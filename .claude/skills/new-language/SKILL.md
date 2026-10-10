@@ -10,7 +10,7 @@ ISO 639-1 code the browser sends in `Accept-Language` (`fr`, `ja`, `th`); `<name
 own name ("Français", not "French").
 
 The app has one dictionary for server and frontend (`i18n/`). English (`i18n/en.ts`) is the source of
-truth; every other language `satisfies` the same keys, so `tsc` finds a missing or extra one.
+truth; every other language `satisfies` the same keys, so `bun check` finds a missing or extra one.
 Extensions are **not** part of this: each extension has its own `i18n/` folder, and a language it
 doesn't ship falls back to its English. Only add extension files when asked.
 
@@ -53,7 +53,7 @@ doesn't ship falls back to its English. Only add extension files when asked.
    a `negotiate("<code>-XX,<code>;q=0.9,en;q=0.8")` check, and a `validate()` run inside
    `I18n.withLocale("<code>", …)` (our key and Zod's email message, both in the new language).
 8. **Docs**: the user guide where it names the languages (`resources/guide/`).
-9. **Verify**: `bun run lint && bunx tsc --noEmit -p . && bun test`, then `bun run build` and
+9. **Verify**: `bun run lint && bun check && bun test`, then `bun run build` and
    `bunx playwright test e2e/p-i18n.spec.ts` (a fresh build first — e2e serves `public/build`).
 
 ## Tell the user

@@ -52,7 +52,7 @@ It has the API reference and the guide for writing extensions.
 ## Check your change
 
 ```sh
-bun run lint && bunx tsc --noEmit -p . && bun run test
+bun run lint && bun check && bun run test
 bun run test:e2e
 ```
 

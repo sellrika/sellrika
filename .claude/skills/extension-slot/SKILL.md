@@ -16,7 +16,7 @@ Names are `<page>.<place>` in lower case (`product.form`, `order.show`, `pos.car
    `<ExtensionSlot name="<name>" :context="<context>" />` at the spot described; build the context object in `<script setup>` (a plain object of functions/data — see `productSlot` in `resources/js/Pages/Products/Form.vue`). Keep `v-show`/tab conditions the surrounding content has. It renders nothing when no running extension names the slot.
 4. **Docs**: the JSDoc of the slot's context in `extensions/types.ts` is what authors read: say there where the slot is and what it gets.
 5. **Tests**: `app/services/settings/__tests__/Extension.Service.test.ts` — a manifest naming the new slot passes validation and `ui()` returns its script URL under that name. `e2e/o-extensions.spec.ts` — zip a small extension inline with `zip()` (manifest `slots` + an `assets/<name>.ts` script that uses the context) and click through it: upload, enable, open the page, assert what the script rendered / changed.
-6. **Verify**: `bunx tsc --noEmit -p . && bun test && bun run build && bunx playwright test e2e/o-extensions.spec.ts`.
+6. **Verify**: `bun check && bun test && bun run build && bunx playwright test e2e/o-extensions.spec.ts`.
 
 ## Don't
 - Don't hand the extension Vue internals, the Inertia form object or component refs — only the context you documented.

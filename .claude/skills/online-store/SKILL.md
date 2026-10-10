@@ -96,7 +96,7 @@ Read first: one whole built-in theme (`resources/views/themes/classic/`: its pag
 - `e2e/l-store.spec.ts` — the visitor flow at `storeOf(spec)` = `http://main-shop.localhost:<port>` (`e2e/tmp.ts`) (browse, product page, cart, no-gateway guard, template switch, accounts,
   extension theme); `e2e/t-currencies.spec.ts`, `e2e/p-i18n.spec.ts`, `e2e/marketing.spec.ts`,
   `e2e/n-packages.spec.ts` also use the storefront.
-- Verify with `bun run lint && bunx tsc --noEmit -p . && bun run test && bun run test:e2e`. Run `bun run build` before
+- Verify with `bun run lint && bun check && bun run test && bun run test:e2e`. Run `bun run build` before
   `bunx playwright test <spec>` after a theme / `resources/js/store` change — the e2e servers serve the built files.
   To run a test server next to another one without overwriting its build, build with `BUILD_DIR=<dir> bun run build`
   and start the server with the same `BUILD_DIR`.

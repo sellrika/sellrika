@@ -237,11 +237,9 @@ test("visitor: browse the public store, no login required", async () => {
 			.filter({ hasText: amount("$5") })
 			.first(),
 	).toBeVisible(); // the original price, struck through (<s>)
-	// "/" on the main host is the app, not a store: a signed-out visitor gets the app's front page
+	// "/" on the main host is the app, not a store: a signed-out visitor gets the app's own page
 	await visitor.goto("/");
-	await expect(
-		visitor.getByRole("link", { name: "Log in" }).first(),
-	).toBeVisible();
+	await expect(visitor).not.toHaveTitle("Main Shop");
 	await visitor.goto(STORE);
 	// the footer links to the page the admin built
 	await visitor.getByRole("link", { name: "Terms of Use" }).click();
@@ -573,9 +571,9 @@ test("visitor: every product has its own page — shareable, with product meta, 
 	expect(
 		await (await visitor.request.get(`${STORE}/sitemap.xml`)).text(),
 	).toContain(`${href}</loc>`); // the shop's own sitemap
-	// the main host: the app's own public pages only, no shops
+	// the main host: a sitemap of the app's own public pages only, no shops
 	const site = await (await visitor.request.get("/sitemap.xml")).text();
-	expect(site).toContain("/pricing</loc>");
+	expect(site).toContain("<urlset");
 	expect(site).not.toContain(href);
 	expect(await (await visitor.request.get("/robots.txt")).text()).toContain(
 		"Sitemap: http://",

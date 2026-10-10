@@ -18,7 +18,7 @@ description: Definition-of-done checklist for adding a feature to this POS end t
 8. **Comments** → follow the `comments` skill: every comment you added is a short JSDoc block, none is a long one-liner.
 9. **Verify** (all must pass, paste results, don't claim green without running):
    ```
-   bun run lint && bunx tsc --noEmit -p . && bun test && bun run test:e2e
+   bun run lint && bun check && bun test && bun run test:e2e
    ```
 
 ## Don't finish until

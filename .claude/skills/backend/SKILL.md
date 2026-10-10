@@ -56,4 +56,4 @@ export class CategoryService {
 ## Rules
 - Bun APIs only (no express, pg, node-only deps). Don't add dependencies.
 - Every change to `app/services` or `app/repositories` logic ships with a test → load the `unit-test` skill. New route/role gate → click through it in an e2e spec (`e2e-test` skill).
-- Finish with `bun run lint && bunx tsc --noEmit -p . && bun test` (`bun run format` fixes what Biome can).
+- Finish with `bun run lint && bun check && bun test` (`bun run format` fixes what Biome can).
