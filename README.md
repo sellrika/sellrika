@@ -108,3 +108,4 @@ Write to [support@sellrika.com](mailto:support@sellrika.com).
 Required Notice: Copyright 2026 Zin Kyaw Kyaw (https://sellrika.com)
 
 Licensor Line of Business: Sellrika point of sale and online store platform (https://sellrika.com)
+
