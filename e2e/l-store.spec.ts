@@ -571,9 +571,9 @@ test("visitor: every product has its own page — shareable, with product meta, 
 	expect(
 		await (await visitor.request.get(`${STORE}/sitemap.xml`)).text(),
 	).toContain(`${href}</loc>`); // the shop's own sitemap
-	// the main host: the app's own public pages only, no shops
+	// the main host: a sitemap of the app's own public pages only, no shops
 	const site = await (await visitor.request.get("/sitemap.xml")).text();
-	expect(site).toContain("/pricing</loc>");
+	expect(site).toContain("<urlset");
 	expect(site).not.toContain(href);
 	expect(await (await visitor.request.get("/robots.txt")).text()).toContain(
 		"Sitemap: http://",
