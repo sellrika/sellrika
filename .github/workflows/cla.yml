@@ -2,7 +2,7 @@ name: CLA Assistant
 
 # Asks everyone who opens a pull request to agree to CLA.md, once.
 # They agree by writing one comment. The check stays red until they do.
-# Who agreed, and when, is kept as a list in another repository.
+# Who agreed, and when, is kept as a list on the branch cla-signatures.
 on:
   issue_comment:
     types: [created]
@@ -11,7 +11,7 @@ on:
 
 permissions:
   actions: write
-  contents: read
+  contents: write # the action saves a new name on the cla-signatures branch
   pull-requests: write
   statuses: write
 
@@ -24,13 +24,10 @@ jobs:
         uses: contributor-assistant/github-action@v2.6.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # a token that may write to the repository holding the list
-          PERSONAL_ACCESS_TOKEN: ${{ secrets.DOWNSTREAM_DISPATCH_TOKEN }}
         with:
           path-to-document: https://github.com/sellrika/sellrika/blob/main/CLA.md
-          # the list of signatures: its own branch, so a new name starts no build
-          remote-organization-name: sellrika
-          remote-repository-name: sellrika-cloud
+          # the list of signatures: its own branch, so a new name starts no build.
+          # A rule on the repository stops anyone from deleting that branch.
           branch: cla-signatures
           path-to-signatures: signatures/cla.json
           # people and bots that need not sign
