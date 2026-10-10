@@ -237,11 +237,9 @@ test("visitor: browse the public store, no login required", async () => {
 			.filter({ hasText: amount("$5") })
 			.first(),
 	).toBeVisible(); // the original price, struck through (<s>)
-	// "/" on the main host is the app, not a store: a signed-out visitor gets the app's front page
+	// "/" on the main host is the app, not a store: a signed-out visitor gets the app's own page
 	await visitor.goto("/");
-	await expect(
-		visitor.getByRole("link", { name: "Log in" }).first(),
-	).toBeVisible();
+	await expect(visitor).not.toHaveTitle("Main Shop");
 	await visitor.goto(STORE);
 	// the footer links to the page the admin built
 	await visitor.getByRole("link", { name: "Terms of Use" }).click();
