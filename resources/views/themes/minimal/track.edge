@@ -1,0 +1,44 @@
+{{--
+  "Track your order": the order code + the email or phone it was placed with.
+  The form posts to this page, which prints the order below it.
+--}}
+@component(theme.layout, { search: true })
+  <div class="wrap column section">
+    <a class="back" href="{{ url.home }}">
+      @!component('themes/minimal/icon', { name: 'arrow-left' })
+      {{ t('store.back_to_shop') }}
+    </a>
+    <h1 class="title">{{ t('store.track_title') }}</h1>
+
+    <form class="lined stack" method="post" action="{{ url.track }}" novalidate>
+      <div class="track-fields">
+        <label class="field">
+          <span>{{ t('store.order_code') }}</span>
+          <input name="code" value="{{ query.code }}" autocapitalize="characters" placeholder="{{ t('store.order_code_example') }}" class="upper">
+        </label>
+        <label class="field">
+          <span>{{ t('store.email_or_phone') }}</span>
+          <input name="contact" value="{{ query.contact }}" autocomplete="email" placeholder="{{ t('store.track_contact_hint') }}">
+        </label>
+      </div>
+      @if(error)
+      <p class="error small" role="alert">{{ error }}</p>
+      @end
+      <div><button type="submit" class="btn">{{ t('store.find_my_order') }}</button></div>
+    </form>
+
+    @if(store.login && !store.customer)
+    <p class="muted small after">
+      {{ t('store.have_account') }}
+      <button type="button" class="link-button" data-login-open>{{ t('store.sign_in') }}</button>
+      {{ t('store.signin_see_orders') }}
+    </p>
+    @end
+
+    @if(order)
+    <div class="after">
+      @include('store/partials/order')
+    </div>
+    @end
+  </div>
+@end

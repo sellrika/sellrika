@@ -1,0 +1,25 @@
+export default {
+	name: "Aurora-Design",
+	description: "Ein weicher, luftiger Look für den Online-Shop.",
+	"theme.description": "Foto-Karten, eine Akzentfarbe, viel Luft.",
+	"hero.title": "Alles für einen guten Morgen",
+	"hero.text": "Im Morgengrauen gepflückt, sorgsam verpackt, mittags bei dir.",
+	"hero.cta": "Zum Shop",
+	"section.featured": "Für dich ausgesucht",
+	"card.off": "{pct}% Rabatt",
+	"store_ui.cart": "Tasche",
+	"store_ui.open_cart": "Tasche öffnen",
+	"store.nothing_back_soon": "Noch nichts da — neue Stücke sind unterwegs.",
+	"field.accent": "Hauptfarbe",
+	"field.accent_hint": "Buttons, Chips und der Hero nehmen diese Farbe.",
+	"field.hero_off": "Hero ausblenden",
+	"field.hero_off_hint":
+		"Das große Banner steht standardmäßig über den Produkten.",
+	"field.hero_title": "Hero-Überschrift",
+	"field.hero_text": "Hero-Text",
+	"field.hero_cta": "Hero-Button",
+	"field.hero_image": "Hero-Bild",
+	"field.hero_image_hint":
+		"Breit wirkt am besten, etwa 1200 mal 420. Leer nutzt das eigene Bild.",
+	"field.blank_hint": "Leer nutzt die Wörter des Designs.",
+};

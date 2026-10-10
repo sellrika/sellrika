@@ -1,0 +1,16 @@
+{{-- A custom page the shop built in /online-store (sanitised HTML + its own CSS). --}}
+@component(theme.layout, { search: true })
+  <div class="n-wrap n-column n-top">
+    <a class="n-back" href="{{ url.home }}">
+      @!component('themes/noir/icon', { name: 'arrow-left' })
+      {{ t('store.back_to_shop') }}
+    </a>
+    <h1 class="n-title">{{ title }}</h1>
+    <div class="n-panel">
+      @if(css)
+      <style>{{{ css }}}</style>
+      @end
+      <div class="store-page n-rich">{{{ body }}}</div>
+    </div>
+  </div>
+@end

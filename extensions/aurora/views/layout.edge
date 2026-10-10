@@ -1,0 +1,229 @@
+{{--
+  Aurora's layout: the shop's colour, the banner strip, the header, the page,
+  the footer, then the three dialogs assets/script.js fills
+  (cart drawer, product sheet, sign-in).
+  Every page wraps itself in it: @component(theme.layout, { search: true }) … @end
+  Aurora's search box sits on the catalog page, so `search` is not used here.
+  Slots:
+    main    the page
+  A layout only sees the shared variables (store, theme, t, url, price …).
+--}}
+@if(theme.config.accent)
+{{-- The shop's colour (a checked #rrggbb). On :root, so the dialogs get it too. --}}
+<style>:root { --aurora-accent: {{ theme.config.accent }}; }</style>
+@end
+<div class="aurora-shell">
+  @if(store.banner)
+  <p class="aurora-banner" data-tone="{{ store.banner_type || 'info' }}">
+    @!component('ext/aurora/icon', { name: 'megaphone' })
+    <span>{{ store.banner }}</span>
+  </p>
+  @end
+
+  <header class="aurora-bar">
+    <a class="aurora-brand" href="{{ url.home }}">
+      @if(store.logo)
+      <img class="aurora-logo" src="{{ store.logo }}" alt="" width="32" height="32">
+      @end
+      <span>{{ store.name }}</span>
+    </a>
+    <div class="aurora-tools">
+      @if(store.currencies && store.currencies.length > 1)
+      <form class="aurora-currency" method="post" action="/currency" data-autosubmit>
+        <select class="aurora-select" name="currency" aria-label="{{ t('store_ui.currency') }}">
+          @each(c in store.currencies)
+          <option value="{{ c.code }}" {{ c.code === (store.display ? store.display.code : store.currency) ? 'selected' : '' }}>{{ c.code }}</option>
+          @end
+        </select>
+        <noscript><button type="submit" class="aurora-ghost">OK</button></noscript>
+      </form>
+      @end
+
+      @if(store.login)
+      @if(store.customer)
+      <a class="aurora-ghost" href="{{ url.account }}" aria-label="{{ t('store.my_account') }}">
+        @!component('ext/aurora/icon', { name: 'user' })
+        <span class="aurora-ghost-text">{{ store.customer.name.trim().split(/\s+/)[0] || store.customer.email }}</span>
+      </a>
+      @else
+      <button type="button" class="aurora-ghost" data-login-open aria-label="{{ t('store.sign_in') }}">
+        @!component('ext/aurora/icon', { name: 'user' })
+        <span class="aurora-ghost-text">{{ t('store.sign_in') }}</span>
+      </button>
+      @end
+      @end
+
+      <button type="button" class="aurora-ghost" data-cart-open aria-label="{{ t('store_ui.open_cart') }}">
+        @!component('ext/aurora/icon', { name: 'bag' })
+        <span class="aurora-ghost-text">{{ t('store_ui.cart') }}</span>
+        <span class="aurora-badge" data-cart-count hidden></span>
+      </button>
+    </div>
+  </header>
+
+  {{{ await $slots.main() }}}
+
+  <footer class="aurora-footer">
+    <div class="aurora-foot-cols">
+      <address class="aurora-foot-brand">
+        <strong class="aurora-foot-name">{{ store.name }}</strong>
+        @if(store.address)
+        <p class="aurora-pre">{{ store.address }}</p>
+        @end
+        @if(store.hours)
+        <p class="aurora-pre">{{ store.hours }}</p>
+        @end
+      </address>
+
+      @if(store.phone || store.facebook || store.instagram || store.viber || store.whatsapp)
+      <div>
+        <h3 class="aurora-foot-head">{{ t('store_ui.contact') }}</h3>
+        <ul class="aurora-foot-list">
+          @if(store.phone)
+          <li><a class="aurora-link" href="tel:{{ store.phone.replace(/[^\d+]/g, '') }}">{{ store.phone }}</a></li>
+          @end
+          @if(store.facebook)
+          <li><a class="aurora-link" href="{{ store.facebook }}" target="_blank" rel="noopener">Facebook</a></li>
+          @end
+          @if(store.instagram)
+          <li><a class="aurora-link" href="{{ store.instagram }}" target="_blank" rel="noopener">Instagram</a></li>
+          @end
+          @if(store.viber)
+          <li><a class="aurora-link" href="viber://chat?number=%2B{{ store.viber }}" target="_blank" rel="noopener">Viber</a></li>
+          @end
+          @if(store.whatsapp)
+          <li><a class="aurora-link" href="https://wa.me/{{ store.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a></li>
+          @end
+        </ul>
+      </div>
+      @end
+
+      <div>
+        <h3 class="aurora-foot-head">{{ t('store_ui.information') }}</h3>
+        <ul class="aurora-foot-list">
+          @each(p in (store.pages || []))
+          <li><a class="aurora-link" href="{{ url.page(p.slug) }}">{{ p.title }}</a></li>
+          @end
+          <li><a class="aurora-link" href="{{ url.track }}">{{ t('store_ui.track_order') }}</a></li>
+          @if(store.login)
+          <li><a class="aurora-link" href="{{ url.account }}">{{ t('store.my_account') }}</a></li>
+          @end
+        </ul>
+        @if(store.languages && store.languages.length > 1)
+        <form class="aurora-langs" method="post" action="/lang" aria-label="{{ t('common.language') }}">
+          @each(l in store.languages)
+          <button type="submit" class="aurora-chip aurora-lang" name="locale" value="{{ l }}" {{{ l === locale ? 'aria-current="true"' : '' }}}>{{ t('lang.' + l) }}</button>
+          @end
+        </form>
+        @end
+      </div>
+    </div>
+    <p class="aurora-copy">{{ t('store_ui.copyright', { year: new Date().getFullYear(), name: store.name }) }}</p>
+  </footer>
+</div>
+
+{{-- Cart drawer. script.js draws the lines into [data-cart-lines]. --}}
+<dialog class="aurora-dialog aurora-drawer" data-cart aria-labelledby="aurora-cart-title">
+  <div class="aurora-surface aurora-drawer-body">
+    <div class="aurora-drawer-head">
+      <h2 id="aurora-cart-title" class="aurora-heading">{{ t('store_ui.your_cart') }}</h2>
+      <button type="button" class="aurora-ghost" data-close aria-label="{{ t('common.close') }}">&times;</button>
+    </div>
+    <div class="aurora-drawer-empty" data-cart-empty>
+      @!component('ext/aurora/icon', { name: 'bag', class: 'aurora-icon-lg' })
+      <p class="aurora-heading">{{ t('store.cart_empty') }}</p>
+      <p class="aurora-muted">{{ t('store_ui.cart_empty_hint') }}</p>
+    </div>
+    <ul class="aurora-lines" data-cart-lines></ul>
+    <div class="aurora-drawer-foot" data-cart-foot hidden>
+      <div class="aurora-total"><span>{{ t('common.total') }}</span><span data-cart-subtotal></span></div>
+      <button type="button" class="aurora-button aurora-wide" data-checkout>
+        {{ store.payments.length ? t('store.checkout') : t('store.send_order') }}
+        @!component('ext/aurora/icon', { name: 'arrow-right' })
+      </button>
+      @if(store.payments.length)
+        <p class="aurora-fine">{{ t('store.secure_payment_by', { gateway: store.payment_label }) }}</p>
+      @end
+      <p class="aurora-fine" data-cart-error role="alert" hidden></p>
+    </div>
+  </div>
+</dialog>
+
+{{-- Product sheet. script.js fills it for the tapped product; it is named after the product. --}}
+<dialog class="aurora-dialog aurora-sheet-dialog" data-sheet aria-labelledby="aurora-sheet-title">
+  <div class="aurora-surface aurora-sheet-body">
+    <button type="button" class="aurora-ghost aurora-close" data-close aria-label="{{ t('common.close') }}">&times;</button>
+    <div class="aurora-sheet-side">
+      <div class="aurora-gallery" data-gallery></div>
+      <div class="aurora-sheet-info">
+        <h2 id="aurora-sheet-title" class="aurora-sheet-name" data-sheet-name></h2>
+        <p class="aurora-muted aurora-small" data-sheet-pack></p>
+        <p class="aurora-sheet-price" data-sheet-price></p>
+        <p class="aurora-muted aurora-small" data-sheet-kind></p>
+        <p class="aurora-sheet-links aurora-small">
+          <a class="aurora-link" data-sheet-link href="#">{{ t('store_ui.product_page') }}</a>
+          <button type="button" class="aurora-link-button" data-share aria-label="{{ t('store_ui.share') }}">{{ t('store_ui.share') }}</button>
+          <span role="status" data-share-note></span>
+        </p>
+      </div>
+    </div>
+    <div class="aurora-sheet-main" data-sheet-picker></div>
+  </div>
+</dialog>
+
+@if(store.login)
+{{-- Customer sign-in. script.js switches it between sign in, create account and reset. --}}
+<dialog class="aurora-dialog aurora-modal" data-login aria-label="{{ t('store.sign_in') }}">
+  <div class="aurora-surface aurora-modal-body">
+    <button type="button" class="aurora-ghost aurora-close" data-close aria-label="{{ t('common.close') }}">&times;</button>
+    <h2 class="aurora-sheet-title" data-login-title>{{ t('store.sign_in') }}</h2>
+    <p class="aurora-muted aurora-small">{{ t('store_ui.login_hint') }}</p>
+    @if(store.login.providers.includes('google') || store.login.providers.includes('microsoft'))
+    <div class="aurora-stack" data-login-social>
+      @if(store.login.providers.includes('google'))
+      <button type="button" class="aurora-outline aurora-wide" data-provider="google">
+        <svg class="aurora-icon" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        {{ t('store_ui.continue_google') }}
+      </button>
+      @end
+      @if(store.login.providers.includes('microsoft'))
+      <button type="button" class="aurora-outline aurora-wide" data-provider="microsoft">
+        <svg class="aurora-icon" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+        {{ t('store_ui.continue_microsoft') }}
+      </button>
+      @end
+      @if(store.login.providers.includes('email'))
+      <p class="aurora-or aurora-muted aurora-small"><span>{{ t('store_ui.or') }}</span></p>
+      @end
+    </div>
+    @end
+    @if(store.login.providers.includes('email'))
+    <form class="aurora-stack" data-login-form novalidate>
+      <label class="aurora-field">
+        <span>{{ t('common.email') }}</span>
+        <input class="aurora-input" type="email" name="email" autocomplete="email" required>
+      </label>
+      <label class="aurora-field" data-login-password>
+        <span>{{ t('store_ui.password') }}</span>
+        <input class="aurora-input" type="password" name="password" autocomplete="current-password" required>
+      </label>
+      <label class="aurora-field" data-login-confirm hidden>
+        <span>{{ t('store_ui.confirm_password') }}</span>
+        <input class="aurora-input" type="password" name="confirm" autocomplete="new-password">
+      </label>
+      <button type="submit" class="aurora-button aurora-wide" data-login-submit>{{ t('store.sign_in') }}</button>
+      <p class="aurora-login-links aurora-small aurora-muted">
+        <button type="button" class="aurora-link-button" data-login-mode="reset">{{ t('store_ui.forgot_password') }}</button>
+        <button type="button" class="aurora-link-button" data-login-mode="signup">{{ t('store_ui.create_account') }}</button>
+        <button type="button" class="aurora-link-button" data-login-mode="signin" hidden>{{ t('store_ui.back_to_sign_in') }}</button>
+      </p>
+    </form>
+    @end
+    <p class="aurora-error" role="alert" data-login-error hidden>
+      <span></span>
+      <button type="button" class="aurora-link-button" data-login-resend hidden>{{ t('store_ui.send_link_again') }}</button>
+    </p>
+    <p class="aurora-small" role="status" data-login-note hidden></p>
+  </div>
+</dialog>
+@end

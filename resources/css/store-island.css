@@ -1,0 +1,163 @@
+/*
+ * The shared checkout / done pages and the account's address boxes
+ * (resources/js/store/islands, imported by resources/js/store/checkout.ts).
+ * They sit inside a theme's own page, so:
+ *   - no Tailwind preflight: it would reset the theme's whole page;
+ *   - utilities are not in a layer, so a theme's plain `button {}` rule
+ *     does not beat them (unlayered CSS always beats layered CSS);
+ *   - the shadcn tokens read the theme's `--store-*` variables
+ *     (docs/features/store-themes.md › CSS variables).
+ * Only the island's own files (and the shared store/*.edge) are scanned.
+ */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" source(none);
+@import "tw-animate-css";
+@import "shadcn-vue/tailwind.css";
+
+@source "../js/store/islands";
+@source "../js/components/ui/button";
+@source "../js/components/ui/input";
+@source "../js/components/ui/label";
+@source "../js/components/ui/command";
+@source "../js/components/ui/popover";
+@source "../js/components/ui/input-group";
+@source "../js/components/store/AddressFields.vue";
+@source "../js/components/store/CountrySelect.vue";
+@source "../js/components/store/OptionSelect.vue";
+@source "../js/components/OrderItemImage.vue";
+@source "../views/store";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+	--font-sans: var(--store-font, inherit);
+	--font-heading: var(--store-font-heading, var(--store-font, inherit));
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-destructive: var(--destructive);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	--color-foreground: var(--foreground);
+	--color-background: var(--background);
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+}
+
+/*
+ * The shadcn tokens, from the theme's variables.
+ * Set on the island and on reka's popper wrapper:
+ * the country / state / city lists open in a layer under <body>.
+ */
+.store-island,
+[data-reka-popper-content-wrapper] {
+	--background: var(--store-bg, #fff);
+	--foreground: var(--store-fg, #111);
+	--card: var(--store-surface, var(--background));
+	--card-foreground: var(--theme-on-surface, var(--foreground));
+	--popover: var(--store-surface, var(--background));
+	--popover-foreground: var(--theme-on-surface, var(--foreground));
+	--muted: color-mix(in oklab, var(--foreground) 6%, transparent);
+	--muted-foreground: var(--store-muted, #6b7280);
+	--secondary: var(--muted);
+	--secondary-foreground: var(--foreground);
+	--accent: var(--muted);
+	--accent-foreground: var(--foreground);
+	--border: var(--store-line, #e5e7eb);
+	--input: var(--store-line, #e5e7eb);
+	--ring: var(--store-fg, #111);
+	--primary: var(--store-accent, #111);
+	--primary-foreground: var(--store-on-accent, #fff);
+	--destructive: var(--store-danger, #dc2626);
+	--radius: var(--store-radius, 0.5rem);
+	color: var(--foreground);
+	font-family: var(--store-font, inherit);
+}
+
+/*
+ * The little preflight the island needs, scoped to it.
+ * Zero-specificity selectors, so every utility still wins.
+ */
+:where(.store-island, [data-reka-popper-content-wrapper]) :where(*) {
+	box-sizing: border-box;
+	border: 0 solid var(--border);
+}
+:where(.store-island, [data-reka-popper-content-wrapper])
+	:where(button, input, select, textarea) {
+	font: inherit;
+	color: inherit;
+	background: transparent;
+	margin: 0;
+}
+:where(.store-island, [data-reka-popper-content-wrapper])
+	:where(h1, h2, h3, p, ul, fieldset, legend) {
+	margin: 0;
+	padding: 0;
+}
+:where(.store-island) :where(ul) {
+	list-style: none;
+}
+:where(.store-island) :where(a) {
+	color: inherit;
+	text-decoration: inherit;
+}
+:where(.store-island) :where(img, svg) {
+	display: block;
+	max-width: 100%;
+}
+:where(.store-island, [data-reka-popper-content-wrapper])
+	:where(
+		button,
+		label[for],
+		[role="option"],
+		input[type="radio"],
+		input[type="checkbox"]
+	) {
+	cursor: pointer;
+}
+:where(.store-island) :where(button:disabled) {
+	cursor: not-allowed;
+}
+:where(.store-island) :where(input[type="radio"], input[type="checkbox"]) {
+	display: inline-block;
+}
+
+/* Headings in the theme's heading font. */
+.store-island .island-heading {
+	font-family: var(--store-font-heading, var(--store-font, inherit));
+}
+
+/* Text boxes and the pickers take the theme's field background. */
+.store-island [data-slot="input"],
+.store-island button[role="combobox"] {
+	background-color: var(--store-input-bg, transparent);
+}
+
+/*
+ * Text boxes, the pickers and a button right after a text box (Apply)
+ * take the theme's control height, so they match the theme's own fields.
+ */
+.store-island [data-slot="input"],
+.store-island button[role="combobox"],
+.store-island [data-slot="input"] + [data-slot="button"] {
+	height: var(--store-control-height, 2rem);
+}
+
+/* The main button (Pay, Place order, Back to …) follows the theme's buttons. */
+.store-island .island-primary {
+	border-radius: var(--store-button-radius, var(--radius));
+	text-transform: var(--store-button-case, none);
+	letter-spacing: var(--store-button-tracking, normal);
+}

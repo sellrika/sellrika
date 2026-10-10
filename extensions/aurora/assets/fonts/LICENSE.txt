@@ -1,0 +1,5 @@
+Archivo and Instrument Serif are both licensed under the SIL Open Font License 1.1.
+Full text: https://openfontlicense.org
+
+Archivo — Copyright (c) Omnibus-Type.
+Instrument Serif — Copyright (c) Instrument.

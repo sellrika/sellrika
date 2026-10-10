@@ -1,0 +1,94 @@
+{{--
+  The catalog: a bar with the category pills and the sort + in-stock form,
+  then the edge-to-edge product grid and the pager.
+  Filters and pages are plain links and GET forms, so the page works without JavaScript.
+--}}
+@component(theme.layout, { search: true, q: filters.q })
+  <h1 class="n-sr">{{ store.name }}</h1>
+  <div class="n-bar">
+    <div class="n-wrap n-bar-row">
+      @if(categories.length)
+      <nav class="n-cats" aria-label="{{ t('nav.categories') }}">
+        <a class="n-pill {{ filters.category ? '' : 'is-on' }}" href="{{ url.catalog({ q: filters.q, sort: filters.sort, stock: filters.stock }) }}" {{{ filters.category ? '' : 'aria-current="page"' }}}>
+          {{ t('store.shop_all') }}
+          @if(counts && counts.all)
+          <span class="n-pill-count">{{ counts.all }}</span>
+          @end
+        </a>
+        @each(c in categories)
+        <a class="n-pill {{ filters.category == c.id ? 'is-on' : '' }}" href="{{ url.catalog({ q: filters.q, sort: filters.sort, stock: filters.stock, category: c.id }) }}" {{{ filters.category == c.id ? 'aria-current="page"' : '' }}}>
+          @if(c.color)
+          <span class="n-dot" style="background: {{ c.color }}"></span>
+          @end
+          {{ c.name }}
+          <span class="n-pill-count">{{ c.count }}</span>
+        </a>
+        @end
+      </nav>
+      @end
+      <form class="n-sort" method="get" action="{{ url.home }}" data-autosubmit>
+        @if(filters.q)
+        <input type="hidden" name="q" value="{{ filters.q }}">
+        @end
+        @if(filters.category)
+        <input type="hidden" name="category" value="{{ filters.category }}">
+        @end
+        <span class="n-ctl n-select">
+          <select name="sort" aria-label="{{ t('store_ui.sort_products') }}">
+            @each(o in sorts)
+            <option value="{{ o.value }}" {{ o.value === filters.sort ? 'selected' : '' }}>{{ o.label }}</option>
+            @end
+          </select>
+          @!component('themes/noir/icon', { name: 'chevron-down' })
+        </span>
+        <label class="n-ctl n-chip">
+          <input type="checkbox" name="stock" value="1" {{ filters.stock ? 'checked' : '' }}>
+          {{ t('store.in_stock') }}
+        </label>
+        <noscript><button type="submit" class="n-ctl">OK</button></noscript>
+      </form>
+    </div>
+  </div>
+
+  @if(!catalog.data.length)
+  <p class="n-empty">{{ t('store.nothing_here') }}</p>
+  @else
+  <div class="n-wrap n-grid-wrap">
+    <div class="n-grid">
+      @each(p in catalog.data)
+      @include('themes/noir/card')
+      @end
+    </div>
+  </div>
+  @end
+
+  @if(catalog.last_page > 1)
+  <div class="n-wrap">
+    <nav class="n-pager">
+      @if(pager.prev)
+      <a class="n-ctl" href="{{ pager.prev }}" aria-label="{{ t('store.previous_page') }}">
+        @!component('themes/noir/icon', { name: 'chevron-left' })
+        {{ t('store.prev') }}
+      </a>
+      @else
+      <a class="n-ctl" aria-disabled="true" aria-label="{{ t('store.previous_page') }}">
+        @!component('themes/noir/icon', { name: 'chevron-left' })
+        {{ t('store.prev') }}
+      </a>
+      @end
+      <span class="n-pager-count">{{ catalog.page }} / {{ catalog.last_page }}</span>
+      @if(pager.next)
+      <a class="n-ctl" href="{{ pager.next }}" aria-label="{{ t('store.next_page') }}">
+        {{ t('common.next') }}
+        @!component('themes/noir/icon', { name: 'chevron-right' })
+      </a>
+      @else
+      <a class="n-ctl" aria-disabled="true" aria-label="{{ t('store.next_page') }}">
+        {{ t('common.next') }}
+        @!component('themes/noir/icon', { name: 'chevron-right' })
+      </a>
+      @end
+    </nav>
+  </div>
+  @end
+@end

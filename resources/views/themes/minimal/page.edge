@@ -1,0 +1,19 @@
+{{--
+  A custom page the shop built in /online-store (sanitised HTML + its own CSS).
+  The content sits between two thin lines, no box.
+--}}
+@component(theme.layout, { search: true })
+  <div class="wrap section">
+    <a class="back" href="{{ url.home }}">
+      @!component('themes/minimal/icon', { name: 'arrow-left' })
+      {{ t('store.back_to_shop') }}
+    </a>
+    <div class="lined">
+      <h1 class="title">{{ title }}</h1>
+      @if(css)
+      <style>{{{ css }}}</style>
+      @end
+      <div class="store-page rich-html">{{{ body }}}</div>
+    </div>
+  </div>
+@end

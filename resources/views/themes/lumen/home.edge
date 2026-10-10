@@ -1,0 +1,105 @@
+{{--
+  The catalog: a heading with the item count, one glass filter bar
+  (category chips, sort, in stock), the product grid and the pager.
+  Filters and pages are plain links and GET forms,
+  so the page works without JavaScript.
+--}}
+@component(theme.layout, { search: true, q: filters.q })
+  @let(current = categories.find((c) => filters.category == c.id))
+  <div class="wrap catalog">
+    <div class="catalog-head">
+      <div>
+        <h1 class="title">{{ current ? current.name : t('store.all_products') }}</h1>
+        <p class="muted small nums">{{ t('store.items_count', { count: catalog.total }) }}</p>
+      </div>
+      @if(filters.q || filters.category || filters.stock)
+      <a class="clear-link" href="{{ url.home }}">{{ t('store.clear_all') }}</a>
+      @end
+    </div>
+
+    <div class="glass filters">
+      @if(categories.length)
+      <nav class="cats" aria-label="{{ t('nav.categories') }}">
+        <a class="chip {{ filters.category ? '' : 'is-on violet' }}" href="{{ url.catalog({ q: filters.q, sort: filters.sort, stock: filters.stock }) }}" {{{ filters.category ? '' : 'aria-current="page"' }}}>
+          {{ t('store.all') }}
+          @if(counts && counts.all)
+          <span class="chip-count">{{ counts.all }}</span>
+          @end
+        </a>
+        @each(c in categories)
+        <a class="chip {{ filters.category == c.id ? 'is-on violet' : '' }}" href="{{ url.catalog({ q: filters.q, sort: filters.sort, stock: filters.stock, category: c.id }) }}" {{{ filters.category == c.id ? 'aria-current="page"' : '' }}}>
+          @if(c.color)
+          <span class="dot" style="background: {{ c.color }}"></span>
+          @end
+          {{ c.name }}
+          <span class="chip-count">{{ c.count }}</span>
+        </a>
+        @end
+      </nav>
+      @end
+      <form class="sort" method="get" action="{{ url.home }}" data-autosubmit>
+        @if(filters.q)
+        <input type="hidden" name="q" value="{{ filters.q }}">
+        @end
+        @if(filters.category)
+        <input type="hidden" name="category" value="{{ filters.category }}">
+        @end
+        <span class="chip select-box">
+          <select name="sort" aria-label="{{ t('store_ui.sort_products') }}">
+            @each(o in sorts)
+            <option value="{{ o.value }}" {{ o.value === filters.sort ? 'selected' : '' }}>{{ o.label }}</option>
+            @end
+          </select>
+          @!component('themes/lumen/icon', { name: 'chevron-down' })
+        </span>
+        <label class="chip check-chip">
+          <input type="checkbox" name="stock" value="1" {{ filters.stock ? 'checked' : '' }}>
+          {{ t('store.in_stock') }}
+        </label>
+        <noscript><button type="submit" class="chip">OK</button></noscript>
+      </form>
+    </div>
+
+    @if(!catalog.data.length)
+    <div class="empty">
+      @!component('themes/lumen/icon', { name: 'basket', class: 'icon-lg' })
+      <p class="strong">{{ t('store.nothing_matches') }}</p>
+      <p class="muted small">{{ t('store.try_another_filter') }}</p>
+    </div>
+    @else
+    <div class="products">
+      @each(p in catalog.data)
+      @include('themes/lumen/card')
+      @end
+    </div>
+    @end
+
+    @if(catalog.last_page > 1)
+    <nav class="pager">
+      @if(pager.prev)
+      <a class="glass pager-link" href="{{ pager.prev }}" aria-label="{{ t('store.previous_page') }}">
+        @!component('themes/lumen/icon', { name: 'chevron-left' })
+        {{ t('store.prev') }}
+      </a>
+      @else
+      <a class="glass pager-link" aria-disabled="true" aria-label="{{ t('store.previous_page') }}">
+        @!component('themes/lumen/icon', { name: 'chevron-left' })
+        {{ t('store.prev') }}
+      </a>
+      @end
+      <span class="pager-count">{{ catalog.page }} / {{ catalog.last_page }}</span>
+      @if(pager.next)
+      <a class="glass pager-link" href="{{ pager.next }}" aria-label="{{ t('store.next_page') }}">
+        {{ t('common.next') }}
+        @!component('themes/lumen/icon', { name: 'chevron-right' })
+      </a>
+      @else
+      <a class="glass pager-link" aria-disabled="true" aria-label="{{ t('store.next_page') }}">
+        {{ t('common.next') }}
+        @!component('themes/lumen/icon', { name: 'chevron-right' })
+      </a>
+      @end
+    </nav>
+    @end
+  </div>
+@end

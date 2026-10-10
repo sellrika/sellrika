@@ -1,0 +1,50 @@
+{
+	"key": "tax-invoice",
+	"name": "name",
+	"version": "1.0.0",
+	"description": "description",
+	"icon": "assets/icon.svg",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "seller_name",
+			"label": "field.name",
+			"required": true,
+			"placeholder": "field.name_placeholder",
+			"hint": "field.name_hint"
+		},
+		{
+			"name": "seller_address",
+			"label": "field.address",
+			"required": true,
+			"multiline": true,
+			"hint": "field.address_hint"
+		},
+		{
+			"name": "seller_tax_id",
+			"label": "field.tax_id",
+			"required": true,
+			"hint": "field.tax_id_hint"
+		},
+		{
+			"name": "seller_branch",
+			"label": "field.branch",
+			"placeholder": "field.branch_placeholder",
+			"hint": "field.branch_hint"
+		},
+		{
+			"name": "prefix",
+			"label": "field.prefix",
+			"placeholder": "INV-",
+			"hint": "field.prefix_hint"
+		}
+	],
+	"pages": [],
+	"slots": [
+		{
+			"name": "order.show",
+			"script": "assets/order.tsx"
+		}
+	],
+	"guide": "guide.md"
+}

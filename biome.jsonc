@@ -1,0 +1,68 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.12/schema.json",
+	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+	"files": {
+		"includes": [
+			"**",
+			// third-party code copied in as-is (see its README): keep upstream's own style so updates stay a clean diff
+			"!resources/js/vendor",
+			// each person's own file, written by Claude Code; git ignores it on their machine only
+			"!.claude/settings.local.json"
+		]
+	},
+	"javascript": {
+		// @Service() classes take their dependencies as constructor parameters — Biome must parse the decorators on them
+		"parser": { "unsafeParameterDecoratorsEnabled": true }
+	},
+	// resources/css/app.css is Tailwind v4 (@theme, @apply, @source)
+	"css": { "parser": { "tailwindDirectives": true } },
+	// the only .html files here are extension themes (extensions/<key>/theme.html) — Vue templates
+	"html": { "parser": { "vue": true } },
+	"linter": {
+		"rules": {
+			"preset": "recommended",
+			"style": {
+				// DI reads the constructor parameter types at runtime (emitDecoratorMetadata). Turning `import { X }` into
+				// `import type { X }` erases the class and every injection becomes undefined — so never auto-convert imports.
+				"useImportType": "off",
+				// `x!` is used on purpose all over the app (rows just written, list items just checked)
+				"noNonNullAssertion": "off",
+				// Inertia pages and shadcn components are single words by design (Login.vue, Button.vue)
+				"useVueMultiWordComponentNames": "off"
+			},
+			"suspicious": {
+				// `(a = b)` inside an expression is a house pattern (cache fills, `??=` in tests)
+				"noAssignInExpressions": "off"
+			},
+			// house style: helpers live in a class, also when every member is static (Auth, Guard)
+			"complexity": { "noStaticOnlyClass": "off" },
+			// extension icons are decorative logos, never read by a screen reader
+			"a11y": { "noSvgWithoutTitle": "off" }
+		}
+	},
+	"assist": { "actions": { "source": { "organizeImports": "off" } } },
+	"overrides": [
+		{
+			// a route reads best on one line (method, path, controller), so the route files are never wrapped
+			"includes": ["routes/**"],
+			"formatter": { "lineWidth": 320 }
+		},
+		{
+			// Biome sees only the <script> of a .vue file: a component imported for the template looks unused
+			"includes": ["**/*.vue"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedImports": "off",
+						"noUnusedVariables": "off"
+					}
+				}
+			}
+		},
+		{
+			// tests stub services with `as any`
+			"includes": ["**/__tests__/**", "**/*.test.ts", "e2e/**"],
+			"linter": { "rules": { "suspicious": { "noExplicitAny": "off" } } }
+		}
+	]
+}

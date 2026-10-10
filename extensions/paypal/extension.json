@@ -1,0 +1,38 @@
+{
+	"key": "paypal",
+	"name": "name",
+	"version": "1.0.0",
+	"description": "description",
+	"help_url": "https://developer.paypal.com/dashboard/applications/live",
+	"icon": "assets/icon.svg",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "api_url",
+			"label": "field.api_url",
+			"type": "select",
+			"required": true,
+			"options": [
+				{ "value": "https://api-m.paypal.com", "label": "option.live" },
+				{
+					"value": "https://api-m.sandbox.paypal.com",
+					"label": "option.sandbox"
+				}
+			]
+		},
+		{
+			"name": "client_id",
+			"label": "field.client_id",
+			"required": true,
+			"hint": "field.client_id_hint"
+		},
+		{
+			"name": "client_secret",
+			"label": "field.client_secret",
+			"secret": true,
+			"required": true,
+			"hint": "field.client_secret_hint"
+		}
+	],
+	"payment": { "mode": "hosted" }
+}

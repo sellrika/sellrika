@@ -1,0 +1,26 @@
+node_modules
+public/build
+build/extensions
+build/ssr
+data/*.db*
+.env
+compiled-server
+compiled-server.map
+/storage
+test-results
+playwright-report
+extensions/*/dist
+
+# macOS folder metadata
+.DS_Store
+.mcp.json
+social-media
+# the hosted edition's private add-on: its own git repository (app/cloud.ts)
+/cloud
+
+# the working notes for AI coding tools: private, a link into the add-on
+/CLAUDE.md
+# one skill of the add-on, linked in; and each person's own settings
+/.claude/skills/social-media-post
+/.claude/commands/social-media-post.md
+/.claude/settings.local.json

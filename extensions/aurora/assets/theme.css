@@ -1,0 +1,1617 @@
+/* Aurora — every colour, shape and letter of the theme. Plain CSS, no Tailwind.
+   Every class starts with `aurora-`, and no rule styles a bare element: the shared
+   checkout island (Tailwind utilities) lives on the same page.
+
+   The faces are the theme's own, served from its assets/ folder — a url() here is relative to this file, so
+   the shop's storefront asks the extension for them and nothing is fetched from a third party.
+   Archivo and Instrument Serif, SIL Open Font License 1.1 (assets/fonts/LICENSE.txt). */
+@font-face {
+	font-family: "Aurora Sans";
+	src: url("fonts/archivo-400.woff2") format("woff2");
+	font-weight: 400;
+	font-display: swap;
+}
+@font-face {
+	font-family: "Aurora Sans";
+	src: url("fonts/archivo-500.woff2") format("woff2");
+	font-weight: 500;
+	font-display: swap;
+}
+@font-face {
+	font-family: "Aurora Sans";
+	src: url("fonts/archivo-700.woff2") format("woff2");
+	font-weight: 700;
+	font-display: swap;
+}
+@font-face {
+	font-family: "Aurora Display";
+	src: url("fonts/instrument-serif-400.woff2") format("woff2");
+	font-weight: 400;
+	font-display: swap;
+}
+
+/* The shared variables (docs/features/store-themes.md): the checkout, the done page and the
+   order card take their look from them. The rest are Aurora's own. On :root, so the dialogs
+   (outside the shell) get them too. The layout sets --aurora-accent from the shop's colour. */
+:root {
+	--aurora-accent: #5b6cff;
+	--aurora-ink: #16181d;
+	--aurora-paper: #f6f7fb;
+	--aurora-line: #e3e5ee;
+	--aurora-soft: #eceef6;
+	--aurora-muted: #767b8a;
+	/* The page column, in one place: everything lines up with it. `--aurora-inset` is where that
+	   column starts, so a bar whose background runs edge to edge still lines up with the products. */
+	--aurora-width: 72rem;
+	--aurora-gutter: 1.5rem;
+	--aurora-inset: max(
+		var(--aurora-gutter),
+		calc((100% - var(--aurora-width)) / 2 + var(--aurora-gutter))
+	);
+
+	--store-bg: var(--aurora-paper);
+	--store-fg: var(--aurora-ink);
+	--store-surface: #fff;
+	--store-muted: var(--aurora-muted);
+	--store-line: var(--aurora-line);
+	--store-accent: var(--aurora-accent);
+	--store-on-accent: #fff;
+	--store-danger: #b42318;
+	--store-radius: 1rem;
+	--store-button-radius: 999px;
+	--store-control-height: 2.75rem;
+	--store-font: "Aurora Sans", ui-sans-serif, system-ui, sans-serif;
+	--store-font-heading: "Aurora Display", ui-serif, Georgia, serif;
+	--store-button-case: none;
+	--store-button-tracking: normal;
+	--store-input-bg: #fff;
+	background: var(--aurora-paper);
+	color-scheme: light;
+}
+/* The <body> of a store page (the document marks it), with no browser margin. */
+[data-store-page] {
+	margin: 0;
+	background: var(--aurora-paper);
+	color: var(--aurora-ink);
+	font: 15px / 1.5 var(--store-font);
+	-webkit-font-smoothing: antialiased;
+}
+.aurora-shell,
+.aurora-shell *,
+.aurora-dialog,
+.aurora-dialog * {
+	box-sizing: border-box;
+}
+.aurora-shell [hidden],
+.aurora-dialog [hidden] {
+	/* biome-ignore lint/complexity/noImportantStyles: `hidden` must beat every display rule here */
+	display: none !important;
+}
+.aurora-shell {
+	display: flex;
+	min-height: 100vh;
+	flex-direction: column;
+	background: var(--aurora-paper);
+	color: var(--aurora-ink);
+	font-family: var(--store-font);
+}
+.aurora-shell :focus-visible,
+.aurora-dialog :focus-visible {
+	outline: 2px solid var(--aurora-accent);
+	outline-offset: 2px;
+}
+.aurora-icon {
+	flex: none;
+	width: 16px;
+	height: 16px;
+}
+.aurora-icon-lg {
+	width: 40px;
+	height: 40px;
+	opacity: 0.35;
+}
+.aurora-muted {
+	color: var(--aurora-muted);
+}
+.aurora-faint {
+	opacity: 0.35;
+}
+.aurora-small {
+	font-size: 0.875rem;
+}
+.aurora-strong {
+	font-weight: 600;
+}
+.aurora-pre {
+	white-space: pre-line;
+}
+.aurora-line-block {
+	display: block;
+}
+.aurora-ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.aurora-center {
+	align-items: center;
+	text-align: center;
+}
+.aurora-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.aurora-plain {
+	margin: 0;
+	padding-left: 1.1rem;
+}
+
+/* ── banner and header ────────────────────────────────────────────────────── */
+.aurora-banner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0.6rem var(--aurora-inset);
+	background: var(--aurora-ink);
+	color: #fff;
+	font-size: 0.875rem;
+}
+.aurora-banner[data-tone="success"] {
+	background: #067647;
+}
+.aurora-banner[data-tone="warning"] {
+	background: #b54708;
+}
+.aurora-banner[data-tone="danger"] {
+	background: #b42318;
+}
+.aurora-bar {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 1rem var(--aurora-inset);
+	border-bottom: 1px solid var(--aurora-line);
+	background: rgba(255, 255, 255, 0.92);
+	backdrop-filter: blur(10px);
+}
+.aurora-brand {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	gap: 0.75rem;
+	font-family: var(--store-font-heading);
+	font-size: 1.4rem;
+	font-weight: 400;
+	letter-spacing: -0.01em;
+	color: inherit;
+	text-decoration: none;
+}
+.aurora-brand > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.aurora-logo {
+	width: 2rem;
+	height: 2rem;
+	flex: none;
+	object-fit: cover;
+	border-radius: 999px;
+}
+.aurora-tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+/* A round header control: account, cart, close. */
+.aurora-ghost {
+	position: relative;
+	display: inline-flex;
+	height: 2.5rem;
+	min-width: 2.5rem;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	padding: 0 0.85rem;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: 0.875rem;
+	font-weight: 500;
+	text-decoration: none;
+	cursor: pointer;
+}
+.aurora-ghost:hover {
+	background: var(--aurora-soft);
+}
+.aurora-badge {
+	display: inline-flex;
+	min-width: 1.25rem;
+	height: 1.25rem;
+	align-items: center;
+	justify-content: center;
+	padding: 0 0.35rem;
+	border-radius: 999px;
+	background: var(--aurora-accent);
+	color: #fff;
+	font-size: 0.7rem;
+	font-weight: 700;
+}
+.aurora-badge.is-bump {
+	animation: aurora-bump 0.3s ease-out;
+}
+@keyframes aurora-bump {
+	50% {
+		transform: scale(1.3);
+	}
+}
+@media (max-width: 40rem) {
+	.aurora-ghost-text {
+		display: none;
+	}
+	.aurora-ghost {
+		padding: 0 0.6rem;
+	}
+	.aurora-brand {
+		font-size: 1.2rem;
+	}
+}
+
+/* ── the catalog ──────────────────────────────────────────────────────────── */
+.aurora-main,
+.aurora-page {
+	width: 100%;
+	max-width: var(--aurora-width);
+	margin: 0 auto;
+	flex: 1;
+	padding: 2rem var(--aurora-gutter) 4rem;
+}
+.aurora-page.is-narrow {
+	max-width: 44rem;
+}
+.aurora-filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding-bottom: 1.5rem;
+	scroll-margin-top: 5rem;
+}
+.aurora-cats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.aurora-chip {
+	display: inline-flex;
+	height: 2.25rem;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0 0.875rem;
+	border: 1px solid var(--aurora-line);
+	border-radius: 999px;
+	background: #fff;
+	color: inherit;
+	font: inherit;
+	font-size: 0.875rem;
+	text-decoration: none;
+	cursor: pointer;
+}
+.aurora-chip:hover {
+	border-color: var(--aurora-accent);
+}
+.aurora-chip.is-on,
+.aurora-lang[aria-current="true"] {
+	background: var(--aurora-accent);
+	border-color: var(--aurora-accent);
+	color: #fff;
+}
+.aurora-chip[aria-disabled="true"] {
+	opacity: 0.45;
+	pointer-events: none;
+}
+/* "In stock": a label with its checkbox; it turns on like a category chip. */
+.aurora-toggle input {
+	margin: 0;
+	accent-color: var(--aurora-accent);
+}
+.aurora-toggle:has(:checked) {
+	background: var(--aurora-accent);
+	border-color: var(--aurora-accent);
+	color: #fff;
+}
+.aurora-search,
+.aurora-select,
+.aurora-input {
+	height: 2.25rem;
+	padding: 0 0.875rem;
+	border: 1px solid var(--aurora-line);
+	border-radius: 999px;
+	background: #fff;
+	color: inherit;
+	font: inherit;
+	font-size: 0.875rem;
+	outline: none;
+}
+.aurora-search {
+	width: 14rem;
+	max-width: 100%;
+}
+.aurora-search:focus,
+.aurora-input:focus,
+.aurora-select:focus {
+	border-color: var(--aurora-accent);
+}
+.aurora-input {
+	width: 100%;
+	height: 2.75rem;
+	border-radius: 0.875rem;
+}
+.aurora-input[aria-invalid="true"] {
+	border-color: var(--store-danger);
+}
+.aurora-input.is-code {
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+.aurora-empty {
+	padding: 5rem 0;
+	text-align: center;
+	color: var(--aurora-muted);
+}
+.aurora-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1.25rem;
+}
+@media (min-width: 48rem) {
+	.aurora-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+@media (max-width: 30rem) {
+	.aurora-grid {
+		gap: 0.75rem;
+	}
+}
+.aurora-pager {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	margin-top: 2rem;
+	font-size: 0.875rem;
+}
+
+/* A card is the photo: the picture fills it, a dark wash lifts the words off its bottom.
+   The link covers the whole card; the words let clicks through to it, the button does not. */
+.aurora-card {
+	position: relative;
+	display: block;
+	aspect-ratio: 3 / 4.3;
+	overflow: hidden;
+	border-radius: 1.75rem;
+	background: var(--aurora-soft);
+	color: #fff;
+	box-shadow: 0 1px 2px rgba(22, 24, 29, 0.08);
+	transition:
+		box-shadow 0.25s,
+		transform 0.25s;
+}
+.aurora-card:hover {
+	box-shadow: 0 14px 34px rgba(22, 24, 29, 0.16);
+	transform: translateY(-2px);
+}
+.aurora-card.is-sold-out {
+	opacity: 0.72;
+}
+.aurora-card-link {
+	position: absolute;
+	inset: 0;
+	display: block;
+	color: inherit;
+}
+.aurora-shot {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+/* The stand-in when a product has no photo: the letter, centred in its frame. */
+.aurora-initial {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+	font-family: var(--store-font-heading);
+	font-size: 3rem;
+	color: #a7abbb;
+}
+.aurora-card::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		to top,
+		rgba(14, 15, 20, 0.9) 0%,
+		rgba(14, 15, 20, 0.72) 34%,
+		rgba(14, 15, 20, 0.12) 62%,
+		rgba(14, 15, 20, 0) 78%
+	);
+	pointer-events: none;
+}
+.aurora-off {
+	position: absolute;
+	top: 0.875rem;
+	right: 0.875rem;
+	z-index: 2;
+	padding: 0.3rem 0.7rem;
+	border-radius: 999px;
+	background: rgba(14, 15, 20, 0.45);
+	backdrop-filter: blur(6px);
+	font-size: 0.75rem;
+	font-weight: 600;
+	pointer-events: none;
+}
+.aurora-off.is-inline {
+	position: static;
+	background: var(--aurora-accent);
+	color: #fff;
+}
+.aurora-body {
+	position: absolute;
+	inset: auto 0 0 0;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 1rem;
+	pointer-events: none;
+}
+.aurora-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.aurora-name {
+	min-width: 0;
+	margin: 0;
+	overflow: hidden;
+	font-family: var(--store-font-heading);
+	font-size: 1.3rem;
+	font-weight: 400;
+	letter-spacing: -0.01em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.aurora-price {
+	flex: none;
+	padding: 0.35rem 0.75rem;
+	border-radius: 999px;
+	background: rgba(14, 15, 20, 0.5);
+	backdrop-filter: blur(6px);
+	font-size: 0.875rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.aurora-blurb {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+	margin: 0;
+	font-size: 0.875rem;
+	line-height: 1.35;
+	color: rgba(255, 255, 255, 0.82);
+}
+.aurora-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+}
+.aurora-tag {
+	padding: 0.25rem 0.65rem;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.2);
+	backdrop-filter: blur(6px);
+	font-size: 0.75rem;
+	font-weight: 500;
+}
+.aurora-tag.is-dark {
+	display: inline-block;
+	background: rgba(14, 15, 20, 0.08);
+	color: var(--aurora-ink);
+}
+.aurora-add {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	margin-top: 0.25rem;
+	padding: 0.7rem 1rem;
+	border: 0;
+	border-radius: 999px;
+	background: #fff;
+	color: var(--aurora-ink);
+	font: inherit;
+	font-weight: 700;
+	text-decoration: none;
+	cursor: pointer;
+	pointer-events: auto;
+}
+.aurora-add:hover {
+	background: rgba(255, 255, 255, 0.88);
+}
+.aurora-add:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.aurora-add.is-inline {
+	align-self: start;
+	margin-top: 0;
+	padding-inline: 1.75rem;
+	background: var(--aurora-accent);
+	color: #fff;
+}
+.aurora-add.is-inline:hover {
+	filter: brightness(1.08);
+}
+@media (max-width: 30rem) {
+	.aurora-body {
+		padding: 0.75rem;
+	}
+	.aurora-name {
+		font-size: 1.1rem;
+	}
+	.aurora-head {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+	.aurora-blurb,
+	.aurora-chips {
+		display: none;
+	}
+	.aurora-add {
+		padding: 0.55rem 0.75rem;
+		font-size: 0.8rem;
+	}
+}
+
+/* the base heading — the sections below narrow it, so it must come first */
+.aurora-heading {
+	margin: 0;
+	font-family: var(--store-font-heading);
+	font-weight: 400;
+	letter-spacing: -0.01em;
+}
+
+/* ── hero and the featured rail ───────────────────────────────────────────── */
+.aurora-hero {
+	position: relative;
+	overflow: hidden;
+	margin-bottom: 2rem;
+	padding: 3rem 2rem;
+	border-radius: 1.75rem;
+	background: linear-gradient(135deg, var(--aurora-accent) 0%, #a86bff 100%);
+	color: #fff;
+}
+.aurora-hero-photo {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.aurora-hero::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		to right,
+		rgba(14, 15, 20, 0.82) 0%,
+		rgba(14, 15, 20, 0.35) 70%,
+		rgba(14, 15, 20, 0.1) 100%
+	);
+}
+.aurora-hero-words {
+	position: relative;
+	z-index: 2;
+	max-width: 34rem;
+}
+.aurora-hero-title {
+	margin: 0 0 0.75rem;
+	font-family: var(--store-font-heading);
+	font-size: clamp(2rem, 5vw, 3rem);
+	font-weight: 400;
+	line-height: 1.05;
+	letter-spacing: -0.02em;
+}
+.aurora-hero-text {
+	margin: 0 0 1.5rem;
+	font-size: 1rem;
+	line-height: 1.6;
+	color: rgba(255, 255, 255, 0.88);
+}
+.aurora-hero .aurora-add.is-inline {
+	background: #fff;
+	color: var(--aurora-ink);
+}
+.aurora-featured {
+	margin-bottom: 2.5rem;
+}
+.aurora-featured .aurora-heading,
+.aurora-related .aurora-heading {
+	margin: 0 0 1rem;
+	font-size: 1.6rem;
+}
+.aurora-rail {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 60%;
+	gap: 1rem;
+	overflow-x: auto;
+	padding-bottom: 0.5rem;
+	scroll-snap-type: x mandatory;
+}
+@media (min-width: 48rem) {
+	.aurora-rail {
+		grid-auto-columns: 26%;
+	}
+}
+.aurora-rail > * {
+	scroll-snap-align: start;
+}
+.aurora-card.is-small {
+	aspect-ratio: 1 / 1.15;
+	border-radius: 1.25rem;
+}
+
+/* ── the other pages ──────────────────────────────────────────────────────── */
+.aurora-back {
+	display: inline-block;
+	margin-bottom: 1.5rem;
+	color: #4a4f5e;
+	font-size: 0.875rem;
+	text-decoration: none;
+}
+.aurora-back:hover {
+	color: var(--aurora-accent);
+}
+.aurora-error {
+	margin: 0;
+	color: var(--store-danger);
+	font-size: 0.875rem;
+}
+.aurora-gap {
+	display: block;
+	margin-top: 1.5rem;
+}
+.aurora-sheet {
+	display: block;
+	padding: 1.75rem;
+	border-radius: 1.5rem;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(22, 24, 29, 0.06);
+}
+.aurora-sheet-title {
+	margin: 0 0 1.25rem;
+	font-family: var(--store-font-heading);
+	font-size: 2rem;
+	font-weight: 400;
+	line-height: 1.1;
+	letter-spacing: -0.01em;
+}
+.aurora-form {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.aurora-form > .aurora-sheet-title,
+.aurora-form p {
+	margin: 0;
+}
+.aurora-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+}
+.aurora-big {
+	margin: 0;
+	font-family: var(--store-font-heading);
+	font-size: 6rem;
+	line-height: 1;
+	color: var(--aurora-accent);
+}
+.aurora-center .aurora-add.is-inline {
+	align-self: center;
+}
+
+/* Rich text: a product description or a custom page. */
+.aurora-prose {
+	font-size: 0.9375rem;
+	line-height: 1.7;
+}
+.aurora-prose :is(h1, h2, h3) {
+	margin: 1.25em 0 0.5em;
+	font-family: var(--store-font-heading);
+	font-weight: 400;
+	line-height: 1.2;
+}
+.aurora-prose :is(p, ul, ol) {
+	margin: 0 0 0.75em;
+}
+.aurora-prose img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 1rem;
+}
+.aurora-prose a {
+	color: var(--aurora-accent);
+}
+
+/* The product page. */
+.aurora-detail {
+	display: grid;
+	gap: 2rem;
+}
+@media (min-width: 48rem) {
+	.aurora-detail {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		align-items: start;
+	}
+}
+.aurora-gallery {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.aurora-frame {
+	display: flex;
+	aspect-ratio: 1;
+	overflow: hidden;
+	border-radius: 1.5rem;
+	background: var(--aurora-soft);
+}
+.aurora-frame img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.aurora-thumbs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.aurora-thumb {
+	width: 4rem;
+	height: 4rem;
+	overflow: hidden;
+	padding: 0;
+	border: 2px solid transparent;
+	border-radius: 0.75rem;
+	background: var(--aurora-soft);
+	cursor: pointer;
+}
+.aurora-thumb[aria-pressed="true"] {
+	border-color: var(--aurora-accent);
+}
+.aurora-thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.aurora-detail-side {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.aurora-detail-side > p {
+	margin: 0;
+}
+.aurora-detail-name {
+	margin: 0;
+	font-family: var(--store-font-heading);
+	font-size: clamp(2rem, 4vw, 2.75rem);
+	font-weight: 400;
+	line-height: 1.05;
+	letter-spacing: -0.02em;
+}
+.aurora-detail-price {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	font-size: 1.4rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.aurora-detail-price s {
+	font-size: 1rem;
+	font-weight: 400;
+	color: var(--aurora-muted);
+}
+.aurora-details {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--aurora-line);
+}
+/* A product with no options: no line above its details. */
+.aurora-stack:empty {
+	display: none;
+}
+.aurora-stack:empty + .aurora-details {
+	padding-top: 0;
+	border-top: 0;
+}
+.aurora-label {
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--aurora-muted);
+}
+.aurora-extra {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.35rem 1rem;
+	margin: 0;
+	font-size: 0.875rem;
+}
+.aurora-extra dt {
+	color: var(--aurora-muted);
+}
+.aurora-extra dd {
+	margin: 0;
+}
+.aurora-related {
+	margin-top: 3rem;
+}
+.aurora-link {
+	color: inherit;
+	text-decoration: none;
+}
+.aurora-link:hover {
+	color: var(--aurora-accent);
+}
+.aurora-link-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	cursor: pointer;
+}
+.aurora-link-button:hover {
+	color: var(--aurora-accent);
+}
+.aurora-sheet-links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+	color: var(--aurora-muted);
+}
+
+/* ── buttons ──────────────────────────────────────────────────────────────── */
+.aurora-button,
+.aurora-outline {
+	display: inline-flex;
+	min-height: 2.75rem;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0 1.25rem;
+	border: 1px solid var(--aurora-accent);
+	border-radius: 999px;
+	background: var(--aurora-accent);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+}
+.aurora-button:hover {
+	filter: brightness(1.08);
+}
+.aurora-outline {
+	border-color: var(--aurora-line);
+	background: #fff;
+	color: var(--aurora-ink);
+	font-weight: 500;
+}
+.aurora-outline:hover {
+	border-color: var(--aurora-accent);
+}
+.aurora-outline.is-icon {
+	width: 2.75rem;
+	padding: 0;
+}
+.aurora-button:disabled,
+.aurora-outline:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.aurora-wide {
+	width: 100%;
+}
+
+/* ── option picker (product page + product sheet, drawn by script.js) ─────── */
+.aurora-picker {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.aurora-picker-body {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.aurora-opt-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+.aurora-opt-values {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.aurora-opt {
+	display: inline-flex;
+	min-height: 2.5rem;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0 1rem;
+	border: 1px solid var(--aurora-line);
+	border-radius: 999px;
+	background: #fff;
+	color: inherit;
+	font: inherit;
+	font-size: 0.875rem;
+	cursor: pointer;
+}
+.aurora-opt:hover {
+	border-color: var(--aurora-accent);
+}
+.aurora-opt[aria-pressed="true"] {
+	border-color: var(--aurora-accent);
+	background: var(--aurora-accent);
+	color: #fff;
+}
+.aurora-opt:disabled {
+	opacity: 0.4;
+	text-decoration: line-through;
+	cursor: not-allowed;
+}
+.aurora-swatch {
+	width: 0.9rem;
+	height: 0.9rem;
+	border: 1px solid rgba(0, 0, 0, 0.15);
+	border-radius: 999px;
+}
+.aurora-opt-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.aurora-opt-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--aurora-line);
+	border-radius: 1rem;
+	background: #fff;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.aurora-opt-row[aria-pressed="true"] {
+	border-color: var(--aurora-accent);
+	box-shadow: inset 0 0 0 1px var(--aurora-accent);
+}
+.aurora-opt-row:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.aurora-opt-row-name {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+.aurora-opt-mark {
+	width: 1rem;
+	height: 1rem;
+	flex: none;
+	border: 1px solid var(--aurora-line);
+	border-radius: 999px;
+}
+.aurora-opt-row[aria-pressed="true"] .aurora-opt-mark {
+	border: 5px solid var(--aurora-accent);
+}
+.aurora-picker-foot {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.aurora-picker-foot p {
+	margin: 0;
+}
+.aurora-picker-add {
+	display: flex;
+	gap: 0.75rem;
+}
+.aurora-add-button {
+	flex: 1;
+	justify-content: space-between;
+}
+.aurora-add-text {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.aurora-stepper {
+	display: inline-flex;
+	align-items: center;
+	border: 1px solid var(--aurora-line);
+	border-radius: 999px;
+	background: #fff;
+}
+.aurora-stepper button {
+	display: inline-flex;
+	width: 2rem;
+	height: 2rem;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-radius: 999px;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+}
+.aurora-stepper button:hover {
+	background: var(--aurora-soft);
+}
+.aurora-stepper button:disabled {
+	opacity: 0.35;
+	cursor: not-allowed;
+}
+.aurora-stepper span {
+	min-width: 1.5rem;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+.aurora-stepper.is-big button {
+	width: 2.75rem;
+	height: 2.75rem;
+}
+
+/* ── dialogs: cart drawer, product sheet, sign-in ─────────────────────────── */
+.aurora-dialog {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--aurora-ink);
+	font-family: var(--store-font);
+}
+.aurora-dialog::backdrop {
+	background: rgba(14, 15, 20, 0.45);
+	backdrop-filter: blur(2px);
+}
+.aurora-surface {
+	background: #fff;
+	color: var(--aurora-ink);
+	border-color: var(--aurora-line);
+}
+.aurora-close {
+	position: absolute;
+	top: 0.75rem;
+	right: 0.75rem;
+	z-index: 1;
+	font-size: 1.25rem;
+}
+.aurora-drawer {
+	width: min(28rem, 100%);
+	max-width: 100%;
+	height: 100dvh;
+	max-height: 100dvh;
+	margin: 0 0 0 auto;
+}
+.aurora-drawer[open] {
+	animation: aurora-slide 0.22s ease-out;
+}
+@keyframes aurora-slide {
+	from {
+		transform: translateX(100%);
+	}
+}
+.aurora-drawer-body {
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+	border-radius: 1.5rem 0 0 1.5rem;
+}
+.aurora-drawer-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 1.25rem 1.25rem 1rem;
+	border-bottom: 1px solid var(--aurora-line);
+}
+.aurora-drawer-head .aurora-heading {
+	font-size: 1.75rem;
+}
+.aurora-drawer-empty {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 2rem;
+	text-align: center;
+}
+.aurora-drawer-empty p {
+	margin: 0;
+}
+.aurora-drawer-empty .aurora-heading {
+	font-size: 1.5rem;
+}
+.aurora-lines {
+	display: grid;
+	flex: 1;
+	grid-template-columns: minmax(0, 1fr);
+	align-content: start;
+	gap: 1rem;
+	min-height: 0;
+	margin: 0;
+	padding: 1.25rem;
+	overflow-y: auto;
+	list-style: none;
+}
+.aurora-line-item {
+	display: flex;
+	gap: 0.75rem;
+}
+.aurora-line-thumb {
+	display: flex;
+	width: 4rem;
+	height: 4rem;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	padding: 0;
+	border: 0;
+	border-radius: 1rem;
+	background: var(--aurora-soft);
+	color: var(--aurora-muted);
+	font: inherit;
+	cursor: pointer;
+}
+.aurora-line-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.aurora-line-body {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.aurora-line-name {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.aurora-line-title,
+.aurora-line-variant {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.aurora-line-title {
+	font-weight: 600;
+}
+.aurora-line-variant {
+	font-size: 0.8rem;
+}
+.aurora-line-name:hover .aurora-line-title {
+	color: var(--aurora-accent);
+}
+.aurora-line-qty {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.aurora-line-remove {
+	height: 2rem;
+	min-width: 2rem;
+	padding: 0;
+	color: var(--aurora-muted);
+}
+.aurora-line-note {
+	margin: 0;
+	font-size: 0.75rem;
+}
+.aurora-line-price {
+	flex: none;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.aurora-drawer-foot {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 1.25rem;
+	border-top: 1px solid var(--aurora-line);
+}
+.aurora-total {
+	display: flex;
+	justify-content: space-between;
+	font-family: var(--store-font-heading);
+	font-size: 1.5rem;
+}
+.aurora-fine {
+	margin: 0;
+	font-size: 0.75rem;
+	text-align: center;
+	color: var(--aurora-muted);
+}
+.aurora-sheet-dialog {
+	width: min(48rem, calc(100% - 1.5rem));
+	max-width: none;
+	max-height: 88dvh;
+}
+.aurora-sheet-body {
+	position: relative;
+	display: grid;
+	max-height: 88dvh;
+	grid-template-rows: auto minmax(0, 1fr);
+	overflow: hidden;
+	border-radius: 1.5rem;
+}
+.aurora-sheet-side {
+	display: flex;
+	gap: 1rem;
+	padding: 1.25rem;
+	border-bottom: 1px solid var(--aurora-line);
+	background: var(--aurora-paper);
+}
+.aurora-sheet-side .aurora-gallery {
+	width: 6rem;
+	flex: none;
+}
+.aurora-sheet-side .aurora-frame {
+	border-radius: 1rem;
+}
+.aurora-sheet-side .aurora-thumbs {
+	display: none;
+}
+.aurora-sheet-info {
+	min-width: 0;
+	padding-right: 2.5rem;
+}
+.aurora-sheet-info p {
+	margin: 0.25rem 0 0;
+}
+.aurora-sheet-info p:empty {
+	display: none;
+}
+.aurora-sheet-name {
+	margin: 0;
+	font-family: var(--store-font-heading);
+	font-size: 1.75rem;
+	font-weight: 400;
+	line-height: 1.1;
+}
+.aurora-sheet-price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.5rem;
+	font-weight: 600;
+}
+.aurora-sheet-main {
+	min-height: 0;
+	overflow-y: auto;
+	padding: 1.25rem;
+}
+.aurora-modal {
+	width: min(26rem, calc(100% - 1.5rem));
+}
+.aurora-modal-body {
+	position: relative;
+	padding: 1.75rem;
+	border-radius: 1.5rem;
+}
+.aurora-modal-body > p {
+	margin: 0 0 1rem;
+}
+.aurora-modal-body .aurora-sheet-title {
+	margin-bottom: 0.25rem;
+	padding-right: 2rem;
+}
+.aurora-modal-body [data-login-social] {
+	margin-bottom: 1rem;
+}
+.aurora-or {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin: 0.25rem 0 0;
+}
+.aurora-or::before,
+.aurora-or::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: var(--aurora-line);
+}
+.aurora-login-links {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin: 0;
+}
+.aurora-modal-body [role="alert"],
+.aurora-modal-body [role="status"] {
+	margin: 1rem 0 0;
+}
+
+/* ── account ──────────────────────────────────────────────────────────────── */
+.aurora-account-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-bottom: 1.5rem;
+}
+.aurora-account-head .aurora-sheet-title {
+	margin: 0;
+}
+.aurora-account-head p {
+	margin: 0.25rem 0 0;
+}
+.aurora-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+.aurora-tabs a {
+	padding: 0.45rem 1rem;
+	border: 1px solid var(--aurora-line);
+	border-radius: 999px;
+	background: #fff;
+	color: inherit;
+	font-size: 0.875rem;
+	text-decoration: none;
+}
+.aurora-tabs a[aria-current="page"] {
+	border-color: var(--aurora-accent);
+	background: var(--aurora-accent);
+	color: #fff;
+}
+.aurora-rows {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.aurora-rows > li {
+	border-bottom: 1px solid var(--aurora-line);
+}
+.aurora-rows > li:last-child {
+	border-bottom: 0;
+}
+.aurora-row-main {
+	min-width: 0;
+	flex: 1;
+}
+.aurora-order-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 1rem;
+	padding: 0.75rem 0;
+	color: inherit;
+	font-size: 0.875rem;
+	text-decoration: none;
+}
+.aurora-order-row .aurora-row-main {
+	flex-basis: 12rem;
+}
+.aurora-order-sum {
+	flex: none;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+.aurora-status {
+	flex: none;
+	padding: 0.15rem 0.6rem;
+	border-radius: 999px;
+	background: var(--aurora-soft);
+	font-size: 0.7rem;
+	font-weight: 600;
+}
+.aurora-status.is-completed,
+.aurora-status.is-delivered {
+	background: #ecfdf3;
+	color: #067647;
+}
+.aurora-status.is-partially_refunded,
+.aurora-status.is-refunded {
+	background: #fffaeb;
+	color: #b54708;
+}
+.aurora-status.is-voided {
+	background: #fef3f2;
+	color: #b42318;
+}
+.aurora-pay {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	font-size: 0.75rem;
+}
+.aurora-pay.is-unpaid {
+	color: var(--store-danger);
+}
+.aurora-pay.is-partial {
+	color: #b54708;
+}
+.aurora-pie {
+	width: 0.7rem;
+	height: 0.7rem;
+	border: 1px solid currentColor;
+	border-radius: 999px;
+}
+.aurora-address-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.75rem;
+	padding: 0.75rem 0;
+}
+.aurora-address-row form {
+	margin: 0;
+}
+.aurora-address-edit,
+.aurora-address-add {
+	width: 100%;
+}
+.aurora-address-edit > summary,
+.aurora-address-add > summary {
+	list-style: none;
+}
+.aurora-address-edit > summary::-webkit-details-marker,
+.aurora-address-add > summary::-webkit-details-marker {
+	display: none;
+}
+.aurora-address-edit > form,
+.aurora-address-add > form {
+	margin-top: 1rem;
+}
+
+/* ── footer ───────────────────────────────────────────────────────────────── */
+.aurora-footer {
+	padding: 3rem var(--aurora-inset) 2rem;
+	border-top: 1px solid var(--aurora-line);
+	background: #fff;
+	font-size: 0.875rem;
+}
+.aurora-foot-cols {
+	display: grid;
+	gap: 2rem;
+}
+@media (min-width: 48rem) {
+	.aurora-foot-cols {
+		grid-template-columns: 2fr 1fr 1fr;
+	}
+}
+.aurora-foot-brand {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	font-style: normal;
+	color: var(--aurora-muted);
+}
+.aurora-foot-brand p {
+	margin: 0;
+}
+.aurora-foot-name {
+	font-family: var(--store-font-heading);
+	font-size: 1.4rem;
+	font-weight: 400;
+	color: var(--aurora-ink);
+}
+.aurora-foot-head {
+	margin: 0 0 0.75rem;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.aurora-foot-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	color: var(--aurora-muted);
+}
+.aurora-langs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-top: 1rem;
+}
+.aurora-copy {
+	margin: 2rem 0 0;
+	color: var(--aurora-muted);
+	font-size: 0.75rem;
+}
+
+/* the buyer's custom request box in the picker */
+.note-field textarea {
+	min-height: 88px;
+	padding: 10px 12px;
+	resize: vertical;
+}
+
+/* the buyer's custom request, on its own row under a cart line (lined up with the name) */
+.aurora-line-item {
+	flex-wrap: wrap;
+	row-gap: 6px;
+}
+.aurora-line-request {
+	flex-basis: 100%;
+	margin: 0;
+	padding-left: calc(4rem + 0.75rem);
+	font-size: 12px;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}

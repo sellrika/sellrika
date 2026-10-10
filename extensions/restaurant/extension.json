@@ -1,0 +1,91 @@
+{
+	"key": "restaurant",
+	"name": "name",
+	"version": "1.15.0",
+	"description": "description",
+	"icon": "assets/icon.svg",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "primary_button",
+			"label": "field.primary_button",
+			"type": "select",
+			"app": "pos.primary",
+			"hint": "field.primary_button_hint",
+			"options": [
+				{
+					"value": "pay_later",
+					"label": "option.pay_later"
+				},
+				{
+					"value": "pay_now",
+					"label": "option.pay_now"
+				}
+			]
+		}
+	],
+	"slots": [
+		{
+			"name": "store.page",
+			"script": "assets/store.ts",
+			"wait": true
+		},
+		{
+			"name": "product.side",
+			"script": "assets/product-side.tsx"
+		}
+	],
+	"pages": [
+		{
+			"path": "tables",
+			"title": "page.tables",
+			"script": "assets/tables.tsx",
+			"admin": false,
+			"group": "page.group",
+			"group_before": "Sales",
+			"breadcrumb": false
+		},
+		{
+			"path": "kitchen",
+			"title": "page.kitchen",
+			"script": "assets/kitchen.tsx",
+			"admin": false,
+			"group": "page.group",
+			"group_before": "Sales",
+			"icon": "assets/kitchen.svg",
+			"fullscreen": true,
+			"breadcrumb": false,
+			"fill": true
+		}
+	],
+	"hide_nav": ["/customers"],
+	"app": { "orders.delivery": "hide" },
+	"guide": "guide.md",
+	"tools": [
+		{
+			"name": "get_send_to_kitchen",
+			"summary": "tool.get_kitchen",
+			"description": "tool.get_kitchen_description",
+			"route": "GET /products/:id/kitchen",
+			"role": "cashier",
+			"input": {
+				"id": { "type": "integer", "description": "The product's id." }
+			}
+		},
+		{
+			"name": "set_send_to_kitchen",
+			"summary": "tool.set_kitchen",
+			"description": "tool.set_kitchen_description",
+			"route": "POST /products/:id/kitchen",
+			"role": "manager",
+			"input": {
+				"id": { "type": "integer", "description": "The product's id." },
+				"on": {
+					"type": "boolean",
+					"description": "true = it goes to the kitchen, false = it skips the kitchen."
+				}
+			},
+			"required": ["on"]
+		}
+	]
+}

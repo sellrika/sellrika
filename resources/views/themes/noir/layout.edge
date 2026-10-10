@@ -1,0 +1,269 @@
+{{--
+  Noir ("Obscura") layout: banner strip, sticky dark header, the page, footer,
+  then the three dialogs script.js fills (cart drawer, product sheet, sign-in).
+  Every page wraps itself in it: @component(theme.layout, { search: true }) … @end
+  Props:
+    search  show the product search in the header (default true)
+    q       the search box value (the catalog page passes filters.q)
+  Slots:
+    main    the page
+  On phones the header has two rows: brand + controls, then the search.
+--}}
+<div class="n-page">
+  @if(store.banner)
+  <p class="n-banner n-banner--{{ store.banner_type || 'info' }}" data-tone="{{ store.banner_type || 'info' }}">
+    @if(store.banner_type === 'success')
+    @!component('themes/noir/icon', { name: 'check-circle' })
+    @elseif(store.banner_type === 'warning')
+    @!component('themes/noir/icon', { name: 'alert' })
+    @elseif(store.banner_type === 'danger')
+    @!component('themes/noir/icon', { name: 'octagon' })
+    @else
+    @!component('themes/noir/icon', { name: 'megaphone' })
+    @end
+    <span>{{ store.banner }}</span>
+  </p>
+  @end
+
+  <header class="n-head">
+    <div class="n-wrap n-head-row">
+      <a class="n-brand" href="{{ url.home }}">
+        @if(store.logo)
+        <img class="n-mark" src="{{ store.logo }}" alt="" width="36" height="36">
+        @else
+        <span class="n-mark" aria-hidden="true">{{ store.name.trim().charAt(0).toUpperCase() }}</span>
+        @end
+        <span class="n-brand-name">{{ store.name }}</span>
+      </a>
+
+      @if(store.pages && store.pages.length)
+      <nav class="n-nav" aria-label="{{ t('store_ui.information') }}">
+        @each(p in store.pages)
+        <a href="{{ url.page(p.slug) }}">{{ p.title }}</a>
+        @end
+      </nav>
+      @end
+
+      @if($props.get('search', true))
+      <form class="n-search" role="search" method="get" action="{{ url.home }}">
+        @!component('themes/noir/icon', { name: 'search' })
+        <input type="search" name="q" value="{{ $props.get('q', '') }}" placeholder="{{ t('common.search') }}" aria-label="{{ t('store.search_products') }}">
+      </form>
+      @end
+
+      <div class="n-tools">
+        @if(store.currencies && store.currencies.length > 1)
+        <form class="n-ctl n-select" method="post" action="/currency" data-autosubmit>
+          <select name="currency" aria-label="{{ t('store_ui.currency') }}">
+            @each(c in store.currencies)
+            <option value="{{ c.code }}" {{ c.code === (store.display ? store.display.code : store.currency) ? 'selected' : '' }}>{{ c.code }}</option>
+            @end
+          </select>
+          @!component('themes/noir/icon', { name: 'chevron-down' })
+          <noscript><button type="submit" class="n-ctl">OK</button></noscript>
+        </form>
+        @end
+
+        @if(store.login)
+        @if(store.customer)
+        <a class="n-ctl" href="{{ url.account }}" aria-label="{{ t('store.my_account') }}">
+          @!component('themes/noir/icon', { name: 'user' })
+          <span class="n-ctl-text">{{ store.customer.name.trim().split(/\s+/)[0] || store.customer.email }}</span>
+        </a>
+        @else
+        <button type="button" class="n-ctl" data-login-open aria-label="{{ t('store.sign_in') }}">
+          @!component('themes/noir/icon', { name: 'user' })
+          <span class="n-ctl-text">{{ t('store.sign_in') }}</span>
+        </button>
+        @end
+        @end
+
+        <button type="button" class="n-ctl n-ctl--solid" data-cart-open aria-label="{{ t('store_ui.open_cart') }}">
+          @!component('themes/noir/icon', { name: 'bag' })
+          <span class="n-ctl-text">{{ t('store_ui.cart') }}</span>
+          <span class="n-badge" data-cart-count hidden></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="n-main">
+    {{{ await $slots.main() }}}
+  </main>
+
+  <footer class="n-foot">
+    <div class="n-wrap n-foot-cols">
+      <address class="n-foot-brand">
+        <div class="n-foot-name">
+          @if(store.logo)
+          <img class="n-mark" src="{{ store.logo }}" alt="" width="36" height="36">
+          @end
+          <strong>{{ store.name }}</strong>
+        </div>
+        @if(store.address)
+        <p class="n-foot-line">
+          @!component('themes/noir/icon', { name: 'map-pin' })
+          <span class="n-pre">{{ store.address }}</span>
+        </p>
+        @end
+        @if(store.hours)
+        <p class="n-foot-line">
+          @!component('themes/noir/icon', { name: 'clock' })
+          <span class="n-pre">{{ store.hours }}</span>
+        </p>
+        @end
+      </address>
+
+      @if(store.phone || store.facebook || store.instagram || store.viber || store.whatsapp)
+      <div>
+        <h3 class="n-foot-head">{{ t('store_ui.contact') }}</h3>
+        <ul class="n-foot-list">
+          @if(store.phone)
+          <li class="n-foot-line">
+            @!component('themes/noir/icon', { name: 'phone' })
+            <a href="tel:{{ store.phone.replace(/[^\d+]/g, '') }}">{{ store.phone }}</a>
+          </li>
+          @end
+          @if(store.facebook)
+          <li><a href="{{ store.facebook }}" target="_blank" rel="noopener">Facebook</a></li>
+          @end
+          @if(store.instagram)
+          <li><a href="{{ store.instagram }}" target="_blank" rel="noopener">Instagram</a></li>
+          @end
+          @if(store.viber)
+          <li><a href="viber://chat?number=%2B{{ store.viber }}" target="_blank" rel="noopener">Viber</a></li>
+          @end
+          @if(store.whatsapp)
+          <li><a href="https://wa.me/{{ store.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a></li>
+          @end
+        </ul>
+      </div>
+      @end
+
+      <div>
+        <h3 class="n-foot-head">{{ t('store_ui.information') }}</h3>
+        <ul class="n-foot-list">
+          @each(p in (store.pages || []))
+          <li><a href="{{ url.page(p.slug) }}">{{ p.title }}</a></li>
+          @end
+          <li><a href="{{ url.track }}">{{ t('store_ui.track_order') }}</a></li>
+          @if(store.login)
+          <li><a href="{{ url.account }}">{{ t('store.my_account') }}</a></li>
+          @end
+        </ul>
+        @if(store.languages && store.languages.length > 1)
+        <form class="n-langs" method="post" action="/lang" aria-label="{{ t('common.language') }}">
+          @each(l in store.languages)
+          <button type="submit" name="locale" value="{{ l }}" {{{ l === locale ? 'aria-current="true"' : '' }}}>{{ t('lang.' + l) }}</button>
+          @end
+        </form>
+        @end
+      </div>
+    </div>
+    <div class="n-wrap">
+      <p class="n-foot-copy">{{ t('store_ui.copyright', { year: new Date().getFullYear(), name: store.name }) }}</p>
+    </div>
+  </footer>
+</div>
+
+{{-- Cart drawer. script.js draws the lines into [data-cart-lines]. --}}
+<dialog class="n-dialog n-drawer" data-cart aria-labelledby="cart-title">
+  <div class="n-drawer-head">
+    <h2 id="cart-title">{{ t('store_ui.your_cart') }}</h2>
+    <button type="button" class="n-icon-btn" data-close aria-label="{{ t('common.close') }}">&times;</button>
+  </div>
+  <div class="n-drawer-empty" data-cart-empty>
+    @!component('themes/noir/icon', { name: 'bag', class: 'n-icon-lg' })
+    <p class="n-drawer-empty-title">{{ t('store.cart_empty') }}</p>
+    <p class="n-muted n-small">{{ t('store_ui.cart_empty_hint') }}</p>
+  </div>
+  <ul class="n-lines" data-cart-lines></ul>
+  <div class="n-drawer-foot" data-cart-foot hidden>
+    <div class="n-drawer-total"><span>{{ t('common.total') }}</span><span data-cart-subtotal></span></div>
+    <button type="button" class="n-btn n-btn-block n-btn-big" data-checkout>
+      {{ store.payments.length ? t('store.checkout') : t('store.send_order') }}
+      @!component('themes/noir/icon', { name: 'arrow-right' })
+    </button>
+    @if(store.payments.length)
+      <p class="n-fine">{{ t('store.secure_payment_by', { gateway: store.payment_label }) }}</p>
+    @end
+    <p class="n-fine" data-cart-error role="alert" hidden></p>
+  </div>
+</dialog>
+
+{{-- Product sheet. script.js fills it for the tapped product; it is named after the product. --}}
+<dialog class="n-dialog n-sheet" data-sheet aria-labelledby="sheet-title">
+  <button type="button" class="n-icon-btn n-dialog-close" data-close aria-label="{{ t('common.close') }}">&times;</button>
+  <div class="n-sheet-grid">
+    <div class="n-sheet-side">
+      <div class="n-gallery" data-gallery></div>
+      <div class="n-sheet-info">
+        <h2 id="sheet-title" class="n-sheet-name" data-sheet-name></h2>
+        <p class="n-muted n-small" data-sheet-pack></p>
+        <p class="n-sheet-price" data-sheet-price></p>
+        <p class="n-spec" data-sheet-kind></p>
+        <p class="n-sheet-links n-small">
+          <a data-sheet-link href="#">{{ t('store_ui.product_page') }}</a>
+          <button type="button" class="n-link-btn" data-share aria-label="{{ t('store_ui.share') }}">{{ t('store_ui.share') }}</button>
+          <span role="status" data-share-note></span>
+        </p>
+      </div>
+    </div>
+    <div class="n-sheet-main" data-sheet-picker></div>
+  </div>
+</dialog>
+
+@if(store.login)
+{{-- Customer sign-in. script.js switches it between sign in, create account and reset. --}}
+<dialog class="n-dialog n-modal" data-login aria-label="{{ t('store.sign_in') }}">
+  <button type="button" class="n-icon-btn n-dialog-close" data-close aria-label="{{ t('common.close') }}">&times;</button>
+  <h2 class="n-modal-title" data-login-title>{{ t('store.sign_in') }}</h2>
+  <p class="n-muted n-small">{{ t('store_ui.login_hint') }}</p>
+  @if(store.login.providers.includes('google') || store.login.providers.includes('microsoft'))
+  <div class="n-login-social" data-login-social>
+    @if(store.login.providers.includes('google'))
+    <button type="button" class="n-btn-line n-btn-block" data-provider="google">
+      <svg class="n-icon" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      {{ t('store_ui.continue_google') }}
+    </button>
+    @end
+    @if(store.login.providers.includes('microsoft'))
+    <button type="button" class="n-btn-line n-btn-block" data-provider="microsoft">
+      <svg class="n-icon" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+      {{ t('store_ui.continue_microsoft') }}
+    </button>
+    @end
+    @if(store.login.providers.includes('email'))
+    <p class="n-login-or n-muted n-small"><span>{{ t('store_ui.or') }}</span></p>
+    @end
+  </div>
+  @end
+  @if(store.login.providers.includes('email'))
+  <form class="n-stack" data-login-form novalidate>
+    <label class="n-field">
+      <span>{{ t('common.email') }}</span>
+      <input type="email" name="email" autocomplete="email" required>
+    </label>
+    <label class="n-field" data-login-password>
+      <span>{{ t('store_ui.password') }}</span>
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <label class="n-field" data-login-confirm hidden>
+      <span>{{ t('store_ui.confirm_password') }}</span>
+      <input type="password" name="confirm" autocomplete="new-password">
+    </label>
+    <button type="submit" class="n-btn n-btn-block" data-login-submit>{{ t('store.sign_in') }}</button>
+    <p class="n-login-links n-small n-muted">
+      <button type="button" class="n-link-btn" data-login-mode="reset">{{ t('store_ui.forgot_password') }}</button>
+      <button type="button" class="n-link-btn" data-login-mode="signup">{{ t('store_ui.create_account') }}</button>
+      <button type="button" class="n-link-btn" data-login-mode="signin" hidden>{{ t('store_ui.back_to_sign_in') }}</button>
+    </p>
+  </form>
+  @end
+  <p class="n-error n-small" role="alert" data-login-error hidden>
+    <span></span>
+    <button type="button" class="n-link-btn" data-login-resend hidden>{{ t('store_ui.send_link_again') }}</button>
+  </p>
+  <p class="n-small" role="status" data-login-note hidden></p>
+</dialog>
+@end

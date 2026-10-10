@@ -1,0 +1,71 @@
+{
+	"key": "loyalty",
+	"name": "name",
+	"version": "1.0.0",
+	"description": "description",
+	"icon": "assets/icon.svg",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "spend",
+			"label": "field.spend",
+			"type": "number",
+			"required": true,
+			"min": 0.01,
+			"step": 0.01,
+			"placeholder": "1",
+			"hint": "field.spend_hint",
+			"grid": 4
+		},
+		{
+			"name": "goal",
+			"label": "field.goal",
+			"type": "number",
+			"required": true,
+			"min": 1,
+			"step": 1,
+			"placeholder": "100",
+			"hint": "field.goal_hint",
+			"grid": 4
+		},
+		{
+			"name": "reward_type",
+			"label": "field.reward_type",
+			"hint": "field.reward_type_hint",
+			"type": "select",
+			"required": true,
+			"options": [
+				{ "value": "fixed", "label": "option.fixed" },
+				{ "value": "percent", "label": "option.percent" }
+			],
+			"grid": 4
+		},
+		{
+			"name": "reward_value",
+			"label": "field.reward_value",
+			"type": "number",
+			"required": true,
+			"min": 0.01,
+			"step": 0.01,
+			"placeholder": "5",
+			"hint": "field.reward_value_hint",
+			"grid": 4
+		}
+	],
+	"pages": [
+		{
+			"path": "members",
+			"title": "page.members",
+			"script": "assets/loyalty.tsx",
+			"admin": false,
+			"group": "Sales"
+		}
+	],
+	"slots": [
+		{ "name": "extension.config", "script": "assets/config.tsx" },
+		{ "name": "pos.cart", "script": "assets/till.tsx" },
+		{ "name": "order.receipt", "script": "assets/receipt.ts" },
+		{ "name": "store.page", "script": "assets/store.ts" }
+	],
+	"guide": "guide.md"
+}

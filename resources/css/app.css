@@ -1,0 +1,555 @@
+/* Geist Sans, self-hosted via Fontsource (bundled by Vite → works offline) */
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource/geist-sans/700.css";
+/* The front page (Pages/Home), one variable file per font — `font-figtree`, `font-bricolage`, `font-jetbrains` */
+@import "@fontsource-variable/figtree/wght.css";
+@import "@fontsource-variable/bricolage-grotesque/opsz.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn-vue/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+@source "../js";
+@source "../views";
+/* the built-in extensions' page scripts use the app's classes too */
+@source "../../extensions";
+/* an add-on's pages (cloud/, see app/cloud.ts); git ignores the folder, so name it */
+@source "../../cloud";
+
+@theme inline {
+	--font-sans: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
+	--font-heading: var(--font-sans);
+	--font-figtree: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+	--font-bricolage:
+		"Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+	--font-jetbrains: "JetBrains Mono Variable", ui-monospace, monospace;
+	/* every Tailwind text size 1px smaller than default (line-heights keep their default ratios) */
+	--text-xs: calc(0.75rem - 1px);
+	--text-sm: calc(0.875rem - 1px);
+	--text-base: calc(1rem - 1px);
+	--text-lg: calc(1.125rem - 1px);
+	--text-xl: calc(1.25rem - 1px);
+	--text-2xl: calc(1.5rem - 1px);
+	--text-3xl: calc(1.875rem - 1px);
+	--text-4xl: calc(2.25rem - 1px);
+	--color-sidebar-ring: var(--sidebar-ring);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar: var(--sidebar);
+	--color-chart-5: var(--chart-5);
+	--color-chart-4: var(--chart-4);
+	--color-chart-3: var(--chart-3);
+	--color-chart-2: var(--chart-2);
+	--color-chart-1: var(--chart-1);
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-destructive: var(--destructive);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	--color-foreground: var(--foreground);
+	--color-background: var(--background);
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+	color-scheme: light;
+	--background: oklch(1 0 0);
+	--foreground: oklch(0.145 0 0);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.145 0 0);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.145 0 0);
+	--primary: #f9c13b;
+	--primary-foreground: #1f1600;
+	--secondary: oklch(0.97 0 0);
+	--secondary-foreground: oklch(0.205 0 0);
+	--muted: oklch(0.97 0 0);
+	--muted-foreground: oklch(0.556 0 0);
+	--accent: oklch(0.97 0 0);
+	--accent-foreground: oklch(0.205 0 0);
+	--destructive: oklch(0.577 0.245 27.325);
+	--border: oklch(0.922 0 0);
+	--input: oklch(0.922 0 0);
+	--ring: #d9a21f;
+	--chart-1: oklch(0.87 0 0);
+	--chart-2: oklch(0.556 0 0);
+	--chart-3: oklch(0.439 0 0);
+	--chart-4: oklch(0.371 0 0);
+	--chart-5: oklch(0.269 0 0);
+	--radius: 0.45rem;
+	--sidebar: oklch(0.985 0 0);
+	--sidebar-foreground: oklch(0.145 0 0);
+	--sidebar-primary: #f9c13b;
+	--sidebar-primary-foreground: #1f1600;
+	--sidebar-accent: oklch(0.97 0 0);
+	--sidebar-accent-foreground: oklch(0.205 0 0);
+	--sidebar-border: oklch(0.922 0 0);
+	--sidebar-ring: #d9a21f;
+}
+
+.dark {
+	color-scheme: dark;
+	--background: oklch(0.145 0 0);
+	--foreground: oklch(0.985 0 0);
+	--card: oklch(0.205 0 0);
+	--card-foreground: oklch(0.985 0 0);
+	--popover: oklch(0.205 0 0);
+	--popover-foreground: oklch(0.985 0 0);
+	--primary: #f9c13b;
+	--primary-foreground: #1f1600;
+	--secondary: oklch(0.269 0 0);
+	--secondary-foreground: oklch(0.985 0 0);
+	--muted: oklch(0.269 0 0);
+	--muted-foreground: oklch(0.708 0 0);
+	--accent: oklch(0.269 0 0);
+	--accent-foreground: oklch(0.985 0 0);
+	--destructive: oklch(0.704 0.191 22.216);
+	--border: oklch(1 0 0 / 10%);
+	--input: oklch(1 0 0 / 15%);
+	--ring: #d9a21f;
+	--chart-1: oklch(0.87 0 0);
+	--chart-2: oklch(0.556 0 0);
+	--chart-3: oklch(0.439 0 0);
+	--chart-4: oklch(0.371 0 0);
+	--chart-5: oklch(0.269 0 0);
+	--sidebar: oklch(0.205 0 0);
+	--sidebar-foreground: oklch(0.985 0 0);
+	--sidebar-primary: #f9c13b;
+	--sidebar-primary-foreground: #1f1600;
+	--sidebar-accent: oklch(0.269 0 0);
+	--sidebar-accent-foreground: oklch(0.985 0 0);
+	--sidebar-border: oklch(1 0 0 / 10%);
+	--sidebar-ring: #d9a21f;
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground;
+		@apply font-sans text-base;
+	}
+	/* ponytail: Tailwind v4 dropped the default pointer on buttons — put it back app-wide instead of per-element. */
+	button,
+	summary,
+	label[for],
+	[role="button"],
+	[role="option"],
+	[role="tab"],
+	a[href] {
+		@apply cursor-pointer;
+	}
+	button:disabled,
+	[aria-disabled="true"] {
+		@apply cursor-not-allowed;
+	}
+}
+/* Receipt printing: #receipt (teleported to <body> by CheckoutDialog) is the only thing on the page. 80mm thermal friendly. */
+@media print {
+	@page {
+		margin: 4mm;
+	}
+	body > :not(#receipt) {
+		/* biome-ignore lint/complexity/noImportantStyles: the print must hide every other element, even one with an inline display style */
+		display: none !important;
+	}
+	#receipt {
+		display: block;
+		max-width: 72mm;
+		margin: 0 auto;
+		font:
+			12px / 1.5 ui-monospace,
+			monospace;
+		color: #000;
+	}
+	#receipt .shop {
+		font-size: 16px;
+		font-weight: 700;
+		text-align: center;
+	}
+	#receipt .meta {
+		color: #444;
+	}
+	#receipt .center {
+		text-align: center;
+	}
+	#receipt .note {
+		white-space: pre-line;
+	}
+	#receipt .row {
+		display: flex;
+		justify-content: space-between;
+		gap: 8px;
+	}
+	#receipt .bold {
+		font-weight: 700;
+	}
+	#receipt .qr {
+		width: 48mm;
+		margin: 4mm auto;
+	}
+	#receipt hr {
+		border: 0;
+		border-top: 1px dashed #000;
+		margin: 6px 0;
+	}
+}
+
+/* Rendered rich text: store pages (GrapesJS) and product descriptions (the description editor),
+   both sanitised server-side. Structure only — colour and font size come from the parent. */
+.rich-html a {
+	text-decoration: underline;
+}
+.rich-html blockquote {
+	border-left: 2px solid;
+	padding-left: 0.75rem;
+}
+.rich-html h1 {
+	margin: 0.75rem 0;
+	font-size: 1.5rem;
+	line-height: 2rem;
+	font-weight: 600;
+}
+.rich-html h2 {
+	margin: 0.75rem 0;
+	font-size: 1.25rem;
+	line-height: 1.75rem;
+	font-weight: 600;
+}
+.rich-html h3 {
+	margin: 0.5rem 0;
+	font-size: 1.125rem;
+	line-height: 1.75rem;
+	font-weight: 600;
+}
+.rich-html img {
+	margin: 0.75rem 0;
+	max-width: 100%;
+	border-radius: 0.5rem;
+}
+.rich-html p {
+	margin: 0.5rem 0;
+}
+.rich-html ul {
+	list-style: disc;
+	padding-left: 1.25rem;
+}
+.rich-html ol {
+	list-style: decimal;
+	padding-left: 1.25rem;
+}
+.rich-html li {
+	margin: 0.25rem 0;
+}
+/* Cell borders are mixed from currentColor, NOT from `--border`: the storefront templates paint
+   their own surfaces (Boutique/Market are cream, Noir near-black) without touching the app tokens,
+   so the token grey came out invisible on them. Text colour is legible on its surface by
+   definition, so a faded version of it is the one border that works everywhere. */
+.rich-html table {
+	width: 100%;
+	margin: 0.75rem 0;
+	border-collapse: collapse;
+}
+.rich-html :is(td, th) {
+	border-width: 1px;
+	border-style: solid;
+	border-color: color-mix(in oklab, currentColor 30%, transparent);
+	padding: 0.375rem 0.5rem;
+	text-align: left;
+	vertical-align: top;
+}
+.rich-html th {
+	font-weight: 600;
+}
+/* Collapsible sections (the editor's Section tool): the title is the row the reader clicks. */
+.rich-html details {
+	border-top: 1px solid color-mix(in oklab, currentColor 30%, transparent);
+}
+.rich-html details:last-child {
+	border-bottom: 1px solid color-mix(in oklab, currentColor 30%, transparent);
+}
+.rich-html details[open] {
+	padding-bottom: 0.875rem;
+}
+.rich-html summary {
+	cursor: pointer;
+	font-weight: 600;
+	padding: 0.875rem 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	list-style: none;
+	transition: opacity 0.15s;
+}
+.rich-html summary:hover {
+	opacity: 0.75;
+}
+.rich-html summary::-webkit-details-marker {
+	display: none;
+}
+/* The icon: a plus drawn with two gradient bars (currentColor, so it suits every template); when
+   the section opens the vertical bar shrinks away, leaving a minus. */
+.rich-html summary::after {
+	content: "";
+	flex: none;
+	width: 0.75em;
+	height: 0.75em;
+	margin-right: 0.125em;
+	opacity: 0.7;
+	background:
+		linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat,
+		linear-gradient(currentColor, currentColor) center / 2px 100% no-repeat;
+	transition: background-size 0.2s ease;
+}
+.rich-html details[open] > summary::after {
+	background-size:
+		100% 2px,
+		2px 0;
+}
+.rich-html > :first-child {
+	margin-top: 0;
+}
+.rich-html > :last-child {
+	margin-bottom: 0;
+}
+.rich-html details > :not(summary):first-of-type {
+	margin-top: 0;
+}
+.rich-html details > :last-child {
+	margin-bottom: 0;
+}
+
+/* cart badge pop on the storefront: the badge is re-keyed on every add (cart.bumps) so this replays */
+@keyframes bump {
+	0% {
+		transform: scale(1);
+	}
+	40% {
+		transform: scale(1.6);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+.animate-bump {
+	animation: bump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Image editor › Remove background (products/ImageEditor.vue).
+   While the model works: a glowing line sweeps over the photo under a soft shimmer.
+   When it is done: the old photo is wiped away top to bottom behind a line, uncovering the cut-out. */
+@keyframes magic-scan {
+	0%,
+	100% {
+		top: 0%;
+	}
+	50% {
+		top: 100%;
+	}
+}
+@keyframes magic-shimmer {
+	from {
+		background-position: 150% 0;
+	}
+	to {
+		background-position: -50% 0;
+	}
+}
+@keyframes magic-wipe {
+	from {
+		clip-path: inset(0 0 0 0);
+	}
+	to {
+		clip-path: inset(100% 0 0 0);
+	}
+}
+@keyframes magic-wipe-line {
+	from {
+		top: 0%;
+	}
+	to {
+		top: 100%;
+	}
+}
+.magic-scan,
+.magic-wipe-line {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background: var(--primary);
+	box-shadow:
+		0 0 10px 3px color-mix(in oklab, var(--primary) 70%, transparent),
+		0 0 32px 10px color-mix(in oklab, var(--primary) 30%, transparent);
+}
+.magic-scan {
+	animation: magic-scan 2.4s ease-in-out infinite;
+}
+.magic-shimmer {
+	background: linear-gradient(
+		110deg,
+		transparent 35%,
+		rgb(255 255 255 / 0.28) 50%,
+		transparent 65%
+	);
+	background-size: 250% 100%;
+	animation: magic-shimmer 1.8s linear infinite;
+}
+.magic-wipe {
+	animation: magic-wipe 0.9s ease-in-out forwards;
+}
+.magic-wipe-line {
+	animation: magic-wipe-line 0.9s ease-in-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+	.magic-scan,
+	.magic-shimmer {
+		display: none;
+	}
+}
+
+/* While an extension borrows the palette (lib/search.ts › borrowSearch) its recent picks are not its own — hidden. */
+#search-js.is-borrowed #search-js-histories {
+	/* biome-ignore lint/complexity/noImportantStyles: search-js shows the list with an inline style.display */
+	display: none !important;
+}
+
+/* ⌘K palette (@bilions/search-js, resources/js/lib/search.ts): the app's own tokens in both themes.
+   The package writes its variables on :root when it mounts, so html:root (one step more specific) wins. */
+html:root {
+	--search-js-backdrop-bg: rgb(
+		0 0 0 / 0.1
+	); /* the app's DialogOverlay: bg-black/10 + backdrop-blur-xs (below) */
+	--search-js-modal-bg: var(--popover);
+	--search-js-modal-box-shadow:
+		0 0 0 1px var(--border), 0 24px 60px -12px rgb(0 0 0 / 0.45);
+	--search-js-modal-footer-box-shadow: 0 -1px 0 0 var(--border);
+	--search-js-keyboard-button-bg: var(--muted);
+	--search-js-keyboard-button-box-shadow: 0 0 0 1px var(--border);
+	--search-js-search-input-bg: var(--background);
+	--search-js-input-placeholder-color: var(--muted-foreground);
+	--search-js-item-bg: transparent;
+	--search-js-item-box-shadow: none;
+	--search-js-text-color: var(--popover-foreground);
+	--search-js-theme: var(--border);
+}
+/* the package names its backdrop `container`, which Tailwind's `.container` utility caps at a max-width — undo that */
+html #search-js.container {
+	max-width: none;
+	z-index: 50;
+	backdrop-filter: blur(4px);
+}
+html #search-js.container .modal {
+	border-radius: var(--radius-xl, 0.75rem);
+	color: var(--popover-foreground);
+}
+html #search-js.container .modal .modal-header .search-container {
+	border-width: 1px;
+	height: 44px;
+}
+html #search-js.container .modal .modal-header .search-container .search-input {
+	font-size: 14px;
+}
+html #search-js.container .modal .modal-content .items .item {
+	padding: 8px 10px;
+	margin-bottom: 2px;
+	gap: 2px;
+}
+html #search-js.container .modal .modal-content .items .item .item-title {
+	font-size: 14px;
+	font-weight: 500;
+	margin-bottom: 1px;
+}
+html #search-js.container .modal .modal-content .items .item .item-description {
+	color: var(--muted-foreground);
+	font-size: 12px;
+}
+html #search-js.container .modal .modal-content .items .item .item-icon {
+	display: flex;
+	color: var(--muted-foreground);
+}
+html #search-js.container .modal .modal-content .items .item:hover,
+html #search-js.container .modal .modal-content .items .item.is-active {
+	background: var(--accent);
+	color: var(--accent-foreground);
+}
+html #search-js.container .modal .modal-content .items .item:hover .item-title,
+html
+	#search-js.container
+	.modal
+	.modal-content
+	.items
+	.item:hover
+	.item-description,
+html
+	#search-js.container
+	.modal
+	.modal-content
+	.items
+	.item.is-active
+	.item-title,
+html
+	#search-js.container
+	.modal
+	.modal-content
+	.items
+	.item.is-active
+	.item-description {
+	color: var(--accent-foreground);
+}
+html #search-js.container .modal .modal-content .items .item:hover svg path,
+html
+	#search-js.container
+	.modal
+	.modal-content
+	.items
+	.item.is-active
+	svg
+	path {
+	/* biome-ignore lint/complexity/noImportantStyles: search-js sets this stroke with !important itself */
+	stroke: currentColor !important;
+}
+html #search-js.container .modal .modal-footer .keyboard-button {
+	color: var(--muted-foreground);
+}
+
+/* Toast close button: inside the toast, right side, vertically centred (Sonner only offers corners) */
+html [data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+	padding-right: 40px;
+}
+html
+	[data-sonner-toaster]
+	[data-sonner-toast][data-styled="true"]
+	[data-close-button] {
+	--toast-close-button-left: unset;
+	--toast-close-button-right: 12px;
+	--toast-close-button-top: 50%;
+	--toast-close-button-bottom: unset;
+	--toast-close-button-transform: translateY(-50%);
+	border: 0;
+	background: transparent;
+}

@@ -1,0 +1,105 @@
+{{--
+  Aurora's product page. The gallery, price and description are printed here;
+  script.js draws the options, quantity and "Add to cart" into [data-picker].
+--}}
+@component(theme.layout, { search: true })
+  <main class="aurora-page">
+    <a class="aurora-back" href="{{ url.home }}">← {{ t('store.back_to_shop') }}</a>
+
+    <article class="aurora-detail">
+      <div class="aurora-gallery" data-gallery>
+        <div class="aurora-frame">
+          @if(gallery.length)
+          <img data-gallery-main src="{{ gallery[0] }}" alt="{{ product.name }}">
+          @else
+          <span class="aurora-initial" aria-hidden="true">{{ product.name.trim().charAt(0).toUpperCase() }}</span>
+          @end
+        </div>
+        @if(gallery.length > 1)
+        <div class="aurora-thumbs">
+          @each((src, n) in gallery)
+          <button type="button" class="aurora-thumb" data-gallery-thumb="{{ src }}" aria-label="{{ t('shared.photo_n', { n: n + 1 }) }}" aria-pressed="{{ n === 0 ? 'true' : 'false' }}">
+            <img src="{{ src }}" alt="">
+          </button>
+          @end
+        </div>
+        @end
+      </div>
+
+      <div class="aurora-detail-side">
+        <h1 class="aurora-detail-name">{{ product.name }}</h1>
+        @if(product.amount != null)
+        <p class="aurora-muted">{{ (product.amount + ' ' + (product.unit || '')).trim() }}</p>
+        @end
+        <p class="aurora-detail-price">
+          @if(range && range.min !== range.max)
+          {{ price(range.min) }} – {{ price(range.max) }}
+          @else
+          {{ price(product.price) }}
+          @end
+          @if(discountPct(product))
+          <s>{{ price(product.original_price) }}</s>
+          <span class="aurora-off is-inline">{{ t('card.off', { pct: discountPct(product) }) }}</span>
+          @end
+        </p>
+        @if(product.sold_out)
+        <p><span class="aurora-tag is-dark">{{ t('store.sold_out') }}</span></p>
+        @elseif(product.kind === 'bundle')
+        <p class="aurora-muted aurora-small">{{ t('store.package') }}</p>
+        @elseif(product.variants.length)
+        <p class="aurora-muted aurora-small">{{ t('store.options_count', { count: product.variants.length }) }}</p>
+        @end
+
+        <p class="aurora-sheet-links aurora-small">
+          <button type="button" class="aurora-link-button" data-share data-share-url="{{ url.product(product) }}" data-share-title="{{ product.name }}" aria-label="{{ t('store_ui.share') }}">
+            @!component('ext/aurora/icon', { name: 'share' })
+            {{ t('store_ui.share') }}
+          </button>
+          <span role="status" data-share-note></span>
+        </p>
+
+        {{-- options, qty and "Add to cart" (script.js) --}}
+        <div class="aurora-picker-box" data-picker="{{ product.id }}"></div>
+
+        @if(product.extra.length || product.description)
+        <section class="aurora-details">
+          <h2 class="aurora-label">{{ t('store_ui.details') }}</h2>
+          @if(product.extra.length)
+          <dl class="aurora-extra" aria-label="{{ t('shared.additional_data') }}">
+            @each(r in product.extra)
+            <dt>{{ r.title }}</dt>
+            <dd>{{ r.value }}</dd>
+            @end
+          </dl>
+          @end
+          @if(product.description)
+          <div class="rich-html aurora-prose aurora-muted">{{{ product.description }}}</div>
+          @end
+        </section>
+        @end
+
+        @if(product.kind === 'bundle')
+        <section class="aurora-details">
+          <h2 class="aurora-label">{{ t('store_ui.in_this_package') }}</h2>
+          <ul class="aurora-plain aurora-muted aurora-small">
+            @each(slot in product.bundle_items)
+            <li>{{ slot.qty }} × {{ slot.name }}{{ slot.options.length === 1 && slot.options[0].variant_id === null ? '' : ' (' + slot.options.map((o) => o.name).join(' ' + t('products.or_joiner') + ' ') + ')' }}</li>
+            @end
+          </ul>
+        </section>
+        @end
+      </div>
+    </article>
+
+    @if(related.length)
+    <section class="aurora-related" aria-labelledby="aurora-related-title">
+      <h2 id="aurora-related-title" class="aurora-heading">{{ t('store.related_products') }}</h2>
+      <div class="aurora-grid">
+        @each(p in related)
+        @!component('ext/aurora/card', { p, small: true })
+        @end
+      </div>
+    </section>
+    @end
+  </main>
+@end

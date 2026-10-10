@@ -1,0 +1,11 @@
+{{-- One of the signed-in customer's orders: the same order card as the Track page. --}}
+@component(theme.layout, { search: false })
+  <div class="n-wrap n-column n-top">
+    <a class="n-back" href="{{ url.account }}">
+      @!component('themes/noir/icon', { name: 'arrow-left' })
+      {{ t('store.my_account') }}
+    </a>
+    <h1 class="n-title">{{ t('store.your_order') }}</h1>
+    @include('store/partials/order')
+  </div>
+@end

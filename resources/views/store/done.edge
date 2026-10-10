@@ -1,0 +1,31 @@
+{{--
+  The shared "after paying" page, inside the active theme's layout.
+  The card is a Vue island (resources/js/store/islands/Done.vue),
+  mounted on #store-done with its props in data-props:
+    store, order, instructions, pending, qr, failed, reason
+  While nothing is decided it asks this URL again every 4 s
+  with `Accept: application/json` and gets the same props back.
+  The text inside #store-done is shown until the island mounts.
+--}}
+@component(theme.layout, { search: false })
+<div class="store-island mx-auto w-full max-w-6xl px-4 py-10">
+  <div id="store-done" data-props="{{ js.stringify({ store, order, instructions, pending, qr, failed, reason }) }}">
+    <div class="mx-auto w-full max-w-md space-y-2 rounded-lg border bg-card p-6 text-center text-card-foreground sm:p-8">
+      @if(order)
+      <h1 class="island-heading text-2xl font-semibold">{{ t(order.payment_status === 'paid' ? 'store.thank_you_bang' : 'store.order_received_bang') }}</h1>
+      <p class="text-sm text-muted-foreground">{{ t('store.order_word') }} <span class="font-medium text-foreground">{{ order.reference }}</span></p>
+      @elseif(failed)
+      <h1 class="island-heading text-2xl font-semibold">{{ t('store.done_failed') }}</h1>
+      <p class="text-sm text-muted-foreground">{{ reason || t('store.payment_failed_body') }}</p>
+      @elseif(qr)
+      <h1 class="island-heading text-2xl font-semibold">{{ t('store.done_scan') }}</h1>
+      <img src="{{ qr }}" alt="{{ t('store.done_scan') }}" width="240" height="240" class="mx-auto size-60 max-w-full">
+      @else
+      <h1 class="island-heading text-2xl font-semibold">{{ t('store.done_pending') }}</h1>
+      <p class="text-sm text-muted-foreground">{{ t('store.pending_body') }}</p>
+      @end
+      <p><a href="{{ url.home }}" class="text-sm underline">{{ t('store.back_to_store', { name: store.name }) }}</a></p>
+    </div>
+  </div>
+</div>
+@end

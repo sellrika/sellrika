@@ -1,0 +1,67 @@
+# Sellrika behind Traefik.
+# Traefik gets the SSL certificates from Let's Encrypt: for the app's own host,
+# and for every shop's custom domain and free store address the app writes
+# into the shared `traefik-dynamic` folder.
+#
+# Set in .env (next to this file):
+#   APP_HOST=pos.example.com        the app's own host
+#   ACME_EMAIL=you@example.com      for Let's Encrypt
+#   APP_URL=https://pos.example.com
+#   STORE_DOMAIN=shop.example.com   with a wildcard DNS record *.shop.example.com → this server
+#   DOMAIN_CNAME=stores.example.com the host merchants point their own domain at (→ this server)
+# Then: docker compose up -d --build
+services:
+  traefik:
+    image: traefik:v3.6
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      # the folder the app writes the shops' domains into
+      - --providers.file.directory=/dynamic
+      - --providers.file.watch=true
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # keep this volume: it holds every certificate
+      - letsencrypt:/letsencrypt
+      - traefik-dynamic:/dynamic:ro
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # the real client address and scheme come from Traefik
+      TRUST_PROXY: "1"
+      TRAEFIK_FILE: /traefik/sellrika-shops.yaml
+      # how Traefik reaches this container
+      TRAEFIK_APP_URL: http://app:3000
+    volumes:
+      - data:/app/data
+      - storage:/app/storage
+      - traefik-dynamic:/traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.sellrika.loadbalancer.server.port=3000
+      - traefik.http.routers.sellrika.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.sellrika.entrypoints=https
+      - traefik.http.routers.sellrika.tls.certresolver=letsencrypt
+      - traefik.http.routers.sellrika-http.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.sellrika-http.entrypoints=http
+      - traefik.http.routers.sellrika-http.middlewares=sellrika-https
+      - traefik.http.middlewares.sellrika-https.redirectscheme.scheme=https
+
+volumes:
+  data:
+  storage:
+  letsencrypt:
+  traefik-dynamic:

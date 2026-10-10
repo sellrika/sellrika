@@ -1,0 +1,54 @@
+{{-- The "new order" alert to the shop's staff (app/emails/OrderAlert.Email.ts). Table layout + inline
+     styles only, like emails/order.edge: mail clients drop <style> blocks and most modern CSS. --}}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;padding:24px 12px;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #e6e8eb;border-radius:12px">
+        <tr>
+          <td style="padding:28px 28px 8px">
+            <h1 style="margin:0 0 6px;font-size:20px;line-height:1.3;color:#111827">{{ heading }}</h1>
+            <p style="margin:0;font-size:14px;line-height:1.5;color:#6b7280">{{ summary }}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:12px 28px 0">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#111827">
+              @each(item in items)
+                <tr>
+                  <td style="padding:10px 0;border-bottom:1px solid #f1f2f4;font-weight:500">{{ item }}</td>
+                </tr>
+              @end
+            </table>
+          </td>
+        </tr>
+
+        @if(note)
+          <tr>
+            <td style="padding:20px 28px 0">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #eef0f2;border-radius:8px">
+                <tr>
+                  <td style="padding:14px 16px;font-size:13px;line-height:1.6;color:#374151;white-space:pre-line">{{ note }}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        @end
+
+        @if(link)
+          <tr>
+            <td style="padding:20px 28px 0">
+              <a href="{{ link }}" style="display:inline-block;padding:10px 18px;border-radius:8px;background:#111827;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none">{{ button }}</a>
+            </td>
+          </tr>
+        @end
+
+        <tr>
+          <td style="padding:24px 28px 28px">
+            <p style="margin:0;font-size:13px;line-height:1.6;color:#6b7280">{{ t('mail.no_reply') }}</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

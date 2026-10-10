@@ -1,0 +1,10 @@
+node_modules
+public/build
+data
+.env
+.git
+compiled-server
+compiled-server.map
+.github
+storage
+.DS_Store

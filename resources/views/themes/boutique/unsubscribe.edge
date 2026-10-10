@@ -1,0 +1,26 @@
+{{--
+  The unsubscribe link of a marketing email.
+  Opening it only asks; the button posts, so a link scanner can't unsubscribe anyone.
+--}}
+@component(theme.layout, { search: true })
+  <div class="wrap column sub">
+    <a class="back" href="{{ url.home }}">
+      @!component('themes/boutique/icon', { name: 'arrow-left' })
+      {{ t('store.back_to_shop') }}
+    </a>
+    <div class="panel stack">
+      @if(!email)
+      <h1 class="title">{{ t('marketing.unsubscribe_broken') }}</h1>
+      @elseif(done)
+      <h1 class="title">{{ t('marketing.unsubscribe_done_title') }}</h1>
+      <p class="muted" role="status">{{ t('marketing.unsubscribe_done', { email, shop: store.name }) }}</p>
+      @else
+      <h1 class="title">{{ t('marketing.unsubscribe_title', { shop: store.name }) }}</h1>
+      <p class="muted">{{ t('marketing.unsubscribe_text', { email }) }}</p>
+      <form method="post" action="{{ action }}">
+        <button type="submit" class="btn">{{ t('marketing.unsubscribe_button') }}</button>
+      </form>
+      @end
+    </div>
+  </div>
+@end

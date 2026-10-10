@@ -1,0 +1,34 @@
+{{--
+  The only <html> of the public store. Every store page is rendered through it.
+  Document variables (only here and in what it includes, not in the theme layout):
+    view    the page template: themes/<name>/<page>, ext/<key>/<page> or store/checkout
+    seo     the head data (see store/partials/head)
+    island  the data island (StoreData in resources/js/store/types.ts)
+    assets  { css, js } tags: the theme's stylesheet, window.Store, the island, the theme script
+    json    value → JSON that is safe inside <script>
+  A shop may get the "Powered by Sellrika" line (`store.powered`) under its page
+  (store.powered = the link). It is here, not in a layout, so every theme has it.
+  The page wraps itself in the theme layout: @component(theme.layout, { search: true }) … @end
+--}}
+<!DOCTYPE html>
+<html lang="{{ locale }}" class="{{ theme.scheme === 'dark' ? 'dark' : '' }} {{ theme.classes }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  @include('store/partials/head')
+  @if(theme.scheme === 'auto')
+  <script>(m=>document.documentElement.classList.toggle("dark",m==="dark"||(m!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches)))(localStorage.getItem("vueuse-color-scheme"))</script>
+  @end
+  {{{ assets.css }}}
+</head>
+<body data-store-page="{{ pageName }}">
+  <div class="min-h-screen">
+  @include(view)
+  </div>
+  @if(store.powered)
+  <p style="margin:0;padding:10px 16px;text-align:center;font-size:12px;opacity:.7"><a href="{{ store.powered }}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">{{ t('store_ui.powered') }}</a></p>
+  @end
+  <script type="application/json" id="store-data">{{{ json(island) }}}</script>
+  {{{ assets.js }}}
+</body>
+</html>

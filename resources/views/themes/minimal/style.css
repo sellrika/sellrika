@@ -1,0 +1,1897 @@
+/*
+ * Minimal store theme.
+ * Monochrome and airy: thin lines, no boxes, the photos do the talking.
+ * Square corners. Small labels are uppercase and letter-spaced.
+ * It follows the visitor's light or dark setting:
+ * document.edge puts `.dark` on <html>, and the colours below switch.
+ * Plain CSS, no Tailwind. Geist Sans is self-hosted through @fontsource,
+ * like resources/css/app.css.
+ */
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+
+/*
+ * The shared variables (docs/features/store-themes.md).
+ * The shared checkout, done page and order card read them.
+ * The rest are this theme's own. Light first, dark below.
+ */
+:root {
+	--store-bg: #ffffff;
+	--store-fg: #0a0a0a;
+	--store-surface: #ffffff;
+	--store-muted: #737373;
+	--store-line: #e5e5e5;
+	--store-accent: #c8ff3d;
+	--store-on-accent: #141a00;
+	--store-danger: #dc2626;
+	--store-radius: 0px;
+	--store-button-radius: 0px;
+	--store-font: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
+	--store-font-heading: var(--store-font);
+	--store-button-case: uppercase;
+	--store-button-tracking: 0.2em;
+	--store-input-bg: transparent;
+	--store-control-height: 40px;
+
+	/* Borders of the small controls: the text colour, faded. */
+	--edge: rgb(10 10 10 / 0.3);
+	/* Hover tint and photo background. */
+	--tint: rgb(10 10 10 / 0.05);
+	--thumb: #f5f5f5;
+
+	/*
+	 * The solid blocks: the banner, a picked chip or option, a hovered button.
+	 * The shop's own secondary colour replaces them (Template › Customize).
+	 */
+	--ink: var(--theme-secondary, var(--store-fg));
+	--on-ink: var(--theme-on-secondary, var(--store-bg));
+	color-scheme: light;
+}
+.dark {
+	--store-bg: #0a0a0a;
+	--store-fg: #fafafa;
+	--store-surface: #171717;
+	--store-muted: #a1a1a1;
+	--store-line: rgb(255 255 255 / 0.1);
+	--store-danger: #f87171;
+	--edge: rgb(250 250 250 / 0.3);
+	--tint: rgb(250 250 250 / 0.06);
+	--thumb: #262626;
+	color-scheme: dark;
+}
+
+/* ── Base ─────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	background: var(--store-bg);
+	color: var(--store-fg);
+	font: 14px / 1.5 var(--store-font);
+	-webkit-font-smoothing: antialiased;
+}
+img {
+	display: block;
+	max-width: 100%;
+}
+a {
+	color: inherit;
+}
+button,
+input,
+select,
+textarea {
+	font: inherit;
+	color: inherit;
+}
+:focus-visible {
+	outline: 2px solid var(--store-fg);
+	outline-offset: 2px;
+}
+[hidden] {
+	/* biome-ignore lint/complexity/noImportantStyles: `hidden` must beat every display rule here */
+	display: none !important;
+}
+.icon {
+	flex: none;
+	width: 16px;
+	height: 16px;
+}
+.icon-lg {
+	width: 40px;
+	height: 40px;
+	opacity: 0.3;
+}
+
+/* ── Small helpers ────────────────────────────────────── */
+
+.muted {
+	color: var(--store-muted);
+}
+.faint {
+	opacity: 0.35;
+}
+.small {
+	font-size: 13px;
+}
+.strong {
+	font-weight: 500;
+}
+/*
+ * On a line of its own. Not called `.block`:
+ * that is a Tailwind name the checkout island uses.
+ */
+.own-line {
+	display: block;
+}
+.pre {
+	margin: 0;
+	white-space: pre-line;
+}
+.upper {
+	text-transform: uppercase;
+}
+.center {
+	text-align: center;
+	justify-items: center;
+}
+.ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.error {
+	color: var(--store-danger);
+}
+.stack {
+	display: grid;
+	gap: 16px;
+}
+.stack > p {
+	margin: 0;
+}
+.plain-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: grid;
+	gap: 4px;
+}
+/* The small caps label: section heads, field names, the footer heads. */
+.label {
+	margin: 0;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1.4;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+
+/* ── Page frame ───────────────────────────────────────── */
+
+.page {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+.wrap {
+	width: 100%;
+	max-width: 72rem;
+	margin-inline: auto;
+	padding-inline: 16px;
+}
+.main {
+	flex: 1;
+}
+.section {
+	padding-block: 32px 80px;
+}
+.column {
+	max-width: 42rem;
+}
+/* Content between two thin lines: no box, no side padding. */
+.lined {
+	padding-block: 24px;
+	border-block: 1px solid var(--store-line);
+}
+.after {
+	margin-top: 24px;
+}
+
+/* Announcement strip. `info` takes the theme colours, the others a fixed one. */
+.banner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin: 0;
+	padding: 8px 16px;
+	text-align: center;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1.5;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	background: var(--ink);
+	color: var(--on-ink);
+}
+.banner--success {
+	background: #059669;
+	color: #fff;
+}
+.banner--warning {
+	background: #fbbf24;
+	color: #0a0a0a;
+}
+.banner--danger {
+	background: #dc2626;
+	color: #fff;
+}
+
+/* ── Header ───────────────────────────────────────────── */
+
+.head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px 24px;
+	padding-block: 40px 24px;
+}
+.brand {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+	text-decoration: none;
+}
+.brand-logo {
+	width: 32px;
+	height: 32px;
+	flex: none;
+	object-fit: cover;
+	filter: grayscale(1);
+}
+.brand-name {
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.4;
+	letter-spacing: 0.25em;
+	text-transform: uppercase;
+	overflow-wrap: anywhere;
+}
+.head-tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	min-width: 0;
+}
+/*
+ * One square control: header search, currency, account, cart, pager.
+ * They all share this height, border and type, so a row lines up.
+ */
+.ctl {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 40px;
+	padding: 0 14px;
+	border: 1px solid var(--edge);
+	border-radius: 0;
+	background: transparent;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1;
+	white-space: nowrap;
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
+}
+.ctl:hover {
+	background: var(--tint);
+}
+.ctl[aria-disabled="true"] {
+	opacity: 0.4;
+	pointer-events: none;
+}
+.ctl-name {
+	max-width: 7rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+/* The header search: an icon and a bare input inside one control. */
+.head-search {
+	justify-content: flex-start;
+	width: 14rem;
+	padding: 0 12px;
+	cursor: text;
+}
+.head-search:hover {
+	background: transparent;
+}
+.head-search:focus-within {
+	border-color: var(--store-fg);
+}
+.head-search .icon {
+	width: 14px;
+	height: 14px;
+	color: var(--store-muted);
+}
+.head-search input {
+	flex: 1;
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font-size: 11px;
+	letter-spacing: 0.2em;
+	outline: none;
+}
+.head-search input::placeholder {
+	color: var(--store-muted);
+}
+/* A native select with our own arrow. */
+.select-box {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+}
+.select-box select {
+	appearance: none;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+	padding-right: 20px;
+}
+.select-box select option {
+	color: #000;
+	background: #fff;
+}
+.select-box .icon {
+	position: absolute;
+	right: 0;
+	width: 14px;
+	height: 14px;
+	pointer-events: none;
+	opacity: 0.6;
+}
+/* The header's currency select fills its square control. */
+.ctl.select-box {
+	padding: 0;
+}
+.ctl.select-box select {
+	height: 100%;
+	padding: 0 34px 0 14px;
+	font-size: 13px;
+	font-weight: 500;
+	outline-offset: -2px;
+}
+.ctl.select-box .icon {
+	right: 12px;
+}
+.badge {
+	position: absolute;
+	top: -10px;
+	right: -10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 22px;
+	height: 22px;
+	padding: 0 4px;
+	background: var(--ink);
+	color: var(--on-ink);
+	font-size: 11px;
+	font-weight: 600;
+}
+/* The badge pops when something is added (script.js replays the class). */
+.badge.is-bump {
+	animation: bump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes bump {
+	0% {
+		transform: scale(1);
+	}
+	40% {
+		transform: scale(1.45);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+/* ── Buttons and fields ───────────────────────────────── */
+
+.btn,
+.btn-line {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 40px;
+	padding: 0 20px;
+	border: 1px solid var(--store-accent);
+	border-radius: var(--store-button-radius);
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.2;
+	letter-spacing: var(--store-button-tracking);
+	text-transform: var(--store-button-case);
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		filter 0.15s,
+		background 0.15s;
+}
+.btn:hover {
+	filter: brightness(0.93);
+}
+.btn-line {
+	border-color: var(--edge);
+	background: transparent;
+	color: var(--store-fg);
+	letter-spacing: 0.1em;
+}
+.btn-line:hover {
+	background: var(--tint);
+}
+.btn:disabled,
+.btn-line:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+.btn-block {
+	width: 100%;
+}
+.btn-tall {
+	min-height: 48px;
+}
+.btn-icon {
+	width: 40px;
+	padding: 0;
+}
+.icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex: none;
+	padding: 0;
+	border: 0;
+	background: none;
+	font-size: 24px;
+	line-height: 1;
+	cursor: pointer;
+}
+.icon-button:hover {
+	background: var(--tint);
+}
+.link-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 0;
+	border: 0;
+	background: none;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	cursor: pointer;
+}
+.field {
+	display: grid;
+	gap: 6px;
+}
+.field > span {
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1.4;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+.field input,
+.field textarea {
+	width: 100%;
+	height: 40px;
+	padding: 0 12px;
+	border: 1px solid var(--edge);
+	border-radius: var(--store-radius);
+	background: var(--store-input-bg);
+	outline: none;
+}
+.field input::placeholder {
+	color: var(--store-muted);
+}
+.field input:focus {
+	border-color: var(--store-fg);
+}
+.field [aria-invalid="true"] {
+	border-color: var(--store-danger);
+}
+.field small {
+	font-size: 12px;
+}
+
+/* ── Catalog ──────────────────────────────────────────── */
+
+.index {
+	padding-block: 0 80px;
+}
+/* The thin bar over the grid: categories on the left, sort on the right. */
+.bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 24px;
+	margin-bottom: 40px;
+	padding-block: 12px;
+	border-block: 1px solid var(--store-line);
+	font-size: 11px;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+.cats {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 24px;
+	min-width: 0;
+}
+.cat {
+	color: var(--store-muted);
+	text-decoration: none;
+	transition: opacity 0.15s;
+}
+.cat:hover {
+	opacity: 0.7;
+}
+.cat.is-on {
+	color: var(--store-fg);
+	text-decoration: underline;
+	text-underline-offset: 4px;
+}
+.index-empty {
+	padding: 96px 0;
+	text-align: center;
+	font-size: 13px;
+	letter-spacing: 0.1em;
+	color: var(--store-muted);
+}
+.sort {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 16px;
+	margin-left: auto;
+}
+.sort .select-box select {
+	height: 24px;
+	color: var(--store-muted);
+	font-size: 11px;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+/* "In stock": a real checkbox stretched over its label, the label is the text. */
+.chip {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--store-muted);
+	font-size: 11px;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	cursor: pointer;
+	user-select: none;
+}
+.chip:hover {
+	opacity: 0.7;
+}
+.chip input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	appearance: none;
+	opacity: 0;
+	cursor: pointer;
+}
+.chip:has(:checked) {
+	color: var(--store-fg);
+	text-decoration: underline;
+	text-underline-offset: 4px;
+}
+.chip:has(:focus-visible) {
+	outline: 2px solid var(--store-fg);
+	outline-offset: 2px;
+}
+.products {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 48px 24px;
+}
+.card {
+	display: block;
+	min-width: 0;
+	text-decoration: none;
+}
+.card.is-sold-out {
+	opacity: 0.5;
+}
+.card:focus-visible {
+	outline-offset: 4px;
+}
+.card-frame {
+	position: relative;
+	aspect-ratio: 1;
+	overflow: hidden;
+	background: var(--thumb);
+}
+.card-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: opacity 0.2s;
+}
+.card:hover .card-img {
+	opacity: 0.8;
+}
+.card-letter {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 30px;
+	color: var(--store-muted);
+	opacity: 0.5;
+}
+.card-name {
+	margin: 12px 0 0;
+	font-size: 13px;
+	overflow-wrap: anywhere;
+}
+.card-price {
+	margin: 2px 0 0;
+	font-size: 13px;
+	color: var(--store-muted);
+	font-variant-numeric: tabular-nums;
+}
+.card-was {
+	margin-left: 6px;
+	opacity: 0.6;
+}
+.card-cat {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0 8px;
+	margin: 6px 0 0;
+	font-size: 10px;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: var(--store-muted);
+}
+.card-left {
+	color: var(--store-fg);
+}
+.pager {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	margin-top: 48px;
+}
+.pager .ctl {
+	height: 36px;
+	padding: 0 12px;
+	border-color: var(--store-line);
+}
+.pager-count {
+	font-size: 13px;
+	color: var(--store-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Product page ─────────────────────────────────────── */
+
+.back {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 24px;
+	font-size: 13px;
+	color: var(--store-muted);
+	text-decoration: none;
+}
+.back:hover {
+	color: var(--store-fg);
+}
+.title {
+	margin: 0 0 24px;
+	font-size: 19px;
+	font-weight: 500;
+	line-height: 1.35;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	overflow-wrap: anywhere;
+}
+.product .title,
+.lined .title,
+.account-head .title {
+	margin: 0;
+}
+.product {
+	display: grid;
+	gap: 32px;
+}
+.product-info {
+	display: grid;
+	align-content: start;
+	gap: 16px;
+	min-width: 0;
+}
+.product-info > p {
+	margin: 0;
+}
+.product-price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px;
+	font-size: 19px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+}
+.product-price s {
+	font-size: 15px;
+	font-weight: 400;
+}
+.tag {
+	display: inline-block;
+	padding: 3px 8px;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1.3;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+.tag--out,
+.tag--off {
+	background: var(--store-danger);
+	color: var(--store-bg);
+}
+.gallery {
+	min-width: 0;
+}
+.gallery-main {
+	position: relative;
+	aspect-ratio: 1;
+	overflow: hidden;
+	background: var(--thumb);
+}
+.gallery-main img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.gallery-thumbs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 8px;
+}
+.gallery-thumb {
+	width: 64px;
+	height: 64px;
+	padding: 0;
+	overflow: hidden;
+	border: 1px solid transparent;
+	background: var(--thumb);
+	opacity: 0.6;
+	cursor: pointer;
+}
+.gallery-thumb[aria-pressed="true"] {
+	border-color: var(--store-fg);
+	opacity: 1;
+}
+.gallery-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.details {
+	display: grid;
+	gap: 8px;
+	padding-top: 20px;
+	border-top: 1px solid var(--store-line);
+}
+.extra {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 4px 16px;
+	margin: 0;
+	font-size: 13px;
+}
+.extra dt {
+	font-weight: 500;
+}
+.extra dd {
+	margin: 0;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	color: var(--store-muted);
+}
+.share-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.related {
+	margin-top: 64px;
+}
+.related-title {
+	margin-bottom: 20px;
+}
+
+/* ── Option picker (product page + product sheet, drawn by script.js) ── */
+
+.picker {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+.picker-body {
+	display: grid;
+	gap: 24px;
+}
+.picker-foot p {
+	margin: 0;
+}
+.picker-foot {
+	display: grid;
+	gap: 8px;
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid var(--store-line);
+}
+.opt-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+.opt-head h3 {
+	margin: 0;
+}
+.opt-values {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.opt {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-width: 48px;
+	height: 40px;
+	padding: 0 16px;
+	border: 1px solid var(--edge);
+	background: transparent;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+}
+.opt:hover {
+	background: var(--tint);
+}
+.opt[aria-pressed="true"] {
+	border-color: var(--ink);
+	background: var(--ink);
+	color: var(--on-ink);
+}
+.opt:disabled {
+	opacity: 0.35;
+	text-decoration: line-through;
+	cursor: not-allowed;
+}
+.swatch {
+	width: 14px;
+	height: 14px;
+	border: 1px solid var(--edge);
+	border-radius: 50%;
+}
+.opt-list {
+	display: grid;
+	gap: 8px;
+}
+.opt-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	min-height: 48px;
+	padding: 8px 12px;
+	border: 1px solid var(--edge);
+	background: transparent;
+	text-align: left;
+	cursor: pointer;
+}
+.opt-row:hover {
+	background: var(--tint);
+}
+.opt-row[aria-pressed="true"] {
+	border-color: var(--store-fg);
+}
+.opt-row:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.opt-row-name {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	min-width: 0;
+	font-weight: 500;
+}
+/* The square "radio" mark of a plain option row. */
+.opt-mark {
+	width: 16px;
+	height: 16px;
+	flex: none;
+	border: 1px solid var(--edge);
+}
+.opt-row[aria-pressed="true"] .opt-mark {
+	border: 5px solid var(--store-fg);
+}
+.picker-add {
+	display: flex;
+	align-items: stretch;
+	gap: 8px;
+}
+/* Minus, count, plus in one square box. */
+.stepper {
+	display: flex;
+	flex: none;
+	align-items: center;
+	height: 32px;
+	border: 1px solid var(--edge);
+}
+.stepper button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+.stepper button:hover {
+	background: var(--tint);
+}
+.stepper button:disabled {
+	opacity: 0.35;
+	cursor: not-allowed;
+}
+.stepper span {
+	min-width: 24px;
+	text-align: center;
+	font-size: 13px;
+	font-variant-numeric: tabular-nums;
+}
+/* The big stepper sits next to "Add to cart": the same 48px height. */
+.stepper--big {
+	height: 48px;
+}
+.stepper--big button {
+	width: 44px;
+}
+.stepper--big span {
+	min-width: 28px;
+	font-weight: 600;
+}
+.add-button {
+	flex: 1;
+	min-width: 0;
+	justify-content: space-between;
+	min-height: 48px;
+	padding: 0 16px;
+}
+.add-button .add-text {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.add-button .add-price {
+	flex: none;
+	letter-spacing: 0.05em;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Dialogs: cart drawer, product sheet, sign-in ─────── */
+
+dialog {
+	padding: 0;
+	border: 1px solid var(--store-line);
+	border-radius: 0;
+	background: var(--store-bg);
+	color: var(--store-fg);
+}
+dialog::backdrop {
+	background: rgb(0 0 0 / 0.5);
+}
+/* Dialog headings: small, uppercase, letter-spaced. */
+.dialog-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.4;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+.drawer {
+	width: min(28rem, 100%);
+	max-width: 100%;
+	height: 100dvh;
+	max-height: 100dvh;
+	margin: 0 0 0 auto;
+	border-width: 0 0 0 1px;
+}
+.drawer[open] {
+	display: flex;
+	flex-direction: column;
+	animation: slide-in 0.2s ease-out;
+}
+@keyframes slide-in {
+	from {
+		transform: translateX(100%);
+	}
+}
+.drawer-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 12px 12px 20px;
+	border-bottom: 1px solid var(--store-line);
+}
+.drawer-empty {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 32px;
+	text-align: center;
+}
+.drawer-empty p {
+	margin: 0;
+}
+.drawer-empty-title {
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+.drawer-lines {
+	display: grid;
+	/* a long name must not widen the drawer */
+	grid-template-columns: minmax(0, 1fr);
+	flex: 1;
+	align-content: start;
+	gap: 0;
+	min-height: 0;
+	margin: 0;
+	padding: 0 20px;
+	overflow-y: auto;
+	list-style: none;
+}
+.line {
+	display: flex;
+	gap: 12px;
+	padding-block: 16px;
+	border-bottom: 1px solid var(--store-line);
+}
+.line-thumb {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 64px;
+	height: 64px;
+	flex: none;
+	padding: 0;
+	overflow: hidden;
+	border: 0;
+	background: var(--thumb);
+	color: var(--store-muted);
+	font-size: 20px;
+	cursor: pointer;
+}
+.line-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.line-body {
+	flex: 1;
+	min-width: 0;
+}
+.line-name {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	text-align: left;
+	cursor: pointer;
+}
+.line-title,
+.line-variant {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.line-title {
+	font-size: 13px;
+	font-weight: 500;
+}
+.line-variant {
+	font-size: 12px;
+}
+.line-name:hover .line-title {
+	text-decoration: underline;
+}
+.line-qty {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 8px;
+}
+.line-remove {
+	width: 32px;
+	height: 32px;
+	color: var(--store-muted);
+}
+.line-remove:hover {
+	color: var(--store-danger);
+}
+.line-note {
+	margin: 4px 0 0;
+	font-size: 12px;
+}
+.line-price {
+	font-size: 13px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+}
+.drawer-foot {
+	display: grid;
+	gap: 12px;
+	padding: 20px;
+	border-top: 1px solid var(--store-line);
+}
+.drawer-total {
+	display: flex;
+	justify-content: space-between;
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	font-variant-numeric: tabular-nums;
+}
+.fine {
+	margin: 0;
+	font-size: 12px;
+	text-align: center;
+	color: var(--store-muted);
+}
+.sheet {
+	width: min(48rem, calc(100% - 24px));
+	max-width: none;
+	max-height: 85dvh;
+	overflow: hidden;
+}
+.sheet[open] {
+	display: flex;
+	flex-direction: column;
+}
+.sheet-close {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	z-index: 1;
+}
+.sheet-grid {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr);
+	min-height: 0;
+	max-height: 85dvh;
+}
+.sheet-side {
+	display: flex;
+	gap: 16px;
+	padding: 16px;
+	border-bottom: 1px solid var(--store-line);
+}
+.sheet-side .gallery {
+	width: 80px;
+	flex: none;
+}
+.sheet-side .gallery-thumbs {
+	display: none;
+}
+.sheet-side .gallery-thumb {
+	width: 44px;
+	height: 44px;
+}
+.sheet-info {
+	min-width: 0;
+	padding-right: 32px;
+}
+.sheet-info p {
+	margin: 6px 0 0;
+}
+.sheet-info p:empty {
+	display: none;
+}
+.sheet-name {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.4;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	overflow-wrap: anywhere;
+}
+.sheet-price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px;
+	font-size: 15px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+}
+.sheet-price s {
+	font-size: 13px;
+	font-weight: 400;
+}
+.off {
+	font-size: 12px;
+	color: var(--store-danger);
+}
+.sheet-links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	color: var(--store-muted);
+}
+.sheet-main {
+	min-height: 0;
+}
+.sheet-main .picker {
+	height: 100%;
+}
+.sheet-main .picker-body {
+	flex: 1;
+	min-height: 0;
+	padding: 20px;
+	overflow-y: auto;
+}
+.sheet-main .opt-head {
+	padding-right: 32px;
+}
+.sheet-main .picker-foot {
+	margin: 0;
+	padding: 16px 20px 20px;
+}
+.modal {
+	width: min(24rem, calc(100% - 24px));
+	padding: 24px;
+}
+.modal-title {
+	margin-bottom: 6px;
+	padding-right: 32px;
+}
+.modal > p {
+	margin: 0 0 16px;
+}
+.login-social {
+	display: grid;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+.login-or {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 4px 0 0;
+}
+.login-or::before,
+.login-or::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: var(--store-line);
+}
+.login-links {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 8px;
+}
+.modal [role="alert"],
+.modal [role="status"] {
+	margin: 16px 0 0;
+}
+
+/* ── Track, account, order ────────────────────────────── */
+
+.track-fields {
+	display: grid;
+	gap: 16px;
+}
+.account-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 24px;
+}
+.account-head p {
+	margin: 6px 0 0;
+}
+.tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 24px;
+	margin-bottom: 0;
+	border-bottom: 1px solid var(--store-line);
+}
+.tabs a {
+	margin-bottom: -1px;
+	padding: 0 2px 10px;
+	border-bottom: 1px solid transparent;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: var(--store-muted);
+	text-decoration: none;
+}
+/* The tab line is the top line of the content under it. */
+.tabs + .lined {
+	border-top: 0;
+}
+.tabs a:hover {
+	color: var(--store-fg);
+}
+.tabs a[aria-current="page"] {
+	border-color: var(--store-fg);
+	color: var(--store-fg);
+}
+.rows {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.rows > li {
+	border-bottom: 1px solid var(--store-line);
+}
+.rows > li:last-child {
+	border-bottom: 0;
+}
+.row-main {
+	flex: 1;
+	min-width: 0;
+}
+.order-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+	padding: 12px 0;
+	font-size: 13px;
+	text-decoration: none;
+}
+.order-row:hover .strong {
+	text-decoration: underline;
+}
+.order-row .row-main {
+	flex-basis: 12rem;
+}
+.order-sum {
+	flex: none;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+/* Order status badges (the same colours as the staff app's statusBadges). */
+.status {
+	flex: none;
+	padding: 2px 8px;
+	border: 1px solid;
+	font-size: 10px;
+	font-weight: 500;
+	line-height: 1.4;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+.status--completed,
+.status--delivered {
+	border-color: #6ee7b7;
+	background: #ecfdf5;
+	color: #047857;
+}
+.status--partially_refunded,
+.status--refunded {
+	border-color: #fcd34d;
+	background: #fffbeb;
+	color: #b45309;
+}
+.status--voided {
+	border-color: #d4d4d8;
+	background: #f4f4f5;
+	color: #52525b;
+	text-decoration: line-through;
+}
+.status--new {
+	border-color: #7dd3fc;
+	background: #f0f9ff;
+	color: #0369a1;
+}
+.status--packing {
+	border-color: #c4b5fd;
+	background: #f5f3ff;
+	color: #6d28d9;
+}
+.status--shipped {
+	border-color: #93c5fd;
+	background: #eff6ff;
+	color: #1d4ed8;
+}
+/* In the dark the badges keep their hue, lighter, on a see-through fill. */
+.dark .status {
+	background: transparent;
+	color: #7dd3fc;
+}
+.dark .status--completed,
+.dark .status--delivered {
+	color: #6ee7b7;
+}
+.dark .status--partially_refunded,
+.dark .status--refunded {
+	color: #fcd34d;
+}
+.dark .status--voided {
+	border-color: #71717a;
+	color: #a1a1aa;
+}
+.dark .status--packing {
+	color: #c4b5fd;
+}
+.dark .status--shipped {
+	color: #93c5fd;
+}
+/* Unpaid / partly paid: a small pie filled by the share already paid. */
+.pay {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	font-weight: 500;
+	white-space: nowrap;
+}
+.pay--unpaid {
+	color: var(--store-danger);
+}
+.pay--partial {
+	color: #d97706;
+}
+.pie {
+	width: 12px;
+	height: 12px;
+	flex: none;
+	border: 1px solid currentColor;
+	border-radius: 50%;
+}
+.address-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+	gap: 8px 12px;
+	padding: 12px 0;
+	font-size: 13px;
+}
+.address-row form {
+	margin: 0;
+}
+.address-edit {
+	grid-column: 1 / -1;
+}
+.address-edit > form,
+.address-add > form {
+	margin-top: 16px;
+}
+details > summary {
+	width: fit-content;
+	list-style: none;
+}
+details > summary::-webkit-details-marker {
+	display: none;
+}
+.address-edit > summary {
+	min-height: 32px;
+	padding: 0 12px;
+}
+.big-number {
+	margin: 0;
+	font-size: 72px;
+	font-weight: 500;
+	line-height: 1;
+	letter-spacing: 0.1em;
+	color: var(--store-muted);
+	opacity: 0.5;
+}
+/*
+ * The shared order card (store/partials/order.edge) as a Minimal card:
+ * lines only at the top and bottom, no box and no side padding.
+ */
+.so-card {
+	padding: 24px 0;
+	border-width: 1px 0;
+	background: transparent;
+}
+.so-title {
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+
+/* ── Footer ───────────────────────────────────────────── */
+
+.foot {
+	margin-top: auto;
+	border-top: 1px solid var(--store-line);
+	font-size: 12px;
+	color: var(--store-muted);
+}
+.foot-cols {
+	display: flex;
+	flex-direction: column;
+	gap: 40px;
+	padding-block: 48px 0;
+}
+.foot-brand {
+	display: grid;
+	gap: 12px;
+	font-style: normal;
+}
+.foot-name {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.foot-name img {
+	width: 40px;
+	height: 40px;
+	object-fit: cover;
+}
+.foot-name strong {
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.25em;
+	text-transform: uppercase;
+	color: var(--store-fg);
+	overflow-wrap: anywhere;
+}
+.foot-head {
+	margin: 0 0 12px;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: var(--store-fg);
+}
+.foot-list {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.foot a,
+.langs button {
+	text-decoration: none;
+	transition: color 0.15s;
+}
+.foot a:hover,
+.langs button:hover {
+	color: var(--store-fg);
+}
+.langs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 12px;
+}
+.langs button {
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+.langs [aria-current="true"] {
+	color: var(--store-fg);
+	text-decoration: underline;
+}
+.foot-copy {
+	margin: 40px 0 0;
+	padding-block: 20px 48px;
+	border-top: 1px solid var(--store-line);
+}
+
+/* ── Rich text: product descriptions and custom pages ── */
+
+.rich-html {
+	font-size: 13px;
+	line-height: 1.65;
+}
+.rich-html a {
+	text-decoration: underline;
+}
+.rich-html h1,
+.rich-html h2,
+.rich-html h3 {
+	margin: 12px 0;
+	font-weight: 500;
+	line-height: 1.3;
+}
+.rich-html h1 {
+	font-size: 22px;
+}
+.rich-html h2 {
+	font-size: 18px;
+}
+.rich-html h3 {
+	font-size: 15px;
+}
+.rich-html p {
+	margin: 8px 0;
+}
+.rich-html ul,
+.rich-html ol {
+	padding-left: 20px;
+}
+.rich-html img {
+	margin: 12px 0;
+	max-width: 100%;
+}
+.rich-html blockquote {
+	margin: 12px 0;
+	padding-left: 12px;
+	border-left: 2px solid;
+}
+.rich-html table {
+	width: 100%;
+	margin: 12px 0;
+	border-collapse: collapse;
+}
+.rich-html :is(td, th) {
+	padding: 6px 8px;
+	border: 1px solid var(--store-line);
+	text-align: left;
+	vertical-align: top;
+}
+.rich-html details {
+	border-top: 1px solid var(--store-line);
+}
+.rich-html details:last-child {
+	border-bottom: 1px solid var(--store-line);
+}
+.rich-html summary {
+	width: auto;
+	padding: 14px 0;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+/* ── Wider screens ────────────────────────────────────── */
+
+@media (min-width: 640px) {
+	.wrap {
+		padding-inline: 24px;
+	}
+	.products {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+	.products--four {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.track-fields {
+		grid-template-columns: 240px 1fr;
+	}
+	.foot-cols {
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 40px 64px;
+	}
+	.foot-brand {
+		flex: 1;
+		min-width: 14rem;
+	}
+	.sheet-grid {
+		grid-template-columns: 240px minmax(0, 1fr);
+		grid-template-rows: minmax(0, 1fr);
+	}
+	.sheet-side {
+		flex-direction: column;
+		border-right: 1px solid var(--store-line);
+		border-bottom: 0;
+		padding: 20px;
+		overflow-y: auto;
+	}
+	.sheet-side .gallery {
+		width: 100%;
+	}
+	.sheet-side .gallery-thumbs {
+		display: flex;
+	}
+}
+@media (min-width: 768px) {
+	.product {
+		grid-template-columns: 1fr 1fr;
+		gap: 48px;
+	}
+}
+
+/* ── Phones ───────────────────────────────────────────── */
+
+/*
+ * The shop name gets the whole first line, the controls wrap under it.
+ * The search takes a full row of its own, so nothing is squeezed.
+ */
+@media (max-width: 639px) {
+	.head {
+		padding-block: 24px 20px;
+	}
+	.brand {
+		flex: 1 1 100%;
+	}
+	.head-tools {
+		flex: 1 1 100%;
+	}
+	.head-search {
+		order: 1;
+		flex: 1 1 100%;
+		width: auto;
+	}
+	.sort {
+		margin-left: 0;
+	}
+	.tabs {
+		gap: 4px 16px;
+	}
+	.tabs a {
+		letter-spacing: 0.15em;
+	}
+}
+
+/*
+ * The shared checkout and done pages mark their headings `island-heading`.
+ * Here they take this theme's small uppercase look.
+ */
+.store-island .island-heading {
+	font-size: 17px;
+	font-weight: 500;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+.store-island :not(h1).island-heading {
+	font-size: 13px;
+}
+
+/*
+ * The island's text boxes and pickers get this theme's field border.
+ * Their 40px height comes from --store-control-height.
+ */
+.store-island [data-slot="input"],
+.store-island button[role="combobox"] {
+	border-color: var(--edge);
+}
+/* The island's field names: the same small caps as this theme's own. */
+.store-island [data-slot="label"] {
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+
+/* the buyer's custom request box in the picker */
+.note-field textarea {
+	min-height: 88px;
+	padding: 10px 12px;
+	resize: vertical;
+}
+
+/* the buyer's custom request, on its own row under a cart line (lined up with the name) */
+.line {
+	flex-wrap: wrap;
+	row-gap: 6px;
+}
+.line-request {
+	flex-basis: 100%;
+	margin: 0;
+	padding-left: 76px;
+	font-size: 12px;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}
+
+/*
+ * The shop's own footer colours (Template › Customize).
+ * document.edge puts `.theme-footer` on <html> when a background is picked,
+ * and `.theme-footer-text` when the footer has its own text colour:
+ * the shop's, else black or white, whichever reads best on that background.
+ * Every footer text is exactly that colour, never a softer shade of it.
+ */
+.theme-footer .foot {
+	background: var(--theme-footer);
+}
+.theme-footer-text .foot {
+	color: var(--theme-on-footer);
+}
+.theme-footer-text
+	.foot
+	:is(
+		.foot-name strong,
+		.foot-head,
+		a:hover,
+		.langs button:hover,
+		.langs [aria-current="true"]
+	) {
+	color: var(--theme-on-footer);
+}
+.theme-footer-text .foot-copy {
+	color: inherit;
+	border-top-color: color-mix(in srgb, var(--theme-on-footer) 15%, transparent);
+}
+
+/*
+ * This theme draws no cards of its own.
+ * The shop's own card colours (Template › Customize) show on the shared
+ * checkout and order pages only, which read `--store-surface`.
+ */

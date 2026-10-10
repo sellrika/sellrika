@@ -1,0 +1,43 @@
+{{--
+  The SEO head of every store page. `seo` is built by StoreViewService:
+    title, description, url (canonical), type (website | product), image (absolute or null),
+    noindex, verification (Google), meta [{ property, content }] (product price tags),
+    ld (JSON-LD object or null), ga (GA4 id or null), pixel (Meta Pixel id or null), icon.
+  The GA4 and Pixel ids are validated to letters, digits and "-" on save; they are
+  still printed through json() so nothing can leave the string.
+--}}
+<title>{{ seo.title }}</title>
+<meta name="description" content="{{ seo.description }}">
+<link rel="canonical" href="{{ seo.url }}">
+<meta property="og:type" content="{{ seo.type }}">
+<meta property="og:site_name" content="{{ store.name }}">
+<meta property="og:title" content="{{ seo.title }}">
+<meta property="og:description" content="{{ seo.description }}">
+<meta property="og:url" content="{{ seo.url }}">
+<meta name="twitter:card" content="{{ seo.type === 'product' && seo.image ? 'summary_large_image' : 'summary' }}">
+<meta name="twitter:title" content="{{ seo.title }}">
+<meta name="twitter:description" content="{{ seo.description }}">
+@if(seo.verification)
+<meta name="google-site-verification" content="{{ seo.verification }}">
+@end
+@if(seo.noindex)
+<meta name="robots" content="noindex">
+@end
+@if(seo.image)
+<meta property="og:image" content="{{ seo.image }}">
+<meta name="twitter:image" content="{{ seo.image }}">
+@end
+@each(m in seo.meta)
+<meta property="{{ m.property }}" content="{{ m.content }}">
+@end
+@if(seo.ld)
+<script type="application/ld+json">{{{ json(seo.ld) }}}</script>
+@end
+@if(seo.ga)
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ seo.ga }}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config",{{{ json(seo.ga) }}})</script>
+@end
+@if(seo.pixel)
+<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version="2.0";n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");fbq("init",{{{ json(seo.pixel) }}});fbq("track","PageView")</script>
+@end
+<link rel="icon" href="{{ seo.icon }}">

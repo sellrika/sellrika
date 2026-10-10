@@ -1,0 +1,9 @@
+{{-- A store page that does not exist (unknown product, page or order). --}}
+@component(theme.layout, { search: true })
+  <div class="n-wrap n-column n-top n-center">
+    <p class="n-big" aria-hidden="true">404</p>
+    <h1 class="n-title">{{ t('nav.notfound_heading') }}</h1>
+    <p class="n-muted">{{ t('nav.notfound_text') }}</p>
+    <p><a class="n-btn" href="{{ url.home }}">{{ t('store.back_to_shop') }}</a></p>
+  </div>
+@end

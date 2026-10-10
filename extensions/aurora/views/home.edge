@@ -1,0 +1,106 @@
+{{--
+  Aurora's catalog: the hero, the "picked for you" rail, category chips,
+  sort + in-stock + search forms, the photo cards and the pager.
+  Filters and pages are plain links and GET forms, so it works without JavaScript.
+  The hero words and picture come from the shop's settings (theme.config);
+  a blank one falls back to the theme's own words (i18n/) and assets/hero.svg.
+--}}
+@component(theme.layout, { search: true })
+  @let(filtered = !!(filters.q || filters.category || filters.stock) || catalog.page > 1)
+  <main class="aurora-main">
+    @if(!theme.config.hero_off)
+    <section class="aurora-hero">
+      <img class="aurora-hero-photo" src="{{ theme.config.hero_image || asset('hero.svg') }}" alt="">
+      <div class="aurora-hero-words">
+        <h1 class="aurora-hero-title">{{ theme.config.hero_title || t('hero.title') }}</h1>
+        <p class="aurora-hero-text">{{ theme.config.hero_text || t('hero.text') }}</p>
+        <a class="aurora-add is-inline" href="#aurora-catalog">{{ theme.config.hero_cta || t('hero.cta') }}</a>
+      </div>
+    </section>
+    @end
+
+    @if(featured.length && !filtered)
+    <section class="aurora-featured" aria-labelledby="aurora-featured-title">
+      <h2 id="aurora-featured-title" class="aurora-heading">{{ t('section.featured') }}</h2>
+      <div class="aurora-rail">
+        @each(p in featured)
+        @!component('ext/aurora/card', { p, categories, small: true })
+        @end
+      </div>
+    </section>
+    @end
+
+    <div class="aurora-filters" id="aurora-catalog">
+      <nav class="aurora-cats" aria-label="{{ t('nav.categories') }}">
+        <a class="aurora-chip {{ filters.category ? '' : 'is-on' }}" href="{{ url.catalog({ q: filters.q, sort: filters.sort, stock: filters.stock }) }}" {{{ filters.category ? '' : 'aria-current="page"' }}}>{{ t('store.all') }}</a>
+        @each(c in categories)
+        <a class="aurora-chip {{ filters.category == c.id ? 'is-on' : '' }}" href="{{ url.catalog({ q: filters.q, sort: filters.sort, stock: filters.stock, category: c.id }) }}" {{{ filters.category == c.id ? 'aria-current="page"' : '' }}}>{{ c.name }}</a>
+        @end
+      </nav>
+      <div class="aurora-tools">
+        <form class="aurora-tools" method="get" action="{{ url.home }}" data-autosubmit>
+          @if(filters.q)
+          <input type="hidden" name="q" value="{{ filters.q }}">
+          @end
+          @if(filters.category)
+          <input type="hidden" name="category" value="{{ filters.category }}">
+          @end
+          <select class="aurora-select" name="sort" aria-label="{{ t('store_ui.sort_products') }}">
+            @each(o in sorts)
+            <option value="{{ o.value }}" {{ o.value === filters.sort ? 'selected' : '' }}>{{ o.label }}</option>
+            @end
+          </select>
+          <label class="aurora-chip aurora-toggle">
+            <input type="checkbox" name="stock" value="1" {{ filters.stock ? 'checked' : '' }}>
+            {{ t('store.in_stock') }}
+          </label>
+          <noscript><button type="submit" class="aurora-chip">OK</button></noscript>
+        </form>
+        <form role="search" method="get" action="{{ url.home }}">
+          @if(filters.category)
+          <input type="hidden" name="category" value="{{ filters.category }}">
+          @end
+          @if(filters.sort && filters.sort !== 'featured')
+          <input type="hidden" name="sort" value="{{ filters.sort }}">
+          @end
+          @if(filters.stock)
+          <input type="hidden" name="stock" value="1">
+          @end
+          <input class="aurora-search" type="search" name="q" value="{{ filters.q || '' }}" placeholder="{{ t('store.search_products') }}" aria-label="{{ t('store.search_products') }}">
+        </form>
+      </div>
+    </div>
+
+    @if(!catalog.data.length)
+    <p class="aurora-empty">{{ t('store.nothing_back_soon') }}</p>
+    @else
+    <div class="aurora-grid">
+      @each(p in catalog.data)
+      @!component('ext/aurora/card', { p, categories })
+      @end
+    </div>
+    @end
+
+    @if(catalog.last_page > 1)
+    <nav class="aurora-pager">
+      @if(pager.prev)
+      <a class="aurora-chip" href="{{ pager.prev }}" aria-label="{{ t('store.previous_page') }}">
+      @else
+      <a class="aurora-chip" aria-disabled="true" aria-label="{{ t('store.previous_page') }}">
+      @end
+        @!component('ext/aurora/icon', { name: 'chevron-left' })
+        {{ t('store.prev') }}
+      </a>
+      <span class="aurora-muted">{{ catalog.page }} / {{ catalog.last_page }}</span>
+      @if(pager.next)
+      <a class="aurora-chip" href="{{ pager.next }}" aria-label="{{ t('store.next_page') }}">
+      @else
+      <a class="aurora-chip" aria-disabled="true" aria-label="{{ t('store.next_page') }}">
+      @end
+        {{ t('common.next') }}
+        @!component('ext/aurora/icon', { name: 'chevron-right' })
+      </a>
+    </nav>
+    @end
+  </main>
+@end

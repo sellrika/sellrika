@@ -1,0 +1,31 @@
+{
+	"key": "omise",
+	"name": "name",
+	"version": "1.0.0",
+	"description": "description",
+	"help_url": "https://dashboard.omise.co/test/keys",
+	"icon": "assets/icon.png",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "public_key",
+			"label": "field.public_key",
+			"required": true,
+			"placeholder": "field.public_key_hint",
+			"starts_with": "pkey_"
+		},
+		{
+			"name": "secret_key",
+			"label": "field.secret_key",
+			"secret": true,
+			"required": true,
+			"placeholder": "field.secret_key_hint",
+			"starts_with": "skey_"
+		}
+	],
+	"payment": {
+		"mode": "tokenize",
+		"public_field": "public_key",
+		"script": "assets/checkout.ts"
+	}
+}

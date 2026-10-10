@@ -1,0 +1,39 @@
+name: E2E
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Playwright, split in six jobs that run at the same time: each one builds once, then boots and runs only its
+# share of the spec files (E2E_SHARD=<i>/<n> is read by e2e/tmp.ts — round-robin over the spec list, so a new
+# spec file lands in a shard on its own). Unit tests are in test.yml.
+#
+# The jobs run inside Microsoft's Playwright image: browsers + every system library are already there, so
+# there's nothing to install or cache. The tag MUST match `@playwright/test` in package.json — bump both together.
+jobs:
+  e2e:
+    name: e2e ${{ matrix.shard }}/6
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.62.1-noble
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+      - run: apt-get update -qq && apt-get install -y -qq unzip >/dev/null # the image has no unzip, which setup-bun needs
+      - uses: oven-sh/setup-bun@v2 # the image ships Node, not Bun
+      - run: bun install --frozen-lockfile
+      - run: bun run test:e2e
+        env:
+          CI: "1"
+          E2E_SHARD: ${{ matrix.shard }}/6
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces-${{ matrix.shard }}
+          path: test-results/
+          retention-days: 7

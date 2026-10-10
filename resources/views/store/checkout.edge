@@ -1,0 +1,16 @@
+{{--
+  The shared checkout page, inside the active theme's layout.
+  The form is a Vue island (resources/js/store/islands/Checkout.vue),
+  mounted on #store-checkout with its props in data-props:
+    store    the shop (zones, tax, payments, customer …)
+    states   the shop country's states when its postal codes are downloaded, else []
+    restore  lines from an abandoned-cart link (they replace the cart), or null
+  It takes its look from the theme's --store-* variables.
+--}}
+@component(theme.layout, { search: false })
+<div class="store-island mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+  <a href="{{ url.home }}" class="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:underline">← {{ t('store.back_to_shop') }}</a>
+  <h1 class="island-heading mb-6 text-2xl font-semibold">{{ t('store.checkout') }}</h1>
+  <div id="store-checkout" data-props="{{ js.stringify({ store, states: states || [], restore: restore || null }) }}"></div>
+</div>
+@end

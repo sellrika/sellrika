@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}" class="{{ theme === 'dark' ? 'dark' : '' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  @if(title)
+    <title>{{ title }}</title>
+  @end
+  {{{ head }}}
+  <link rel="icon" href="{{ icon }}" sizes="any">
+  <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  @if(theme === 'auto')
+    <!-- apply the saved theme before first paint (useColorMode() in AppLayout owns it afterwards); pinned themes skip this -->
+    <script>(m=>document.documentElement.classList.toggle("dark",m==="dark"||(m!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches)))(localStorage.getItem("vueuse-color-scheme"))</script>
+  @end
+  @if(ga)
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga }}"></script>
+    <script>window.gaId={{{ JSON.stringify(ga) }}};window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config",gaId)</script>
+  @end
+  {{{ vite }}}
+</head>
+{{-- 1Password: no save or fill offers, except on the sign-in page --}}
+{{-- app.ts keeps it in step on Inertia visits --}}
+<body{{ passwordManager ? '' : ' data-1p-ignore' }}>
+  {{{ body }}}
+</body>
+</html>

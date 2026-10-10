@@ -1,0 +1,168 @@
+{{--
+  My account. A guest sees a sign-in prompt.
+  A signed-in customer gets three tabs (plain links, ?tab=):
+  orders, their details (name + phone) and their delivery addresses.
+  Every change is a plain form post; an error re-renders this page with `errors` + `old`.
+--}}
+@component(theme.layout, { search: false })
+  <div class="n-wrap n-column n-top">
+    <a class="n-back" href="{{ url.home }}">
+      @!component('themes/noir/icon', { name: 'arrow-left' })
+      {{ t('store.back_to_shop') }}
+    </a>
+
+    <div class="n-account-head">
+      <div>
+        <h1 class="n-title">{{ t('store.my_account') }}</h1>
+        @if(store.customer)
+        <p class="n-muted n-small">{{ t('store.signed_in_as', { email: store.customer.email }) }}</p>
+        @end
+      </div>
+      @if(store.customer)
+      <form method="post" action="{{ url.account }}/logout">
+        <button type="submit" class="n-btn-line">
+          @!component('themes/noir/icon', { name: 'log-out' })
+          {{ t('store.sign_out') }}
+        </button>
+      </form>
+      @end
+    </div>
+
+    @if(!store.customer)
+    <div class="n-panel n-center n-stack">
+      @!component('themes/noir/icon', { name: 'user', class: 'n-icon-lg' })
+      <p class="n-strong">{{ t('store.signin_to_see_orders') }}</p>
+      <p class="n-muted n-small">{{ t(store.login ? 'store.account_intro' : 'store.no_customer_accounts') }}</p>
+      @if(store.login)
+      <p><button type="button" class="n-btn" data-login-open>{{ t('store.sign_in') }}</button></p>
+      @end
+    </div>
+    @else
+    {{-- a box for the shop's extensions (their points, a reward): empty by default --}}
+    <div data-account-extra></div>
+    @let(current = ['details', 'address'].includes(tab) ? tab : 'orders')
+    @let(failed = Object.keys(errors || {}).length > 0)
+    <nav class="n-tabs">
+      <a href="{{ url.account }}" {{{ current === 'orders' ? 'aria-current="page"' : '' }}}>{{ t('store.orders') }}</a>
+      <a href="{{ url.account }}?tab=details" {{{ current === 'details' ? 'aria-current="page"' : '' }}}>{{ t('store.your_details') }}</a>
+      <a href="{{ url.account }}?tab=address" {{{ current === 'address' ? 'aria-current="page"' : '' }}}>{{ t('store.delivery_address') }}</a>
+    </nav>
+
+    @if(current === 'details')
+    <form class="n-panel n-stack" method="post" action="{{ url.account }}" novalidate>
+      <input type="hidden" name="tab" value="details">
+      <label class="n-field">
+        <span>{{ t('common.name') }}</span>
+        <input id="acct-name" name="name" autocomplete="name" value="{{ old.name ?? store.customer.name }}" {{{ errors.name ? 'aria-invalid="true"' : '' }}}>
+        @if(errors.name)
+        <small class="n-error">{{ errors.name }}</small>
+        @end
+      </label>
+      <label class="n-field">
+        <span>{{ t('store.phone_number') }}</span>
+        <input id="acct-phone" name="phone" type="tel" autocomplete="tel" value="{{ old.phone ?? store.customer.phone }}" {{{ errors.phone ? 'aria-invalid="true"' : '' }}}>
+        @if(errors.phone)
+        <small class="n-error">{{ errors.phone }}</small>
+        @end
+      </label>
+      <div><button type="submit" class="n-btn">{{ t('store.save_details') }}</button></div>
+      @if(saved)
+      <p role="status">{{ t('common.saved') }}</p>
+      @end
+    </form>
+
+    @elseif(current === 'address')
+    <div class="n-panel n-stack">
+      <p class="n-muted n-small">{{ t('store.addresses_hint') }}</p>
+      @if(!store.customer.addresses.length)
+      <p class="n-muted n-small">{{ t('store.no_saved_address') }}</p>
+      @else
+      <ul class="n-rows" aria-label="{{ t('store.saved_addresses') }}">
+        @each(a in store.customer.addresses)
+        @let(name = a.label || a.address_1)
+        @let(mine = failed && String(old.address_id) === String(a.id))
+        <li class="n-address-row">
+          <div class="n-row-main">
+            <span class="n-strong">{{ name }}</span>
+            @if(a.phone)
+            <span class="n-muted"> · {{ a.phone }}</span>
+            @end
+            <span class="n-muted n-small n-block">{{ [a.address_1, a.address_2, [a.city, a.state, a.postal_code].filter(Boolean).join(' '), a.country].filter(Boolean).join(', ') }}</span>
+          </div>
+          <div class="n-row-tools">
+            <form method="post" action="{{ url.account }}/addresses/{{ a.id }}/delete">
+              <button type="submit" class="n-btn-line n-btn-square" aria-label="{{ t('store.remove_x', { name }) }}">
+                @!component('themes/noir/icon', { name: 'trash' })
+              </button>
+            </form>
+          </div>
+          <details class="n-address-edit" {{ mine ? 'open' : '' }}>
+            <summary class="n-btn-line" aria-label="{{ t('store.edit_x', { name }) }}">{{ t('common.edit') }}</summary>
+            <form class="n-stack" method="post" action="{{ url.account }}/addresses/{{ a.id }}" novalidate>
+              <input type="hidden" name="address_id" value="{{ a.id }}">
+              @let(address = mine ? old : a)
+              @include('themes/noir/address-form')
+            </form>
+          </details>
+        </li>
+        @end
+      </ul>
+      @end
+
+      <details class="n-address-add" {{ failed && !old.address_id ? 'open' : '' }}>
+        <summary class="n-btn">
+          @!component('themes/noir/icon', { name: 'plus' })
+          {{ t('store.add_address') }}
+        </summary>
+        <form class="n-stack" method="post" action="{{ url.account }}/addresses" novalidate>
+          @let(address = failed && !old.address_id ? old : { country: store.country || '' })
+          @include('themes/noir/address-form')
+        </form>
+      </details>
+    </div>
+
+    @else
+    <section class="n-panel n-stack" aria-label="{{ t('store.your_orders') }}">
+      @if(!orders || !orders.data.length)
+      <p class="n-muted n-small">{{ t('store.no_orders_yet') }}</p>
+      @else
+      <ul class="n-rows">
+        @each(o in orders.data)
+        @let(badges = o.status === 'voided' ? ['voided'] : [...(o.status !== 'completed' ? [o.status] : []), ...(o.fulfillment ? [o.fulfillment] : [])])
+        <li>
+          <a class="n-order-row" href="{{ url.order(o.reference) }}" aria-label="{{ t('store.order_number', { code: o.reference }) }}">
+            <span class="n-row-main">
+              <span class="n-strong n-mono">{{ o.reference }}</span>
+              <span class="n-muted n-small n-block">{{ date(o.created_at) }}</span>
+              <span class="n-muted n-small n-block n-ellipsis">{{ o.items.map((i) => i.qty + ' × ' + i.name).join(', ') }}</span>
+            </span>
+            @each(b in (badges.length ? badges : ['completed']))
+            <span class="n-status n-status--{{ b }}">{{ orderStatus(b) }}</span>
+            @end
+            <span class="n-order-sum">
+              <span class="n-block">{{ money(o.total, store.currency) }}</span>
+              @if(o.payment_status !== 'paid' && o.status !== 'voided')
+              <span class="n-pay n-pay--{{ o.payment_status }}">
+                <span class="n-pie" aria-hidden="true" style="background: conic-gradient(currentColor {{ o.total > 0 ? Math.min(100, Math.round(o.paid / o.total * 100)) : 0 }}%, transparent 0)"></span>
+                {{ t(o.payment_status === 'partial' ? 'orders.partly_paid' : 'orders.unpaid') }}
+              </span>
+              @end
+            </span>
+            @!component('themes/noir/icon', { name: 'chevron-right', class: 'n-faint' })
+          </a>
+        </li>
+        @end
+      </ul>
+      @if(orders.last_page > 1)
+      <nav class="n-pager">
+        <a class="n-ctl" {{{ orders.page > 1 ? 'href="' + url.account + '?page=' + (orders.page - 1) + '"' : 'aria-disabled="true"' }}} aria-label="{{ t('store.previous_page') }}">{{ t('store.prev') }}</a>
+        <span class="n-pager-count">{{ orders.page }} / {{ orders.last_page }}</span>
+        <a class="n-ctl" {{{ orders.page < orders.last_page ? 'href="' + url.account + '?page=' + (orders.page + 1) + '"' : 'aria-disabled="true"' }}} aria-label="{{ t('store.next_page') }}">{{ t('common.next') }}</a>
+      </nav>
+      @end
+      @end
+    </section>
+    @end
+    @end
+  </div>
+@end

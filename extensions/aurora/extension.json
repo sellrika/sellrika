@@ -1,0 +1,61 @@
+{
+	"key": "aurora",
+	"name": "name",
+	"version": "2.0.0",
+	"description": "description",
+	"icon": "assets/icon.svg",
+	"main": "index.ts",
+	"theme": {
+		"label": "Aurora",
+		"description": "theme.description",
+		"views": "views",
+		"css": "assets/theme.css",
+		"script": "assets/script.js",
+		"scheme": "light",
+		"featured": 6
+	},
+	"fields": [
+		{
+			"name": "accent",
+			"label": "field.accent",
+			"type": "color",
+			"grid": 4,
+			"hint": "field.accent_hint"
+		},
+		{
+			"name": "hero_off",
+			"label": "field.hero_off",
+			"type": "switch",
+			"grid": 4,
+			"hint": "field.hero_off_hint"
+		},
+		{
+			"name": "hero_title",
+			"label": "field.hero_title",
+			"type": "text",
+			"placeholder": "Everything for a good morning",
+			"hint": "field.blank_hint"
+		},
+		{
+			"name": "hero_text",
+			"label": "field.hero_text",
+			"type": "text",
+			"multiline": true,
+			"hint": "field.blank_hint"
+		},
+		{
+			"name": "hero_cta",
+			"label": "field.hero_cta",
+			"type": "text",
+			"grid": 4,
+			"hint": "field.blank_hint"
+		},
+		{
+			"name": "hero_image",
+			"label": "field.hero_image",
+			"type": "image",
+			"grid": 4,
+			"hint": "field.hero_image_hint"
+		}
+	]
+}

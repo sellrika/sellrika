@@ -1,0 +1,84 @@
+{{--
+  The catalog: category pills, a heading worked out from the filters,
+  sort + in-stock form, the product grid and the pager.
+  Filters and pages are plain links and GET forms,
+  so the page works without JavaScript.
+--}}
+@let(current = categories.find((c) => filters.category == c.id))
+@let(heading = filters.q ? t('store.results_for', { q: filters.q }) : (current ? current.name : t('store.most_loved')))
+@let(subtitle = (filters.q || filters.stock) ? t('store.showing_products', { count: catalog.total }) : t('store.showing_of_products', { count: catalog.data.length, total: catalog.total }))
+@component(theme.layout, { search: true, q: filters.q })
+  <div class="wrap catalog">
+    @if(categories.length)
+    <nav class="cats" aria-label="{{ t('nav.categories') }}">
+      <a class="cat {{ filters.category ? '' : 'is-on' }}" href="{{ url.catalog({ q: filters.q, sort: filters.sort, stock: filters.stock }) }}" {{{ filters.category ? '' : 'aria-current="page"' }}}>
+        {{ t('store.all') }}
+        @if(counts && counts.all)
+        <span class="cat-count">{{ counts.all }}</span>
+        @end
+      </a>
+      @each(c in categories)
+      <a class="cat {{ filters.category == c.id ? 'is-on' : '' }}" href="{{ url.catalog({ q: filters.q, sort: filters.sort, stock: filters.stock, category: c.id }) }}" {{{ filters.category == c.id ? 'aria-current="page"' : '' }}}>
+        @if(c.color)
+        <span class="dot" style="background: {{ c.color }}"></span>
+        @end
+        {{ c.name }}
+        <span class="cat-count">{{ c.count }}</span>
+      </a>
+      @end
+    </nav>
+    @end
+
+    <div class="catalog-head">
+      <div class="catalog-titles">
+        <h1 class="catalog-title">{{ heading }}</h1>
+        <p class="muted small">{{ subtitle }}</p>
+      </div>
+      <form class="sort" method="get" action="{{ url.home }}" data-autosubmit>
+        @if(filters.q)
+        <input type="hidden" name="q" value="{{ filters.q }}">
+        @end
+        @if(filters.category)
+        <input type="hidden" name="category" value="{{ filters.category }}">
+        @end
+        <span class="pill pill-line select-box">
+          <select name="sort" aria-label="{{ t('store_ui.sort_products') }}">
+            @each(o in sorts)
+            <option value="{{ o.value }}" {{ o.value === filters.sort ? 'selected' : '' }}>{{ o.label }}</option>
+            @end
+          </select>
+          @!component('themes/soft/icon', { name: 'chevron-down' })
+        </span>
+        <label class="pill pill-line chip">
+          <input type="checkbox" name="stock" value="1" {{ filters.stock ? 'checked' : '' }}>
+          {{ t('store.in_stock') }}
+        </label>
+        <noscript><button type="submit" class="pill pill-line">OK</button></noscript>
+      </form>
+    </div>
+
+    @if(!catalog.data.length)
+    <p class="catalog-empty">{{ t('store.nothing_back_soon') }}</p>
+    @else
+    <div class="cards">
+      @each(p in catalog.data)
+      @include('themes/soft/card')
+      @end
+    </div>
+    @end
+
+    @if(catalog.last_page > 1)
+    <nav class="pager">
+      <a class="pill pill-line" {{{ pager.prev ? 'href="' + pager.prev + '"' : 'aria-disabled="true"' }}} aria-label="{{ t('store.previous_page') }}">
+        @!component('themes/soft/icon', { name: 'chevron-left' })
+        {{ t('store.prev') }}
+      </a>
+      <span class="pager-count">{{ catalog.page }} / {{ catalog.last_page }}</span>
+      <a class="pill pill-line" {{{ pager.next ? 'href="' + pager.next + '"' : 'aria-disabled="true"' }}} aria-label="{{ t('store.next_page') }}">
+        {{ t('common.next') }}
+        @!component('themes/soft/icon', { name: 'chevron-right' })
+      </a>
+    </nav>
+    @end
+  </div>
+@end

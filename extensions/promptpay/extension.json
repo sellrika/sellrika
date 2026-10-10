@@ -1,0 +1,42 @@
+{
+	"key": "promptpay",
+	"name": "name",
+	"version": "1.2.0",
+	"description": "description",
+	"icon": "assets/icon.svg",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "promptpay_id",
+			"label": "field.id",
+			"required": true,
+			"placeholder": "field.id_placeholder",
+			"hint": "field.id_hint"
+		},
+		{
+			"name": "display_name",
+			"label": "field.name",
+			"placeholder": "field.name_placeholder",
+			"hint": "field.name_hint"
+		},
+		{
+			"name": "account_name",
+			"label": "field.account",
+			"placeholder": "field.account_placeholder",
+			"hint": "field.account_hint"
+		}
+	],
+	"payment_method": {
+		"name": "method.name",
+		"icon": "QrCode",
+		"color": "#103e68"
+	},
+	"slots": [
+		{
+			"name": "pos.display",
+			"script": "assets/display.tsx"
+		}
+	],
+	"pages": [],
+	"guide": "guide.md"
+}

@@ -1,0 +1,27 @@
+{{--
+  The address boxes of a plain HTML form (the account page's address forms).
+  Include it inside the <form>: @include('store/partials/address')
+  It reads from the including page:
+    address  the values to show (the posted values after an error) — may be missing
+    errors   field → message
+    states   the shop country's states when its postal codes are downloaded
+  The Vue island (AddressFields) mounts here: State → City lists, the country picker.
+  It writes real inputs named phone, address_1, address_2, state, city, country,
+  postal_code, so the form posts them. Without JavaScript the plain boxes
+  below are used instead.
+--}}
+@let(values = address || {})
+@let(bad = errors || {})
+<div class="store-island space-y-4" data-store-address data-props="{{ js.stringify({ store, values, errors: bad, states: states || [], withPhone: true }) }}">
+  <noscript>
+    @each(field in ['phone', 'address_1', 'address_2', 'state', 'city', 'country', 'postal_code'])
+    <label class="block space-y-1.5 text-sm">
+      <span class="block font-medium">{{ t({ phone: 'store.phone_number', address_1: 'store_ui.address_1', address_2: 'store_ui.address_2', state: 'store_ui.state_province', city: 'store_ui.city', country: 'store_ui.country', postal_code: 'store_ui.postal_code' }[field]) }}</span>
+      <input name="{{ field }}" value="{{ values[field] || '' }}" class="h-8 w-full rounded-lg border px-2.5">
+      @if(bad[field])
+      <small class="block text-xs text-destructive">{{ bad[field] }}</small>
+      @end
+    </label>
+    @end
+  </noscript>
+</div>

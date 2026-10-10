@@ -1,0 +1,19 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Typecheck + unit tests only — the browser tests live in e2e.yml (six shards) so they don't hold these up.
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx tsc --noEmit -p .
+      - run: bun test

@@ -1,0 +1,23 @@
+{{--
+  The unsubscribe link of a marketing email.
+  Opening it only asks; the button posts, so a link scanner can't unsubscribe anyone.
+--}}
+@component(theme.layout, { search: true })
+  <main class="aurora-page is-narrow">
+    <a class="aurora-back" href="{{ url.home }}">← {{ t('store.back_to_shop') }}</a>
+    <div class="aurora-sheet aurora-form">
+      @if(!email)
+      <h1 class="aurora-sheet-title">{{ t('marketing.unsubscribe_broken') }}</h1>
+      @elseif(done)
+      <h1 class="aurora-sheet-title">{{ t('marketing.unsubscribe_done_title') }}</h1>
+      <p class="aurora-muted" role="status">{{ t('marketing.unsubscribe_done', { email, shop: store.name }) }}</p>
+      @else
+      <h1 class="aurora-sheet-title">{{ t('marketing.unsubscribe_title', { shop: store.name }) }}</h1>
+      <p class="aurora-muted">{{ t('marketing.unsubscribe_text', { email }) }}</p>
+      <form method="post" action="{{ action }}">
+        <button type="submit" class="aurora-add is-inline">{{ t('marketing.unsubscribe_button') }}</button>
+      </form>
+      @end
+    </div>
+  </main>
+@end

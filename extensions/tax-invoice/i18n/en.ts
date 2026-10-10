@@ -1,0 +1,65 @@
+/**
+ * English texts for this extension.
+ * It is the fallback for every other language.
+ * The `doc.*` texts are printed on the invoice.
+ */
+export default {
+	name: "Tax Invoice",
+	description:
+		"Print a tax invoice for a paid order, with the buyer's name, address and tax ID.",
+
+	"field.name": "Seller name",
+	"field.name_placeholder": "My Shop Co., Ltd.",
+	"field.name_hint": "The registered name of your business.",
+	"field.address": "Seller address",
+	"field.address_hint": "The registered address of your business.",
+	"field.tax_id": "Seller tax ID",
+	"field.tax_id_hint": "Your tax or VAT number, as it is registered.",
+	"field.branch": "Branch",
+	"field.branch_placeholder": "Head office",
+	"field.branch_hint": "Optional. Printed under the tax ID when filled.",
+	"field.prefix": "Invoice number prefix",
+	"field.prefix_hint": "The text in front of the order number. Empty = INV-.",
+
+	"button.open": "Tax invoice",
+	"dialog.title": "Tax invoice",
+	"dialog.again": "Invoice {number}. The number and the date stay the same.",
+	"buyer.name": "Buyer name",
+	"buyer.address": "Buyer address",
+	"buyer.saved": "Saved address",
+	"buyer.saved_pick": "Pick a saved address",
+	"buyer.tax_id": "Buyer tax ID",
+	"buyer.tax_id_hint": "Optional. Leave empty for a person with no tax ID.",
+	"buyer.branch": "Buyer branch",
+	"buyer.branch_hint": "Optional.",
+	"button.cancel": "Cancel",
+	"button.print": "Save and print",
+	"load.failed": "Could not load the invoice.",
+	"save.failed": "Could not save the invoice.",
+
+	"refuse.cancelled": "A voided or refunded order gets no tax invoice.",
+	"refuse.unpaid": "Only a paid order gets a tax invoice.",
+	"refuse.no_tax": "This order has no tax. Set the shop's tax rate first.",
+	"refuse.buyer": "Type the buyer's name and address.",
+
+	"doc.title": "Tax Invoice",
+	"doc.original": "Original",
+	"doc.tax_id": "Tax ID",
+	"doc.branch": "Branch",
+	"doc.number": "No.",
+	"doc.date": "Date",
+	"doc.buyer": "To",
+	"doc.no": "#",
+	"doc.item": "Description",
+	"doc.qty": "Qty",
+	"doc.price": "Unit price",
+	"doc.amount": "Amount",
+	"doc.subtotal": "Subtotal",
+	"doc.discount": "Discount",
+	"doc.value": "Value before tax",
+	"doc.tax_name": "Tax",
+	"doc.tax": "{label} {rate}%",
+	"doc.delivery": "Delivery",
+	"doc.total": "Total",
+	"doc.included": "Prices include {label}",
+};

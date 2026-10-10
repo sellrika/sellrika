@@ -1,0 +1,78 @@
+{{--
+  The catalog: one thin bar with the category links, sort and "In stock",
+  then the product grid and the pager. Filters and pages are plain links
+  and GET forms, so the page works without JavaScript.
+--}}
+@component(theme.layout, { search: true, q: filters.q })
+  @slot('main')
+  <div class="wrap index">
+    <div class="bar">
+      <nav class="cats" aria-label="{{ t('nav.categories') }}">
+        <a class="cat {{ filters.category ? '' : 'is-on' }}" href="{{ url.catalog({ q: filters.q, sort: filters.sort, stock: filters.stock }) }}" {{{ filters.category ? '' : 'aria-current="page"' }}}>{{ t('store.all') }}</a>
+        @each(c in categories)
+        <a class="cat {{ filters.category == c.id ? 'is-on' : '' }}" href="{{ url.catalog({ q: filters.q, sort: filters.sort, stock: filters.stock, category: c.id }) }}" {{{ filters.category == c.id ? 'aria-current="page"' : '' }}}>{{ c.name }}</a>
+        @end
+      </nav>
+      <form class="sort" method="get" action="{{ url.home }}" data-autosubmit>
+        @if(filters.q)
+        <input type="hidden" name="q" value="{{ filters.q }}">
+        @end
+        @if(filters.category)
+        <input type="hidden" name="category" value="{{ filters.category }}">
+        @end
+        <span class="select-box">
+          <select name="sort" aria-label="{{ t('store_ui.sort_products') }}">
+            @each(o in sorts)
+            <option value="{{ o.value }}" {{ o.value === filters.sort ? 'selected' : '' }}>{{ o.label }}</option>
+            @end
+          </select>
+          @!component('themes/minimal/icon', { name: 'chevron-down' })
+        </span>
+        <label class="chip">
+          <input type="checkbox" name="stock" value="1" {{ filters.stock ? 'checked' : '' }}>
+          {{ t('store.in_stock') }}
+        </label>
+        <noscript><button type="submit" class="chip">OK</button></noscript>
+      </form>
+    </div>
+
+    @if(!catalog.data.length)
+    <p class="index-empty">{{ t('store.nothing_here_caps') }}</p>
+    @else
+    <div class="products">
+      @each(p in catalog.data)
+      @include('themes/minimal/card')
+      @end
+    </div>
+    @end
+
+    @if(catalog.last_page > 1)
+    <nav class="pager">
+      @if(pager.prev)
+      <a class="ctl" href="{{ pager.prev }}" aria-label="{{ t('store.previous_page') }}">
+        @!component('themes/minimal/icon', { name: 'chevron-left' })
+        {{ t('store.prev') }}
+      </a>
+      @else
+      <a class="ctl" aria-disabled="true" aria-label="{{ t('store.previous_page') }}">
+        @!component('themes/minimal/icon', { name: 'chevron-left' })
+        {{ t('store.prev') }}
+      </a>
+      @end
+      <span class="pager-count">{{ catalog.page }} / {{ catalog.last_page }}</span>
+      @if(pager.next)
+      <a class="ctl" href="{{ pager.next }}" aria-label="{{ t('store.next_page') }}">
+        {{ t('common.next') }}
+        @!component('themes/minimal/icon', { name: 'chevron-right' })
+      </a>
+      @else
+      <a class="ctl" aria-disabled="true" aria-label="{{ t('store.next_page') }}">
+        {{ t('common.next') }}
+        @!component('themes/minimal/icon', { name: 'chevron-right' })
+      </a>
+      @end
+    </nav>
+    @end
+  </div>
+  @end
+@end

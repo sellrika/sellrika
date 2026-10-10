@@ -1,0 +1,5 @@
+/* One font a shop may pick for its store theme (STORE_FONTS). */
+@import "@fontsource/archivo/400.css";
+@import "@fontsource/archivo/500.css";
+@import "@fontsource/archivo/600.css";
+@import "@fontsource/archivo/700.css";

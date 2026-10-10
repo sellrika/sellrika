@@ -1,0 +1,27 @@
+{
+	"key": "stripe",
+	"name": "name",
+	"version": "1.0.0",
+	"description": "description",
+	"help_url": "https://dashboard.stripe.com/apikeys",
+	"icon": "assets/icon.svg",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "publishable_key",
+			"label": "field.publishable_key",
+			"required": true,
+			"placeholder": "field.publishable_key_hint",
+			"starts_with": "pk_"
+		},
+		{
+			"name": "secret_key",
+			"label": "field.secret_key",
+			"secret": true,
+			"required": true,
+			"placeholder": "field.secret_key_hint",
+			"starts_with": "sk_"
+		}
+	],
+	"payment": { "mode": "hosted" }
+}

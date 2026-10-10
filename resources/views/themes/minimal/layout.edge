@@ -1,0 +1,252 @@
+{{--
+  Minimal layout: banner strip, header, the page, footer,
+  then the three dialogs script.js fills (cart drawer, product sheet, sign-in).
+  Monochrome, square corners, small uppercase letter-spaced labels.
+  Every page wraps itself in it: @component(theme.layout, { search: true }) … @end
+  Props:
+    search  show the product search in the header (default true)
+    q       the search box value (the catalog page passes filters.q)
+  Slots:
+    main    the page
+  A layout only sees the shared variables (store, t, url, price …) and its props.
+--}}
+<div class="page">
+  @if(store.banner)
+  <p class="banner banner--{{ store.banner_type || 'info' }}" data-tone="{{ store.banner_type || 'info' }}">
+    @if(store.banner_type === 'success')
+    @!component('themes/minimal/icon', { name: 'check-circle' })
+    @elseif(store.banner_type === 'warning')
+    @!component('themes/minimal/icon', { name: 'alert' })
+    @elseif(store.banner_type === 'danger')
+    @!component('themes/minimal/icon', { name: 'octagon' })
+    @else
+    @!component('themes/minimal/icon', { name: 'megaphone' })
+    @end
+    <span>{{ store.banner }}</span>
+  </p>
+  @end
+
+  <header class="wrap head">
+    <a class="brand" href="{{ url.home }}">
+      @if(store.logo)
+      <img class="brand-logo" src="{{ store.logo }}" alt="" width="32" height="32">
+      @end
+      <span class="brand-name">{{ store.name }}</span>
+    </a>
+
+    <div class="head-tools">
+      @if($props.get('search', true))
+      <form class="ctl head-search" role="search" method="get" action="{{ url.home }}">
+        @!component('themes/minimal/icon', { name: 'search' })
+        <input type="search" name="q" value="{{ $props.get('q', '') }}" placeholder="{{ t('store.search_caps') }}" aria-label="{{ t('store.search_products') }}">
+      </form>
+      @end
+
+      @if(store.currencies && store.currencies.length > 1)
+      <form class="ctl select-box" method="post" action="/currency" data-autosubmit>
+        <select name="currency" aria-label="{{ t('store_ui.currency') }}">
+          @each(c in store.currencies)
+          <option value="{{ c.code }}" {{ c.code === (store.display ? store.display.code : store.currency) ? 'selected' : '' }}>{{ c.code }}</option>
+          @end
+        </select>
+        @!component('themes/minimal/icon', { name: 'chevron-down' })
+        <noscript><button type="submit" class="ctl">OK</button></noscript>
+      </form>
+      @end
+
+      @if(store.login)
+      @if(store.customer)
+      <a class="ctl" href="{{ url.account }}" aria-label="{{ t('store.my_account') }}">
+        @!component('themes/minimal/icon', { name: 'user' })
+        <span class="ctl-name">{{ store.customer.name.trim().split(/\s+/)[0] || store.customer.email }}</span>
+      </a>
+      @else
+      <button type="button" class="ctl" data-login-open aria-label="{{ t('store.sign_in') }}">
+        @!component('themes/minimal/icon', { name: 'user' })
+        <span>{{ t('store.sign_in') }}</span>
+      </button>
+      @end
+      @end
+
+      <button type="button" class="ctl cart-button" data-cart-open aria-label="{{ t('store_ui.open_cart') }}">
+        @!component('themes/minimal/icon', { name: 'bag' })
+        <span>{{ t('store_ui.cart') }}</span>
+        <span class="badge" data-cart-count hidden></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="main">
+    {{{ await $slots.main() }}}
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-cols">
+      <address class="foot-brand">
+        <div class="foot-name">
+          @if(store.logo)
+          <img src="{{ store.logo }}" alt="" width="40" height="40">
+          @end
+          <strong>{{ store.name }}</strong>
+        </div>
+        @if(store.address)
+        <p class="pre">{{ store.address }}</p>
+        @end
+        @if(store.hours)
+        <p class="pre">{{ store.hours }}</p>
+        @end
+      </address>
+
+      @if(store.phone || store.facebook || store.instagram || store.viber || store.whatsapp)
+      <div>
+        <h3 class="foot-head">{{ t('store_ui.contact') }}</h3>
+        <ul class="foot-list">
+          @if(store.phone)
+          <li><a href="tel:{{ store.phone.replace(/[^\d+]/g, '') }}">{{ store.phone }}</a></li>
+          @end
+          @if(store.facebook)
+          <li><a href="{{ store.facebook }}" target="_blank" rel="noopener">Facebook</a></li>
+          @end
+          @if(store.instagram)
+          <li><a href="{{ store.instagram }}" target="_blank" rel="noopener">Instagram</a></li>
+          @end
+          @if(store.viber)
+          <li><a href="viber://chat?number=%2B{{ store.viber }}" target="_blank" rel="noopener">Viber</a></li>
+          @end
+          @if(store.whatsapp)
+          <li><a href="https://wa.me/{{ store.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a></li>
+          @end
+        </ul>
+      </div>
+      @end
+
+      <div>
+        <h3 class="foot-head">{{ t('store_ui.information') }}</h3>
+        <ul class="foot-list">
+          @each(p in (store.pages || []))
+          <li><a href="{{ url.page(p.slug) }}">{{ p.title }}</a></li>
+          @end
+          <li><a href="{{ url.track }}">{{ t('store_ui.track_order') }}</a></li>
+          @if(store.login)
+          <li><a href="{{ url.account }}">{{ t('store.my_account') }}</a></li>
+          @end
+        </ul>
+        @if(store.languages && store.languages.length > 1)
+        <form class="langs" method="post" action="/lang" aria-label="{{ t('common.language') }}">
+          @each(l in store.languages)
+          <button type="submit" name="locale" value="{{ l }}" {{{ l === locale ? 'aria-current="true"' : '' }}}>{{ t('lang.' + l) }}</button>
+          @end
+        </form>
+        @end
+      </div>
+    </div>
+    <div class="wrap">
+      <p class="foot-copy">{{ t('store_ui.copyright', { year: new Date().getFullYear(), name: store.name }) }}</p>
+    </div>
+  </footer>
+</div>
+
+{{-- Cart drawer. script.js draws the lines into [data-cart-lines]. --}}
+<dialog class="drawer" data-cart aria-labelledby="cart-title">
+  <div class="drawer-head">
+    <h2 id="cart-title" class="dialog-title">
+      @!component('themes/minimal/icon', { name: 'bag' })
+      {{ t('store_ui.your_cart') }}
+    </h2>
+    <button type="button" class="icon-button" data-close aria-label="{{ t('common.close') }}">&times;</button>
+  </div>
+  <div class="drawer-empty" data-cart-empty>
+    @!component('themes/minimal/icon', { name: 'bag', class: 'icon-lg' })
+    <p class="drawer-empty-title">{{ t('store.cart_empty') }}</p>
+    <p class="muted small">{{ t('store_ui.cart_empty_hint') }}</p>
+  </div>
+  <ul class="drawer-lines" data-cart-lines></ul>
+  <div class="drawer-foot" data-cart-foot hidden>
+    <div class="drawer-total"><span>{{ t('common.total') }}</span><span data-cart-subtotal></span></div>
+    <button type="button" class="btn btn-block btn-tall" data-checkout>
+      {{ store.payments.length ? t('store.checkout') : t('store.send_order') }}
+      @!component('themes/minimal/icon', { name: 'arrow-right' })
+    </button>
+    @if(store.payments.length)
+      <p class="fine">{{ t('store.secure_payment_by', { gateway: store.payment_label }) }}</p>
+    @end
+    <p class="fine" data-cart-error role="alert" hidden></p>
+  </div>
+</dialog>
+
+{{-- Product sheet. script.js fills it for the tapped product; it is named after the product. --}}
+<dialog class="sheet" data-sheet aria-labelledby="sheet-title">
+  <button type="button" class="icon-button sheet-close" data-close aria-label="{{ t('common.close') }}">&times;</button>
+  <div class="sheet-grid">
+    <div class="sheet-side">
+      <div class="gallery" data-gallery></div>
+      <div class="sheet-info">
+        <h2 id="sheet-title" class="sheet-name" data-sheet-name></h2>
+        <p class="muted small" data-sheet-pack></p>
+        <p class="sheet-price" data-sheet-price></p>
+        <p class="muted small" data-sheet-kind></p>
+        <p class="sheet-links small">
+          <a data-sheet-link href="#">{{ t('store_ui.product_page') }}</a>
+          <button type="button" class="link-button" data-share aria-label="{{ t('store_ui.share') }}">{{ t('store_ui.share') }}</button>
+          <span role="status" data-share-note></span>
+        </p>
+      </div>
+    </div>
+    <div class="sheet-main" data-sheet-picker></div>
+  </div>
+</dialog>
+
+@if(store.login)
+{{-- Customer sign-in. script.js switches it between sign in, create account and reset. --}}
+<dialog class="modal" data-login aria-label="{{ t('store.sign_in') }}">
+  <button type="button" class="icon-button sheet-close" data-close aria-label="{{ t('common.close') }}">&times;</button>
+  <h2 class="dialog-title modal-title" data-login-title>{{ t('store.sign_in') }}</h2>
+  <p class="muted small">{{ t('store_ui.login_hint') }}</p>
+  @if(store.login.providers.includes('google') || store.login.providers.includes('microsoft'))
+  <div class="login-social" data-login-social>
+    @if(store.login.providers.includes('google'))
+    <button type="button" class="btn-line btn-block" data-provider="google">
+      <svg class="icon" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      {{ t('store_ui.continue_google') }}
+    </button>
+    @end
+    @if(store.login.providers.includes('microsoft'))
+    <button type="button" class="btn-line btn-block" data-provider="microsoft">
+      <svg class="icon" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+      {{ t('store_ui.continue_microsoft') }}
+    </button>
+    @end
+    @if(store.login.providers.includes('email'))
+    <p class="login-or muted small"><span>{{ t('store_ui.or') }}</span></p>
+    @end
+  </div>
+  @end
+  @if(store.login.providers.includes('email'))
+  <form class="stack" data-login-form novalidate>
+    <label class="field">
+      <span>{{ t('common.email') }}</span>
+      <input type="email" name="email" autocomplete="email" required>
+    </label>
+    <label class="field" data-login-password>
+      <span>{{ t('store_ui.password') }}</span>
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <label class="field" data-login-confirm hidden>
+      <span>{{ t('store_ui.confirm_password') }}</span>
+      <input type="password" name="confirm" autocomplete="new-password">
+    </label>
+    <button type="submit" class="btn btn-block" data-login-submit>{{ t('store.sign_in') }}</button>
+    <p class="login-links small muted">
+      <button type="button" class="link-button" data-login-mode="reset">{{ t('store_ui.forgot_password') }}</button>
+      <button type="button" class="link-button" data-login-mode="signup">{{ t('store_ui.create_account') }}</button>
+      <button type="button" class="link-button" data-login-mode="signin" hidden>{{ t('store_ui.back_to_sign_in') }}</button>
+    </p>
+  </form>
+  @end
+  <p class="error small" role="alert" data-login-error hidden>
+    <span></span>
+    <button type="button" class="link-button" data-login-resend hidden>{{ t('store_ui.send_link_again') }}</button>
+  </p>
+  <p class="small" role="status" data-login-note hidden></p>
+</dialog>
+@end

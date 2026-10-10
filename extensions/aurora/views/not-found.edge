@@ -1,0 +1,9 @@
+{{-- A store page that does not exist (unknown product, page or order). --}}
+@component(theme.layout, { search: true })
+  <main class="aurora-page is-narrow aurora-center">
+    <p class="aurora-big" aria-hidden="true">404</p>
+    <h1 class="aurora-sheet-title">{{ t('nav.notfound_heading') }}</h1>
+    <p class="aurora-muted">{{ t('nav.notfound_text') }}</p>
+    <p><a class="aurora-add is-inline" href="{{ url.home }}">{{ t('store.back_to_shop') }}</a></p>
+  </main>
+@end

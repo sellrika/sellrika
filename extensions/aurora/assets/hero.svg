@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="1200" height="420" preserveAspectRatio="xMidYMid slice" role="presentation">
+  <defs>
+    <linearGradient id="h-sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#101433" />
+      <stop offset="0.55" stop-color="#2b1b52" />
+      <stop offset="1" stop-color="#0d1a2b" />
+    </linearGradient>
+    <linearGradient id="h-veil" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5b6cff" stop-opacity="0" />
+      <stop offset="0.35" stop-color="#5b6cff" stop-opacity="0.85" />
+      <stop offset="0.65" stop-color="#49d4c0" stop-opacity="0.8" />
+      <stop offset="1" stop-color="#a86bff" stop-opacity="0" />
+    </linearGradient>
+    <filter id="h-soft" x="-20%" y="-40%" width="140%" height="180%">
+      <feGaussianBlur stdDeviation="26" />
+    </filter>
+  </defs>
+  <rect width="1200" height="420" fill="url(#h-sky)" />
+  <g filter="url(#h-soft)" fill="none" stroke="url(#h-veil)" stroke-linecap="round">
+    <path d="M-40 300C180 150 360 120 620 190s420 60 660-60" stroke-width="70" opacity="0.75" />
+    <path d="M-40 380C200 250 420 230 660 280s400 30 620-90" stroke-width="42" opacity="0.5" />
+    <path d="M-40 210C220 90 420 70 700 130s360 40 580-40" stroke-width="26" opacity="0.35" />
+  </g>
+  <g fill="#fff">
+    <circle cx="180" cy="70" r="2" opacity="0.7" />
+    <circle cx="420" cy="46" r="1.6" opacity="0.5" />
+    <circle cx="880" cy="62" r="2.2" opacity="0.6" />
+    <circle cx="1040" cy="110" r="1.4" opacity="0.4" />
+    <circle cx="700" cy="34" r="1.4" opacity="0.45" />
+  </g>
+</svg>

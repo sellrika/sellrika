@@ -1,0 +1,2113 @@
+/*
+ * Soft store theme.
+ * Soft modern retail: warm off-white page, white rounded cards,
+ * sage accents, a floating white pill header and a dark rounded footer.
+ * Archivo for text, IBM Plex Mono for the small labels.
+ * Every small control is a pill (fully round ends).
+ * Controls that sit in one row share one height: --control (44px).
+ * Plain CSS, no Tailwind. Fonts are self-hosted through @fontsource.
+ */
+@import "@fontsource/archivo/400.css";
+@import "@fontsource/archivo/500.css";
+@import "@fontsource/archivo/600.css";
+@import "@fontsource/archivo/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+/*
+ * The shared variables (docs/features/store-themes.md).
+ * The shared checkout, done page and order card read them.
+ * The rest are this theme's own.
+ */
+:root {
+	--store-bg: #fbfaf8;
+	--store-fg: #1c1b19;
+	--store-surface: #ffffff;
+	--store-muted: #8a857c;
+	--store-line: #eae7e1;
+	--store-accent: #1c1b19;
+	--store-on-accent: #ffffff;
+	--store-danger: #b3261e;
+	--store-radius: 20px;
+	--store-control-height: var(--control);
+	--store-button-radius: 999px;
+	--store-font: "Archivo", ui-sans-serif, system-ui, sans-serif;
+	--store-font-heading: "Archivo", ui-sans-serif, system-ui, sans-serif;
+	--store-button-case: none;
+	--store-button-tracking: 0;
+	--store-input-bg: #ffffff;
+
+	--mono: "IBM Plex Mono", ui-monospace, monospace;
+	--control: 44px;
+	--soft: #f4f2ee;
+	--thumb: #efece6;
+	--faint: #a3a09a;
+	--line-strong: #d9d5cd;
+	--ink-2: #55524c;
+	--sage: oklch(0.42 0.06 150);
+	--sage-soft: oklch(0.93 0.03 150);
+	--sage-ink: oklch(0.38 0.05 150);
+	--sage-badge: oklch(0.9 0.06 150);
+	--sage-on: oklch(0.95 0.02 150);
+	--sage-edge: oklch(0.88 0.04 150);
+	--sage-ring: oklch(0.85 0.05 150);
+	/* Text on a sage block. */
+	--sage-text: #fff;
+	--shadow: 0 2px 10px rgb(28 27 25 / 0.04);
+	--foot-fg: #f6f4f0;
+	color-scheme: light;
+}
+/*
+ * The shop's own secondary colour (Template › Customize) replaces the sage:
+ * document.edge puts `.theme-secondary` on <html> when one is picked.
+ * The lighter and darker sages are mixed from it.
+ */
+.theme-secondary {
+	--sage: var(--theme-secondary);
+	--sage-text: var(--theme-on-secondary);
+	--sage-ink: color-mix(in oklch, var(--theme-secondary) 70%, black);
+	--sage-soft: color-mix(in oklch, var(--theme-secondary) 14%, white);
+	--sage-badge: color-mix(in oklch, var(--theme-secondary) 22%, white);
+	--sage-on: color-mix(in oklch, var(--theme-secondary) 8%, white);
+	--sage-edge: color-mix(in oklch, var(--theme-secondary) 28%, white);
+	--sage-ring: color-mix(in oklch, var(--theme-secondary) 34%, white);
+}
+
+/* ── Base ─────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	background: var(--store-bg);
+	color: var(--store-fg);
+	font: 15px / 1.5 var(--store-font);
+	-webkit-font-smoothing: antialiased;
+}
+img {
+	display: block;
+	max-width: 100%;
+}
+a {
+	color: inherit;
+}
+:focus-visible {
+	outline: 2px solid var(--store-fg);
+	outline-offset: 2px;
+}
+[hidden] {
+	/* biome-ignore lint/complexity/noImportantStyles: `hidden` must beat every display rule here */
+	display: none !important;
+}
+.icon {
+	flex: none;
+	width: 16px;
+	height: 16px;
+}
+
+/* ── Small helpers ────────────────────────────────────── */
+
+.muted {
+	color: var(--store-muted);
+}
+.faint {
+	opacity: 0.35;
+}
+.small {
+	font-size: 13px;
+}
+.strong {
+	font-weight: 600;
+}
+.as-block {
+	display: block;
+}
+.pre {
+	margin: 0;
+	white-space: pre-line;
+}
+.upper {
+	text-transform: uppercase;
+}
+.center {
+	text-align: center;
+	justify-items: center;
+}
+.ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.error {
+	color: var(--store-danger);
+}
+.stack {
+	display: grid;
+	gap: 16px;
+}
+.stack > p {
+	margin: 0;
+}
+.plain-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: grid;
+	gap: 4px;
+}
+.label {
+	margin: 0;
+	font: 500 11px / 1.4 var(--mono);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--store-muted);
+}
+
+/* ── Page frame ───────────────────────────────────────── */
+
+.page {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+.wrap {
+	width: 100%;
+	max-width: 72rem;
+	margin-inline: auto;
+	padding-inline: 16px;
+}
+.main {
+	flex: 1;
+	min-width: 0;
+}
+.narrow-top {
+	padding-block: 24px 64px;
+}
+.column {
+	max-width: 44rem;
+}
+
+/* Announcement strip. `info` takes the sage colours, the others a fixed one. */
+.banner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin: 0;
+	padding: 8px 16px;
+	text-align: center;
+	font-size: 14px;
+	font-weight: 500;
+	background: var(--sage-soft);
+	color: var(--sage-ink);
+}
+.banner--success {
+	background: #059669;
+	color: #fff;
+}
+.banner--warning {
+	background: #fbbf24;
+	color: #1c1b19;
+}
+.banner--danger {
+	background: #dc2626;
+	color: #fff;
+}
+
+/* ── Pills: every small control ───────────────────────── */
+
+/*
+ * One pill control: header buttons, sort, chips, pager, small buttons.
+ * All the same height, so a row of them lines up.
+ */
+.pill {
+	position: relative;
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: var(--control);
+	padding: 0 18px;
+	border: 1px solid var(--line-strong);
+	border-radius: 999px;
+	background: var(--store-surface);
+	color: var(--store-fg);
+	font: 500 14px / 1 var(--store-font);
+	white-space: nowrap;
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		color 0.15s;
+}
+.pill-line:hover {
+	background: var(--soft);
+	border-color: var(--store-fg);
+}
+.pill-dark {
+	border-color: var(--store-accent);
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+}
+.pill-dark:hover {
+	border-color: var(--sage);
+	background: var(--sage);
+	color: var(--sage-text);
+}
+.pill-sm {
+	height: 36px;
+	padding: 0 14px;
+	font-size: 13px;
+}
+.pill-icon {
+	width: 36px;
+	padding: 0;
+}
+.pill[aria-disabled="true"] {
+	opacity: 0.4;
+	pointer-events: none;
+}
+.pill-name {
+	max-width: 7rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+/* A native select inside a pill, with our own arrow. */
+.select-box {
+	padding: 0;
+}
+.select-box select {
+	height: 100%;
+	padding: 0 38px 0 18px;
+	border: 0;
+	border-radius: 999px;
+	appearance: none;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+	outline: none;
+}
+.select-box:has(select:focus-visible) {
+	outline: 2px solid var(--store-fg);
+	outline-offset: 2px;
+}
+.select-box select option {
+	color: #000;
+}
+.select-box .icon {
+	position: absolute;
+	right: 14px;
+	width: 14px;
+	height: 14px;
+	pointer-events: none;
+	opacity: 0.6;
+}
+/* "In stock": a real checkbox stretched over its pill label. */
+.chip input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	border-radius: 999px;
+	appearance: none;
+	opacity: 0;
+	cursor: pointer;
+}
+.chip {
+	color: var(--ink-2);
+	user-select: none;
+}
+.chip:has(:checked) {
+	border-color: var(--store-accent);
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+}
+.chip:has(:focus-visible) {
+	outline: 2px solid var(--store-fg);
+	outline-offset: 2px;
+}
+.badge {
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 22px;
+	height: 22px;
+	padding: 0 5px;
+	border: 2px solid var(--store-surface);
+	border-radius: 999px;
+	background: var(--sage-badge);
+	color: var(--store-fg);
+	font: 600 11px / 1 var(--store-font);
+}
+/* The badge pops when something is added (script.js replays the class). */
+.badge.is-bump {
+	animation: bump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes bump {
+	0% {
+		transform: scale(1);
+	}
+	40% {
+		transform: scale(1.45);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+/* ── Header: a floating white pill ────────────────────── */
+
+.head {
+	padding-block: 20px 12px;
+}
+/*
+ * Phones: the shop name gets the whole first line (never cut to "Ma…"),
+ * the buttons go under it, the search box last.
+ * Wide screens: one pill row (see the media query at the end).
+ */
+.head-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	border: 1px solid var(--store-line);
+	border-radius: 28px;
+	background: var(--store-surface);
+	box-shadow: var(--shadow);
+}
+.brand {
+	display: flex;
+	flex: 1 1 100%;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+	text-decoration: none;
+}
+.brand-mark {
+	width: 36px;
+	height: 36px;
+	flex: none;
+	border-radius: 50%;
+	object-fit: cover;
+}
+.brand-letter {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+	font-size: 14px;
+	font-weight: 600;
+}
+.brand-name {
+	min-width: 0;
+	font-size: 20px;
+	font-weight: 600;
+	line-height: 1.2;
+	letter-spacing: -0.02em;
+	overflow-wrap: anywhere;
+}
+.head-tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-left: auto;
+}
+.head-search {
+	position: relative;
+	order: 3;
+	flex: 1 1 100%;
+	min-width: 0;
+}
+.head-search .icon {
+	position: absolute;
+	top: 50%;
+	left: 16px;
+	transform: translateY(-50%);
+	color: var(--store-muted);
+	pointer-events: none;
+}
+.head-search input {
+	width: 100%;
+	height: var(--control);
+	padding: 0 16px 0 42px;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	background: var(--soft);
+	color: inherit;
+	font: 400 14px / 1 var(--store-font);
+	outline: none;
+}
+.head-search input::placeholder {
+	color: var(--store-muted);
+}
+.head-search input:focus {
+	border-color: var(--sage-edge);
+	box-shadow: 0 0 0 3px var(--sage-ring);
+}
+
+/* ── Buttons and fields ───────────────────────────────── */
+
+.btn,
+.btn-line {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: var(--control);
+	padding: 0 22px;
+	border: 1px solid var(--store-accent);
+	border-radius: 999px;
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+	font: 500 14px / 1.2 var(--store-font);
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
+}
+.btn:hover {
+	border-color: var(--sage);
+	background: var(--sage);
+	color: var(--sage-text);
+}
+.btn-line {
+	border-color: var(--line-strong);
+	background: var(--store-surface);
+	color: var(--store-fg);
+}
+.btn-line:hover {
+	border-color: var(--store-fg);
+	background: var(--soft);
+}
+.btn:disabled,
+.btn-line:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+.btn-block {
+	width: 100%;
+}
+.btn-tall {
+	min-height: 52px;
+}
+.icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	flex: none;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+}
+.icon-button .icon {
+	width: 18px;
+	height: 18px;
+}
+.icon-button:hover {
+	background: var(--soft);
+}
+.link-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	cursor: pointer;
+}
+.field {
+	display: grid;
+	gap: 6px;
+}
+.field > span {
+	font-size: 13px;
+	font-weight: 500;
+}
+.field input,
+.field select,
+.field textarea {
+	width: 100%;
+	min-height: var(--control);
+	padding: 0 18px;
+	border: 1px solid var(--line-strong);
+	border-radius: 999px;
+	background: var(--store-input-bg);
+	color: var(--store-fg);
+	font: 400 14px / 1.2 var(--store-font);
+	outline: none;
+}
+.field input::placeholder {
+	color: var(--faint);
+}
+.field input:focus {
+	border-color: var(--sage);
+	box-shadow: 0 0 0 3px var(--sage-ring);
+}
+.field [aria-invalid="true"] {
+	border-color: var(--store-danger);
+}
+.field small {
+	padding-left: 18px;
+	font-size: 12px;
+}
+
+/* ── Catalog ──────────────────────────────────────────── */
+
+.catalog {
+	padding-block: 4px 64px;
+}
+/* Category pills: one scrolling row on phones, wrapped on wide screens. */
+.cats {
+	display: flex;
+	gap: 10px;
+	margin-inline: -16px;
+	padding: 8px 16px;
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.cats::-webkit-scrollbar {
+	display: none;
+}
+.cat {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 8px;
+	height: var(--control);
+	padding: 0 18px;
+	border: 1px solid var(--store-line);
+	border-radius: 999px;
+	background: var(--store-surface);
+	color: var(--ink-2);
+	font-size: 14px;
+	white-space: nowrap;
+	text-decoration: none;
+	transition: background 0.15s;
+}
+.cat:hover {
+	background: var(--soft);
+}
+.cat.is-on {
+	border-color: var(--sage-edge);
+	background: var(--sage-on);
+	color: var(--store-fg);
+	font-weight: 500;
+}
+.cat-count {
+	color: var(--faint);
+	font-weight: 400;
+	font-variant-numeric: tabular-nums;
+}
+.dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+}
+.catalog-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 16px;
+	margin: 28px 0 24px;
+}
+.catalog-titles {
+	min-width: 0;
+}
+.catalog-title {
+	margin: 0;
+	font-size: 30px;
+	font-weight: 600;
+	line-height: 1.15;
+	letter-spacing: -0.02em;
+	overflow-wrap: anywhere;
+}
+.catalog-titles p {
+	margin: 6px 0 0;
+}
+.catalog-empty {
+	padding: 96px 0;
+	text-align: center;
+	color: var(--store-muted);
+}
+.sort {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+.sort .pill {
+	font-size: 13px;
+}
+/* Cards keep their own height, so none is stretched into empty space. */
+.cards {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: start;
+	gap: 12px;
+}
+
+/* One product card: a white rounded box around a rounded photo. */
+.card {
+	display: block;
+	min-width: 0;
+	padding: 10px;
+	border: 1px solid var(--store-line);
+	border-radius: 24px;
+	background: var(--store-surface);
+	text-decoration: none;
+	transition: box-shadow 0.2s;
+}
+.card:hover {
+	box-shadow: 0 12px 30px rgb(28 27 25 / 0.09);
+}
+.card.is-sold-out {
+	opacity: 0.6;
+}
+.card-frame {
+	position: relative;
+	aspect-ratio: 1;
+	overflow: hidden;
+	border-radius: 16px;
+	background: var(--thumb);
+}
+.card-img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.5s;
+}
+.card:hover .card-img {
+	transform: scale(1.03);
+}
+.card-letter {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 48px;
+	font-weight: 600;
+	color: #c2beb7;
+}
+.card-tag,
+.card-off {
+	position: absolute;
+	top: 10px;
+	max-width: calc(100% - 20px);
+	overflow: hidden;
+	padding: 5px 10px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1.2;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.card-tag {
+	left: 10px;
+	background: var(--store-surface);
+	box-shadow: 0 1px 4px rgb(28 27 25 / 0.08);
+}
+.card-tag.is-out {
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+}
+.card-off {
+	right: 10px;
+	background: var(--sage-soft);
+	color: var(--sage-ink);
+	font-weight: 600;
+}
+/* Only what the product has: no empty lines kept "just in case". */
+.card-body {
+	display: grid;
+	gap: 6px;
+	padding: 12px 4px 2px;
+}
+.card-cat {
+	overflow: hidden;
+	font: 400 10px / 1.4 var(--mono);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--faint);
+}
+.card-row {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+.card-name {
+	min-width: 0;
+	overflow: hidden;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.3;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.card-price {
+	flex: none;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.card-from {
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--store-muted);
+}
+.card-was {
+	margin-left: 4px;
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--faint);
+}
+.pager {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	margin-top: 40px;
+}
+.pager-count {
+	font-size: 14px;
+	color: var(--store-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Product page ─────────────────────────────────────── */
+
+.back {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 24px;
+	font-size: 14px;
+	color: var(--store-muted);
+	text-decoration: none;
+}
+.back:hover {
+	color: var(--store-fg);
+	text-decoration: underline;
+}
+.title {
+	margin: 0 0 24px;
+	font-size: 32px;
+	font-weight: 600;
+	line-height: 1.08;
+	letter-spacing: -0.03em;
+	overflow-wrap: anywhere;
+}
+.product .title,
+.panel .title,
+.account-head .title {
+	margin: 0;
+}
+.product {
+	display: grid;
+	gap: 28px;
+}
+.product-info {
+	display: grid;
+	align-content: start;
+	gap: 16px;
+	min-width: 0;
+}
+.product-info > p {
+	margin: 0;
+}
+.product-price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px;
+	font-size: 22px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.product-price s {
+	font-size: 16px;
+	font-weight: 400;
+}
+.off {
+	padding: 3px 10px;
+	border-radius: 999px;
+	background: var(--sage-soft);
+	color: var(--sage-ink);
+	font-size: 12px;
+	font-weight: 600;
+}
+.tag {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: var(--soft);
+	font-size: 11px;
+	font-weight: 500;
+}
+.tag--out {
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+}
+.gallery {
+	min-width: 0;
+}
+.gallery-main {
+	position: relative;
+	aspect-ratio: 1;
+	overflow: hidden;
+	border: 1px solid var(--store-line);
+	border-radius: 28px;
+	background: var(--thumb);
+}
+.gallery-main img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.gallery-thumbs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 10px;
+}
+.gallery-thumb {
+	width: 64px;
+	height: 64px;
+	padding: 0;
+	overflow: hidden;
+	border: 2px solid transparent;
+	border-radius: 14px;
+	background: var(--thumb);
+	opacity: 0.6;
+	cursor: pointer;
+}
+.gallery-thumb[aria-pressed="true"] {
+	border-color: var(--store-fg);
+	opacity: 1;
+}
+.gallery-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.details {
+	display: grid;
+	gap: 10px;
+	padding-top: 20px;
+	border-top: 1px solid var(--store-line);
+}
+.extra {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 4px 16px;
+	margin: 0;
+	font-size: 14px;
+}
+.extra dt {
+	font-weight: 500;
+}
+.extra dd {
+	margin: 0;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	color: var(--store-muted);
+}
+.share-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.related {
+	margin-top: 56px;
+}
+.section-title {
+	margin: 0 0 16px;
+	font-size: 22px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+
+/* ── Option picker (product page + product sheet, drawn by script.js) ── */
+
+.picker {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+.picker-body {
+	display: grid;
+	gap: 24px;
+}
+.picker-foot p {
+	margin: 0;
+}
+.picker-foot {
+	display: grid;
+	gap: 8px;
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid var(--store-line);
+}
+.opt-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+.opt-head h3 {
+	margin: 0;
+}
+.opt-values {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+/* One option value: a pill, dark when picked. */
+.opt {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-width: 56px;
+	height: var(--control);
+	padding: 0 18px;
+	border: 1px solid var(--line-strong);
+	border-radius: 999px;
+	background: var(--store-surface);
+	color: var(--store-fg);
+	font: 500 14px / 1 var(--store-font);
+	cursor: pointer;
+}
+.opt:hover {
+	border-color: var(--store-fg);
+}
+.opt[aria-pressed="true"] {
+	border-color: var(--store-accent);
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+}
+.opt:disabled {
+	opacity: 0.35;
+	text-decoration: line-through;
+	cursor: not-allowed;
+}
+.swatch {
+	width: 16px;
+	height: 16px;
+	border: 1px solid rgb(0 0 0 / 0.15);
+	border-radius: 50%;
+}
+.opt-list {
+	display: grid;
+	gap: 8px;
+}
+.opt-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	min-height: 52px;
+	padding: 10px 18px;
+	border: 1px solid var(--store-line);
+	border-radius: 18px;
+	background: var(--store-surface);
+	color: var(--store-fg);
+	font: 400 14px / 1.3 var(--store-font);
+	text-align: left;
+	cursor: pointer;
+}
+.opt-row:hover {
+	background: var(--soft);
+}
+.opt-row[aria-pressed="true"] {
+	border-color: var(--store-fg);
+}
+.opt-row:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.opt-row-name {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+	font-weight: 500;
+}
+/* The round "radio" mark of a plain option row. */
+.opt-mark {
+	width: 18px;
+	height: 18px;
+	flex: none;
+	border: 1px solid var(--line-strong);
+	border-radius: 50%;
+}
+.opt-row[aria-pressed="true"] .opt-mark {
+	border: 6px solid var(--store-fg);
+}
+.picker-add {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+/* The quantity stepper: a pill with round - and + buttons. */
+.stepper {
+	display: flex;
+	flex: none;
+	align-items: center;
+	height: 34px;
+	padding: 2px;
+	border: 1px solid var(--line-strong);
+	border-radius: 999px;
+	background: var(--store-surface);
+}
+.stepper button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+}
+.stepper button:hover {
+	background: var(--soft);
+}
+.stepper button:disabled {
+	opacity: 0.35;
+	cursor: not-allowed;
+}
+.stepper span {
+	min-width: 24px;
+	text-align: center;
+	font-size: 14px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+}
+.stepper--big {
+	height: 52px;
+	padding: 3px;
+}
+.stepper--big button {
+	width: 44px;
+	height: 44px;
+}
+.stepper--big span {
+	min-width: 28px;
+	font-weight: 600;
+}
+.add-button {
+	flex: 1;
+	min-width: 0;
+	justify-content: space-between;
+	min-height: 52px;
+	padding: 0 22px;
+}
+.add-button .add-text {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.add-button .add-price {
+	flex: none;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Dialogs: cart drawer, product sheet, sign-in ─────── */
+
+.drawer,
+.sheet,
+.modal {
+	padding: 0;
+	border: 1px solid var(--store-line);
+	background: var(--store-bg);
+	color: var(--store-fg);
+	font-family: var(--store-font);
+}
+.drawer::backdrop,
+.sheet::backdrop,
+.modal::backdrop {
+	background: rgb(28 27 25 / 0.4);
+}
+.drawer {
+	width: min(28rem, 100%);
+	max-width: 100%;
+	height: 100dvh;
+	max-height: 100dvh;
+	margin: 0 0 0 auto;
+	border-width: 0;
+}
+.drawer[open] {
+	display: flex;
+	flex-direction: column;
+	animation: slide-in 0.2s ease-out;
+}
+@keyframes slide-in {
+	from {
+		transform: translateX(100%);
+	}
+}
+.drawer-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 16px 16px 16px 24px;
+	border-bottom: 1px solid var(--store-line);
+}
+.drawer-head h2 {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+.drawer-empty {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 32px;
+	text-align: center;
+}
+.drawer-empty p {
+	margin: 0;
+}
+.empty-mark {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 64px;
+	height: 64px;
+	margin-bottom: 8px;
+	border-radius: 50%;
+	background: var(--soft);
+	color: var(--store-muted);
+}
+.empty-mark .icon {
+	width: 26px;
+	height: 26px;
+}
+.drawer-empty-title {
+	font-size: 18px;
+	font-weight: 600;
+}
+.drawer-lines {
+	display: grid;
+	/* a long name must not widen the drawer */
+	grid-template-columns: minmax(0, 1fr);
+	flex: 1;
+	align-content: start;
+	gap: 12px;
+	min-height: 0;
+	margin: 0;
+	padding: 16px;
+	overflow-y: auto;
+	list-style: none;
+}
+/* One cart line: a white rounded card. */
+.line {
+	display: flex;
+	gap: 12px;
+	padding: 10px;
+	border: 1px solid var(--store-line);
+	border-radius: 20px;
+	background: var(--store-surface);
+}
+.line-thumb {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 64px;
+	height: 64px;
+	flex: none;
+	padding: 0;
+	overflow: hidden;
+	border: 0;
+	border-radius: 14px;
+	background: var(--thumb);
+	color: #b3aea6;
+	font: 600 22px / 1 var(--store-font);
+	cursor: pointer;
+}
+.line-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.line-body {
+	flex: 1;
+	min-width: 0;
+}
+.line-name {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.line-title,
+.line-variant {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.line-title {
+	font-size: 14px;
+	font-weight: 500;
+}
+.line-variant {
+	font-size: 12px;
+}
+.line-name:hover .line-title {
+	text-decoration: underline;
+}
+.line-qty {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+}
+/* Same height as the stepper next to it, and round like it. */
+.line-remove {
+	width: 34px;
+	height: 34px;
+	color: var(--store-muted);
+}
+.line-remove:hover {
+	color: var(--store-danger);
+}
+.line-note {
+	margin: 4px 0 0;
+	font-size: 12px;
+}
+.line-price {
+	padding-right: 4px;
+	font-size: 14px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.drawer-foot {
+	display: grid;
+	gap: 12px;
+	padding: 16px 16px 20px;
+	border-top: 1px solid var(--store-line);
+	background: var(--store-surface);
+}
+.drawer-total {
+	display: flex;
+	justify-content: space-between;
+	padding-inline: 4px;
+	font-size: 18px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.fine {
+	margin: 0;
+	font-size: 12px;
+	text-align: center;
+	color: var(--store-muted);
+}
+.sheet {
+	width: min(52rem, calc(100% - 24px));
+	max-width: none;
+	max-height: 88dvh;
+	overflow: hidden;
+	border-radius: 28px;
+}
+.sheet[open] {
+	display: flex;
+	flex-direction: column;
+}
+.sheet-close {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	z-index: 1;
+	background: var(--store-surface);
+}
+.sheet-grid {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr);
+	min-height: 0;
+	max-height: 88dvh;
+}
+.sheet-side {
+	display: flex;
+	gap: 16px;
+	padding: 16px;
+	border-bottom: 1px solid var(--store-line);
+	background: var(--store-surface);
+}
+.sheet-side .gallery {
+	width: 84px;
+	flex: none;
+}
+.sheet-side .gallery-main {
+	border-radius: 16px;
+}
+.sheet-side .gallery-thumbs {
+	display: none;
+}
+.sheet-side .gallery-thumb {
+	width: 48px;
+	height: 48px;
+	border-radius: 12px;
+}
+.sheet-info {
+	min-width: 0;
+	padding-right: 40px;
+}
+.sheet-info p {
+	margin: 4px 0 0;
+}
+.sheet-info p:empty {
+	display: none;
+}
+.sheet-name {
+	margin: 0;
+	font-size: 22px;
+	font-weight: 600;
+	line-height: 1.15;
+	letter-spacing: -0.02em;
+	overflow-wrap: anywhere;
+}
+.sheet-price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px;
+	font-size: 16px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.sheet-price s {
+	font-weight: 400;
+}
+.sheet-links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	color: var(--store-muted);
+}
+.sheet-main {
+	min-height: 0;
+}
+.sheet-main .picker {
+	height: 100%;
+}
+.sheet-main .picker-body {
+	flex: 1;
+	min-height: 0;
+	padding: 20px;
+	overflow-y: auto;
+}
+.sheet-main .opt-head {
+	padding-right: 40px;
+}
+.sheet-main .picker-foot {
+	margin: 0;
+	padding: 16px 20px 20px;
+	background: var(--store-surface);
+}
+.modal {
+	width: min(26rem, calc(100% - 24px));
+	padding: 28px;
+	border-radius: 28px;
+}
+.modal-title {
+	margin: 0 0 4px;
+	padding-right: 36px;
+	font-size: 24px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+.modal > p {
+	margin: 0 0 16px;
+}
+.login-social {
+	display: grid;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+.login-or {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 4px 0 0;
+}
+.login-or::before,
+.login-or::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: var(--store-line);
+}
+.login-links {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 8px;
+}
+.modal [role="alert"],
+.modal [role="status"] {
+	margin: 16px 0 0;
+}
+
+/* ── Panels: page, track, account ─────────────────────── */
+
+.panel {
+	padding: 24px;
+	border: 1px solid var(--store-line);
+	border-radius: 24px;
+	background: var(--store-surface);
+	box-shadow: var(--shadow);
+}
+/* A custom page: room between its title and its text. */
+.store-page {
+	margin-top: 16px;
+}
+.track-fields {
+	display: grid;
+	gap: 16px;
+}
+.account-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 24px;
+}
+.account-head p {
+	margin: 6px 0 0;
+}
+.account-head form {
+	margin: 0;
+}
+/* Account tabs: the same pills as the category row. */
+.tabs {
+	display: flex;
+	gap: 8px;
+	margin: 0 -16px 16px;
+	padding: 2px 16px;
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar {
+	display: none;
+}
+.tabs a {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	height: var(--control);
+	padding: 0 18px;
+	border: 1px solid var(--store-line);
+	border-radius: 999px;
+	background: var(--store-surface);
+	color: var(--ink-2);
+	font-size: 14px;
+	white-space: nowrap;
+	text-decoration: none;
+}
+.tabs a:hover {
+	background: var(--soft);
+}
+.tabs a[aria-current="page"] {
+	border-color: var(--store-accent);
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+	font-weight: 500;
+}
+.rows {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.rows > li {
+	border-bottom: 1px solid var(--store-line);
+}
+.rows > li:last-child {
+	border-bottom: 0;
+}
+.row-main {
+	flex: 1;
+	min-width: 0;
+}
+.order-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	padding: 14px 0;
+	font-size: 14px;
+	text-decoration: none;
+}
+.order-row .row-main {
+	flex-basis: 12rem;
+}
+.order-sum {
+	flex: none;
+	margin-left: auto;
+	text-align: right;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+/* Order status badges (the same colours as the staff app's statusBadges). */
+.status {
+	flex: none;
+	padding: 3px 10px;
+	border: 1px solid;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1.4;
+}
+.status--completed,
+.status--delivered {
+	border-color: #6ee7b7;
+	background: #ecfdf5;
+	color: #047857;
+}
+.status--partially_refunded,
+.status--refunded {
+	border-color: #fcd34d;
+	background: #fffbeb;
+	color: #b45309;
+}
+.status--voided {
+	border-color: #d4d4d8;
+	background: #f4f4f5;
+	color: #52525b;
+	text-decoration: line-through;
+}
+.status--new {
+	border-color: #7dd3fc;
+	background: #f0f9ff;
+	color: #0369a1;
+}
+.status--packing {
+	border-color: #c4b5fd;
+	background: #f5f3ff;
+	color: #6d28d9;
+}
+.status--shipped {
+	border-color: #93c5fd;
+	background: #eff6ff;
+	color: #1d4ed8;
+}
+/* Unpaid / partly paid: a small pie filled by the share already paid. */
+.pay {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	font-weight: 500;
+	white-space: nowrap;
+}
+.pay--unpaid {
+	color: #dc2626;
+}
+.pay--partial {
+	color: #d97706;
+}
+.pie {
+	width: 12px;
+	height: 12px;
+	flex: none;
+	border: 1px solid currentColor;
+	border-radius: 50%;
+}
+.address-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+	gap: 8px 12px;
+	padding: 14px 0;
+	font-size: 14px;
+}
+.address-row form {
+	margin: 0;
+}
+.address-edit {
+	grid-column: 1 / -1;
+}
+.address-edit > form,
+.address-add > form {
+	margin-top: 16px;
+}
+details > summary {
+	width: fit-content;
+	list-style: none;
+}
+details > summary::-webkit-details-marker {
+	display: none;
+}
+/*
+ * The shared order card (store/partials/order.edge):
+ * its title in this theme's heading weight.
+ */
+.so-title {
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+.big-letter {
+	margin: 0;
+	font-size: 96px;
+	font-weight: 700;
+	line-height: 1;
+	letter-spacing: -0.04em;
+	color: #d6d2ca;
+}
+
+/* ── Footer: a dark rounded block ─────────────────────── */
+
+.foot-wrap {
+	padding-bottom: 24px;
+}
+.foot {
+	padding: 40px 24px 24px;
+	border-radius: 28px;
+	/* its own ink, so the shop's text colour never moves it */
+	background: #1c1b19;
+	color: #a5a09a;
+	font-size: 14px;
+}
+.foot-cols {
+	display: flex;
+	flex-direction: column;
+	gap: 36px;
+}
+.foot-brand {
+	display: grid;
+	gap: 12px;
+	font-style: normal;
+}
+.foot-name {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.foot-name img {
+	width: 40px;
+	height: 40px;
+	border-radius: 12px;
+	object-fit: cover;
+}
+.foot-name strong {
+	color: var(--foot-fg);
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	overflow-wrap: anywhere;
+}
+.foot-line {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	max-width: 20rem;
+	margin: 0;
+}
+.foot-line .icon {
+	width: 14px;
+	height: 14px;
+	margin-top: 3px;
+}
+.foot-head {
+	margin: 0 0 12px;
+	font: 400 11px / 1.4 var(--mono);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: #75706a;
+}
+.foot-list {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.foot a {
+	text-decoration: none;
+	transition: color 0.15s;
+}
+.foot a:hover,
+.langs button:hover {
+	color: var(--foot-fg);
+}
+.langs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-top: 12px;
+}
+.langs button {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+.langs [aria-current="true"] {
+	color: var(--foot-fg);
+	font-weight: 500;
+	text-decoration: underline;
+}
+.foot-copy {
+	margin: 36px 0 0;
+	padding-top: 20px;
+	border-top: 1px solid rgb(246 244 240 / 0.12);
+	font-size: 12px;
+}
+
+/* ── Rich text: product descriptions and custom pages ── */
+
+.rich-html {
+	font-size: 14px;
+	line-height: 1.65;
+}
+.rich-html a {
+	text-decoration: underline;
+}
+.rich-html h1,
+.rich-html h2,
+.rich-html h3 {
+	margin: 12px 0;
+	font-weight: 600;
+	line-height: 1.25;
+	letter-spacing: -0.02em;
+}
+.rich-html h1 {
+	font-size: 26px;
+}
+.rich-html h2 {
+	font-size: 22px;
+}
+.rich-html h3 {
+	font-size: 18px;
+}
+.rich-html p {
+	margin: 8px 0;
+}
+.rich-html ul,
+.rich-html ol {
+	padding-left: 20px;
+}
+.rich-html img {
+	margin: 12px 0;
+	max-width: 100%;
+	border-radius: 16px;
+}
+.rich-html blockquote {
+	margin: 12px 0;
+	padding-left: 12px;
+	border-left: 2px solid var(--sage-edge);
+}
+.rich-html table {
+	width: 100%;
+	margin: 12px 0;
+	border-collapse: collapse;
+}
+.rich-html :is(td, th) {
+	padding: 6px 8px;
+	border: 1px solid var(--store-line);
+	text-align: left;
+	vertical-align: top;
+}
+.rich-html details {
+	border-top: 1px solid var(--store-line);
+}
+.rich-html details:last-child {
+	border-bottom: 1px solid var(--store-line);
+}
+.rich-html summary {
+	width: auto;
+	padding: 14px 0;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+/* ── Wider screens ────────────────────────────────────── */
+
+@media (min-width: 640px) {
+	.wrap {
+		padding-inline: 24px;
+	}
+	.cats {
+		flex-wrap: wrap;
+		margin-inline: 0;
+		padding-inline: 0;
+		overflow: visible;
+	}
+	.tabs {
+		margin-inline: 0;
+		padding-inline: 0;
+	}
+	/* The shop name and the buttons share the first line. */
+	.brand {
+		flex: 1 1 14rem;
+	}
+	.cards {
+		gap: 24px;
+	}
+	.card {
+		padding: 14px;
+	}
+	.card-body {
+		padding: 14px 6px 4px;
+	}
+	.card-row {
+		flex-direction: row;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 12px;
+	}
+	.card-name {
+		font-size: 17px;
+	}
+	.card-tag,
+	.card-off {
+		top: 12px;
+		padding: 6px 12px;
+	}
+	.card-tag {
+		left: 12px;
+	}
+	.card-off {
+		right: 12px;
+	}
+	.catalog-title {
+		font-size: 32px;
+	}
+	.title {
+		font-size: 42px;
+		line-height: 1.06;
+	}
+	.track-fields {
+		grid-template-columns: 240px 1fr;
+	}
+	.foot {
+		padding: 52px 56px 28px;
+	}
+	.foot-cols {
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 40px 64px;
+	}
+	.foot-brand {
+		flex: 1;
+		min-width: 14rem;
+	}
+	.drawer {
+		border-radius: 28px 0 0 28px;
+	}
+	.sheet-grid {
+		grid-template-columns: 260px minmax(0, 1fr);
+		grid-template-rows: minmax(0, 1fr);
+	}
+	.sheet-side {
+		flex-direction: column;
+		padding: 20px;
+		border-right: 1px solid var(--store-line);
+		border-bottom: 0;
+		overflow-y: auto;
+	}
+	.sheet-side .gallery {
+		width: 100%;
+	}
+	.sheet-side .gallery-thumbs {
+		display: flex;
+	}
+	.sheet-info {
+		padding-right: 0;
+	}
+}
+/* One pill row: brand left, search and buttons right. */
+@media (min-width: 900px) {
+	.head-bar {
+		flex-wrap: nowrap;
+		padding-left: 24px;
+		border-radius: 999px;
+	}
+	.brand {
+		flex: 1 1 auto;
+	}
+	/* A long name takes two lines instead of being cut to "Collec…". */
+	.brand-name {
+		display: -webkit-box;
+		overflow: hidden;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+	}
+	.head-search {
+		order: 0;
+		flex: 0 1 16rem;
+		min-width: 11rem;
+		margin-left: auto;
+	}
+	.head-tools {
+		flex-wrap: nowrap;
+	}
+	.head-search + .head-tools {
+		margin-left: 0;
+	}
+}
+@media (min-width: 768px) {
+	.product {
+		grid-template-columns: 1fr 1fr;
+		gap: 48px;
+	}
+	.panel {
+		padding: 32px;
+	}
+	.cards--four {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+@media (min-width: 1024px) {
+	.cards:not(.cards--four) {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+/* ── Phones ───────────────────────────────────────────── */
+
+@media (max-width: 639px) {
+	/* The product sheet rises from the bottom edge. */
+	.sheet {
+		width: 100%;
+		max-width: 100%;
+		margin: auto 0 0;
+		border-radius: 28px 28px 0 0;
+	}
+	/* An order row: the text on top, badges + total + arrow under it. */
+	.order-row .row-main {
+		flex-basis: 100%;
+	}
+}
+
+/* the buyer's custom request box in the picker */
+.note-field textarea {
+	min-height: 88px;
+	padding: 10px 12px;
+	resize: vertical;
+}
+
+/* the buyer's custom request, on its own row under a cart line (lined up with the name) */
+.line {
+	flex-wrap: wrap;
+	row-gap: 6px;
+}
+.line-request {
+	flex-basis: 100%;
+	margin: 0;
+	padding-left: 76px;
+	font-size: 12px;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}
+
+/*
+ * The shop's own footer colours (Template › Customize).
+ * document.edge puts `.theme-footer` on <html> when a background is picked,
+ * and `.theme-footer-text` when the footer has its own text colour:
+ * the shop's, else black or white, whichever reads best on that background.
+ * Every footer text is exactly that colour, never a softer shade of it.
+ */
+.theme-footer .foot {
+	background: var(--theme-footer);
+}
+.theme-footer-text .foot {
+	color: var(--theme-on-footer);
+}
+.theme-footer-text
+	.foot
+	:is(
+		.foot-name strong,
+		.foot-head,
+		a:hover,
+		.langs button:hover,
+		.langs [aria-current="true"]
+	) {
+	color: var(--theme-on-footer);
+}
+.theme-footer-text .foot-copy {
+	color: inherit;
+	border-top-color: color-mix(in srgb, var(--theme-on-footer) 15%, transparent);
+}
+
+/*
+ * The shop's own card text (Template › Customize): document.edge puts
+ * `.theme-surface-text` on <html> when the cards have their own text colour:
+ * the shop's, else black or white, whichever reads best on the card colour.
+ * Every box drawn in `--store-surface` takes it, and so does all text inside.
+ * `:where()` keeps the rule as weak as the box's own class,
+ * so a picked or dark state still wins.
+ */
+:where(.theme-surface-text) .pill:not(.pill-dark),
+:where(.theme-surface-text) .head-bar,
+:where(.theme-surface-text) .btn-line,
+:where(.theme-surface-text) .cat,
+:where(.theme-surface-text) .card,
+:where(.theme-surface-text) .card-tag,
+:where(.theme-surface-text) .opt,
+:where(.theme-surface-text) .opt-row,
+:where(.theme-surface-text) .stepper,
+:where(.theme-surface-text) .line,
+:where(.theme-surface-text) .drawer-foot,
+:where(.theme-surface-text) .sheet-close,
+:where(.theme-surface-text) .sheet-side,
+:where(.theme-surface-text) .sheet-main .picker-foot,
+:where(.theme-surface-text) .panel,
+:where(.theme-surface-text) .tabs a {
+	--store-fg: var(--theme-on-surface);
+	--store-muted: color-mix(in srgb, var(--theme-on-surface) 65%, transparent);
+	color: var(--store-fg);
+}

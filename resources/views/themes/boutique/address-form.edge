@@ -1,0 +1,14 @@
+{{--
+  The inside of an address form on the account page (add and edit).
+  Expects `address` (the values to show) and `errors`.
+  The label box is ours; the address boxes come from the shared partial.
+--}}
+<label class="field">
+  <span>{{ t('store.label') }} <span class="muted">{{ t('store.optional_paren') }}</span></span>
+  <input name="label" value="{{ address.label || '' }}" placeholder="{{ t('store.label_placeholder') }}">
+  @if(errors.label)
+  <small class="error">{{ errors.label }}</small>
+  @end
+</label>
+@include('store/partials/address')
+<div><button type="submit" class="btn">{{ t('store.save_address') }}</button></div>

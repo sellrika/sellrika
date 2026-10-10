@@ -1,0 +1,59 @@
+{
+	"key": "webhook",
+	"name": "name",
+	"version": "1.0.0",
+	"icon": "assets/icon.svg",
+	"description": "description",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "secret",
+			"label": "field.secret",
+			"secret": true,
+			"hint": "field.secret_hint"
+		},
+		{
+			"name": "hooks",
+			"label": "field.hooks",
+			"type": "list",
+			"required": true,
+			"add_label": "field.hooks_add",
+			"fields": [
+				{
+					"name": "url",
+					"label": "field.url",
+					"type": "url",
+					"required": true,
+					"placeholder": "https://example.com/hooks/pos"
+				},
+				{
+					"name": "events",
+					"label": "field.events",
+					"type": "multiselect",
+					"required": true,
+					"options": [
+						{ "value": "order.created", "label": "option.order.created" },
+						{ "value": "order.updated", "label": "option.order.updated" },
+						{
+							"value": "order.status_changed",
+							"label": "option.order.status_changed"
+						},
+						{ "value": "order.paid", "label": "option.order.paid" },
+						{ "value": "order.refunded", "label": "option.order.refunded" },
+						{ "value": "order.voided", "label": "option.order.voided" },
+						{ "value": "product.created", "label": "option.product.created" },
+						{ "value": "product.updated", "label": "option.product.updated" },
+						{ "value": "product.deleted", "label": "option.product.deleted" },
+						{ "value": "customer.created", "label": "option.customer.created" },
+						{ "value": "customer.updated", "label": "option.customer.updated" },
+						{ "value": "customer.deleted", "label": "option.customer.deleted" },
+						{ "value": "stock.updated", "label": "option.stock.updated" },
+						{ "value": "staff.created", "label": "option.staff.created" },
+						{ "value": "staff.updated", "label": "option.staff.updated" },
+						{ "value": "staff.deleted", "label": "option.staff.deleted" }
+					]
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,117 @@
+{{--
+  One order as the buyer sees it. The Track page and the account's order page
+  of every theme may @include('store/partials/order'). Expects `order`
+  (a public order with `instructions`).
+  It shows: the code and date, how it is paid, payment instructions,
+  the delivery steps, the tracking number, the lines, the totals and the note.
+  The look comes from the --store-* variables. The rules sit in :where(),
+  so any theme rule for a `so-` class wins over them.
+--}}
+<style>
+:where(.so-card) { display: grid; gap: 1.25rem; padding: 1.5rem; background: var(--store-surface); color: var(--store-fg); border: 1px solid var(--store-line); border-radius: var(--store-radius); }
+:where(.so-head) { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem; }
+:where(.so-title) { margin: 0; font: 400 1.25rem/1.3 var(--store-font-heading); }
+:where(.so-muted) { color: var(--store-muted); }
+:where(.so-small) { font-size: .875rem; }
+:where(.so-pay) { display: flex; align-items: center; gap: .4rem; margin: 0; font-weight: 500; }
+:where(.so-pie) { width: .75rem; height: .75rem; flex: none; border: 1px solid currentColor; border-radius: 50%; }
+:where(.so-pie--unpaid) { color: var(--store-danger); }
+:where(.so-pie--partial) { color: #b45309; }
+:where(.so-box) { padding: 1rem; border: 1px solid var(--store-line); border-radius: var(--store-radius); white-space: pre-line; }
+:where(.so-steps) { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin: 0; padding: 0; list-style: none; text-align: center; font-size: .75rem; }
+:where(.so-step) { position: relative; display: grid; justify-items: center; gap: .35rem; color: var(--store-muted); }
+:where(.so-step)::before { content: ""; position: absolute; top: .875rem; right: calc(50% + .875rem); left: calc(-50% + .375rem); border-top: 1px solid var(--store-line); }
+:where(.so-step:first-child)::before { display: none; }
+:where(.so-step.is-done, .so-step.is-now) { color: var(--store-fg); }
+:where(.so-step.is-done, .so-step.is-now)::before { border-color: var(--store-fg); }
+:where(.so-step.is-now) { font-weight: 600; }
+:where(.so-dot) { position: relative; display: flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border: 1px solid currentColor; border-radius: 50%; background: var(--store-surface); font-size: .7rem; font-weight: 600; }
+:where(.so-step.is-done .so-dot, .so-step.is-now .so-dot) { background: var(--store-accent); border-color: var(--store-accent); color: var(--store-on-accent); }
+:where(.so-lines) { display: grid; gap: .5rem; padding: 1rem; border: 1px solid var(--store-line); border-radius: var(--store-radius); font-size: .875rem; }
+:where(.so-row) { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+:where(.so-row > :last-child) { font-variant-numeric: tabular-nums; }
+:where(.so-name) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:where(.so-img) { width: 40px; height: 40px; flex: none; object-fit: cover; border-radius: calc(var(--store-radius) / 2); background: color-mix(in oklab, currentColor 10%, transparent); }
+:where(.so-line-note) { display: block; font-size: .75rem; white-space: pre-line; overflow-wrap: anywhere; }
+:where(.so-code) { font-family: ui-monospace, monospace; font-size: .75rem; }
+:where(.so-total) { padding-top: .5rem; border-top: 1px solid var(--store-line); font-weight: 600; }
+:where(.so-due) { color: var(--store-danger); font-weight: 500; }
+:where(.so-note) { margin: 0; font-size: .75rem; white-space: pre-line; }
+</style>
+<section class="so-card" aria-label="{{ t('store_ui.order_status') }}">
+  <div class="so-head">
+    <h2 class="so-title" data-order-code="{{ order.reference }}">{{ t('store.order_number', { code: order.reference }) }}</h2>
+    <span class="so-muted so-small">{{ date(order.created_at) }}</span>
+  </div>
+
+  <p class="so-pay so-small">
+    @if(order.payment_status !== 'paid' && order.status !== 'voided')
+    <span class="so-pie so-pie--{{ order.payment_status }}" aria-hidden="true" style="background: conic-gradient(currentColor {{ order.total > 0 ? Math.min(100, Math.round(order.paid / order.total * 100)) : 0 }}%, transparent 0)"></span>
+    @end
+    @if(order.status === 'voided')
+    {{ t('store_ui.order_cancelled') }}
+    @elseif(order.status === 'refunded')
+    {{ t('store_ui.order_refunded') }}
+    @elseif(order.payment_status === 'paid')
+    {{ t('store_ui.paid_with', { method: order.payment_method }) }}
+    @elseif(order.payment_status === 'partial')
+    {{ t('store_ui.partly_paid', { method: order.payment_method }) }}
+    @else
+    {{ t('store_ui.to_pay_by', { method: order.payment_method }) }}
+    @end
+  </p>
+
+  @if(order.instructions)
+  <div class="so-box so-small" data-payment-instructions>{{ order.instructions }}</div>
+  @end
+
+  @if(order.status !== 'voided' && store.fulfillment_steps.includes(order.fulfillment))
+  <ol class="so-steps" aria-label="{{ t('store_ui.delivery_progress') }}">
+    @each((f, i) in store.fulfillment_steps)
+    @let(now = store.fulfillment_steps.indexOf(order.fulfillment))
+    <li class="so-step {{ i < now ? 'is-done' : (i === now ? 'is-now' : '') }}" {{{ i === now ? 'aria-current="step"' : '' }}}>
+      <span class="so-dot">{{ i < now ? '✓' : i + 1 }}</span>
+      <span>{{ orderStatus(f) }}</span>
+    </li>
+    @end
+  </ol>
+  @end
+
+  @if(order.tracking)
+  <p class="so-small"><span class="so-muted">{{ t('store_ui.tracking') }}</span> <strong data-tracking>{{ order.tracking }}</strong></p>
+  @end
+
+  <div class="so-lines">
+    @each(it in order.items)
+    <div class="so-row">
+      @if(it.image)
+      <img class="so-img" src="{{ it.image }}" alt="" width="40" height="40" loading="lazy" data-line-image>
+      @else
+      <span class="so-img" aria-hidden="true" data-line-placeholder></span>
+      @end
+      <span class="so-name">{{ it.qty }} × {{ it.name }}@if(it.note)<small class="so-line-note" data-line-note>{{ t('store_ui.custom_request') }}: {{ it.note }}</small>@end</span>
+      <span>{{ money(it.price * it.qty, store.currency) }}</span>
+    </div>
+    @end
+    @if(order.discount)
+    <div class="so-row"><span>{{ t('common.discount') }} <span class="so-code">{{ order.coupon_code || '' }}</span></span><span>−{{ money(order.discount, store.currency) }}</span></div>
+    @end
+    @if(order.tax)
+    <div class="so-row"><span>{{ order.tax_included ? t('common.tax_included_prefix') : '' }}{{ order.tax_label }} {{ order.tax_rate / 100 }}%</span><span data-tax>{{ money(order.tax, store.currency) }}</span></div>
+    @end
+    @if(order.delivery_fee)
+    <div class="so-row"><span>{{ t('store.delivery') }}</span><span>{{ money(order.delivery_fee, store.currency) }}</span></div>
+    @elseif(order.coupon_code && !order.discount)
+    <div class="so-row"><span>{{ t('store.delivery') }} <span class="so-code">{{ order.coupon_code }}</span></span><span>{{ t('store.free') }}</span></div>
+    @end
+    <div class="so-row so-total"><span>{{ t('common.total') }}</span><span>{{ money(order.total, store.currency) }}</span></div>
+    @if(order.payment_status !== 'paid' && order.status !== 'voided')
+    <div class="so-row"><span>{{ t('orders.paid') }}</span><span>{{ money(order.paid, store.currency) }}</span></div>
+    <div class="so-row so-due"><span>{{ t('orders.still_due') }}</span><span data-due>{{ money(Math.max(0, order.total - order.paid), store.currency) }}</span></div>
+    @end
+  </div>
+
+  @if(order.note)
+  <p class="so-note so-muted">{{ order.note }}</p>
+  @end
+</section>

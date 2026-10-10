@@ -1,0 +1,44 @@
+{{--
+  One product card: the photo fills it, the words sit on a dark wash.
+  A component: @!component('ext/aurora/card', { p, categories, small })
+  `small` (optional) = the short card of the featured rail.
+  The link covers the card, so crawlers and cmd-click reach the product page;
+  script.js opens the product sheet on a plain click ([data-product]).
+  The "Add to cart" button sits above the link ([data-add]).
+--}}
+@let(short = $props.get('small', false))
+@let(cat = ($props.get('categories') || []).find((c) => p.category_ids.includes(c.id)))
+<div class="aurora-card {{ short ? 'is-small' : '' }} {{ p.sold_out ? 'is-sold-out' : '' }}">
+  <a class="aurora-card-link" href="{{ url.product(p) }}" aria-label="{{ p.name }}" data-product="{{ p.id }}">
+    @if(p.images[0])
+    <img class="aurora-shot" src="{{ p.images[0] }}" alt="{{ p.name }}" loading="lazy">
+    @else
+    <span class="aurora-shot aurora-initial" aria-hidden="true">{{ p.name.trim().charAt(0).toUpperCase() }}</span>
+    @end
+  </a>
+  @if(!short && discountPct(p))
+  <span class="aurora-off">{{ t('card.off', { pct: discountPct(p) }) }}</span>
+  @end
+  <div class="aurora-body">
+    <div class="aurora-head">
+      <h3 class="aurora-name">{{ p.name }}</h3>
+      <span class="aurora-price">{{ price(p.price) }}</span>
+    </div>
+    @if(!short)
+    @if(p.description)
+    <p class="aurora-blurb">{{ p.description.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').trim() }}</p>
+    @end
+    <div class="aurora-chips">
+      @if(cat)
+      <span class="aurora-tag">{{ cat.name }}</span>
+      @end
+      @if(p.sold_out)
+      <span class="aurora-tag">{{ t('store.sold_out') }}</span>
+      @elseif(p.stock !== null)
+      <span class="aurora-tag">{{ t('store.stock_left', { count: p.stock }) }}</span>
+      @end
+    </div>
+    <button type="button" class="aurora-add" data-add="{{ p.id }}" {{ p.sold_out ? 'disabled' : '' }}>{{ t('store.add_to_cart') }}</button>
+    @end
+  </div>
+</div>

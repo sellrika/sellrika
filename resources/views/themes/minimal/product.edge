@@ -1,0 +1,107 @@
+{{--
+  One product's own page. The gallery, price and description are printed here;
+  script.js draws the option picker, quantity and "Add to cart" into [data-picker].
+--}}
+@component(theme.layout, { search: true })
+  <div class="wrap section">
+    <a class="back" href="{{ url.home }}">
+      @!component('themes/minimal/icon', { name: 'arrow-left' })
+      {{ t('store.back_to_shop') }}
+    </a>
+
+    <article class="product">
+      <div class="gallery" data-gallery>
+        <div class="gallery-main">
+          @if(gallery.length)
+          <img data-gallery-main src="{{ gallery[0] }}" alt="{{ product.name }}">
+          @else
+          <span class="card-letter" aria-hidden="true">{{ product.name.trim().charAt(0).toUpperCase() }}</span>
+          @end
+        </div>
+        @if(gallery.length > 1)
+        <div class="gallery-thumbs">
+          @each((src, n) in gallery)
+          <button type="button" class="gallery-thumb" data-gallery-thumb="{{ src }}" aria-label="{{ t('shared.photo_n', { n: n + 1 }) }}" aria-pressed="{{ n === 0 ? 'true' : 'false' }}">
+            <img src="{{ src }}" alt="">
+          </button>
+          @end
+        </div>
+        @end
+      </div>
+
+      <div class="product-info">
+        <h1 class="title">{{ product.name }}</h1>
+        @if(product.amount != null)
+        <p class="muted small">{{ (product.amount + ' ' + (product.unit || '')).trim() }}</p>
+        @end
+        <p class="product-price">
+          @if(range && range.min !== range.max)
+          <span>{{ t('store.from') }}</span>
+          @end
+          {{ price(product.price) }}
+          @if(discountPct(product))
+          <s class="muted line-through">{{ price(product.original_price) }}</s>
+          <span class="tag tag--off">−{{ discountPct(product) }}%</span>
+          @end
+        </p>
+        @if(product.sold_out)
+        <p><span class="tag tag--out">{{ t('store.sold_out') }}</span></p>
+        @elseif(product.kind === 'bundle')
+        <p class="muted small">{{ t('store.package') }}</p>
+        @elseif(product.variants.length)
+        <p class="muted small">{{ t('store.options_count', { count: product.variants.length }) }}</p>
+        @end
+
+        <p class="small muted share-row">
+          <button type="button" class="link-button" data-share data-share-url="{{ url.product(product) }}" data-share-title="{{ product.name }}" aria-label="{{ t('store_ui.share') }}">
+            @!component('themes/minimal/icon', { name: 'share' })
+            {{ t('store_ui.share') }}
+          </button>
+          <span role="status" data-share-note></span>
+        </p>
+
+        {{-- options, qty and "Add to cart" (script.js) --}}
+        <div class="picker-host" data-picker="{{ product.id }}"></div>
+
+        @if(product.extra.length || product.description)
+        <section class="details">
+          <h2 class="label">{{ t('store_ui.details') }}</h2>
+          @if(product.extra.length)
+          <dl class="extra" aria-label="{{ t('shared.additional_data') }}">
+            @each(r in product.extra)
+            <dt>{{ r.title }}</dt>
+            <dd>{{ r.value }}</dd>
+            @end
+          </dl>
+          @end
+          @if(product.description)
+          <div class="rich-html muted">{{{ product.description }}}</div>
+          @end
+        </section>
+        @end
+
+        @if(product.kind === 'bundle')
+        <section class="details">
+          <h2 class="label">{{ t('store_ui.in_this_package') }}</h2>
+          <ul class="muted small plain-list">
+            @each(slot in product.bundle_items)
+            <li>{{ slot.qty }} × {{ slot.name }}{{ slot.options.length === 1 && slot.options[0].variant_id === null ? '' : ' (' + slot.options.map((o) => o.name).join(' ' + t('products.or_joiner') + ' ') + ')' }}</li>
+            @end
+          </ul>
+        </section>
+        @end
+      </div>
+    </article>
+
+    @if(related.length)
+    <section class="related" aria-labelledby="related-title">
+      <h2 id="related-title" class="label related-title">{{ t('store.related_products') }}</h2>
+      <div class="products products--four">
+        @each(p in related)
+        @include('themes/minimal/card')
+        @end
+      </div>
+    </section>
+    @end
+  </div>
+@end

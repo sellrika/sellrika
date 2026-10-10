@@ -1,0 +1,34 @@
+// The JSX runtime for extension browser scripts (plain JavaScript, no framework). The app puts this in front of every
+// .tsx it serves from a raw upload, and extensions/build.ts in front of every bundled browser script, so an extension
+// writes `<div class="x">` with nothing to import. The compiler turns
+//   <tag ...props>children</tag>  into  __h("tag", props, ...children)   and   <>…</>  into  __h(__F, null, …)
+// - a function tag is called as tag({ ...props, children }) and returns the node (a component)
+// - `ref` is called with the element; `on<event>` functions become handlers (onclick, oninput, …)
+// - a key the element has as a property is assigned (value, checked, disabled, htmlFor, …); anything else is an
+//   attribute (class, style, for, readonly, aria-*, data-*); `true` = present, null / undefined / false = left out
+// - children: nodes, strings, numbers, arrays (flattened); null / undefined / booleans are skipped
+function __h(tag, props, ...children) {
+  if (typeof tag === "function") return tag({ ...props, children });
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props ?? {})) {
+    if (v == null || v === false) continue;
+    if (k === "ref") v(el);
+    else if (k.startsWith("on") && typeof v === "function") el[k.toLowerCase()] = v;
+    else if (k in el) el[k] = v;
+    else el.setAttribute(k, v === true ? "" : String(v));
+  }
+  __append(el, children);
+  return el;
+}
+function __F({ children }) {
+  const f = document.createDocumentFragment();
+  __append(f, children);
+  return f;
+}
+function __append(parent, kids) {
+  for (const k of kids) {
+    if (k == null || typeof k === "boolean") continue;
+    if (Array.isArray(k)) __append(parent, k);
+    else parent.append(k instanceof Node ? k : String(k));
+  }
+}

@@ -1,0 +1,2054 @@
+/*
+ * Noir ("Obscura") store theme.
+ * A near-black shell with an electric lime accent.
+ * Archivo for text, IBM Plex Mono for small labels and prices.
+ * An edge-to-edge product grid. Every control is 40px high
+ * with 8px corners, so controls in one row always line up.
+ * Plain CSS, no Tailwind. Every class starts with `n-`,
+ * so it never meets a Tailwind class of the shared checkout island.
+ * The fonts are self-hosted through @fontsource, like resources/css/app.css.
+ */
+@import "@fontsource/archivo/400.css";
+@import "@fontsource/archivo/500.css";
+@import "@fontsource/archivo/600.css";
+@import "@fontsource/archivo/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+/*
+ * The shared variables (docs/features/store-themes.md).
+ * The shared checkout, done page and order card read them.
+ * The rest are this theme's own.
+ */
+:root {
+	--store-bg: #0b0b0d;
+	--store-fg: #f2f2f4;
+	--store-surface: #121217;
+	--store-muted: #a1a1aa;
+	--store-line: #26262c;
+	--store-accent: oklch(0.86 0.2 118);
+	--store-on-accent: #10130a;
+	--store-danger: #f87171;
+	--store-radius: 8px;
+	--store-control-height: var(--ctl);
+	--store-button-radius: 8px;
+	--store-font: "Archivo", ui-sans-serif, system-ui, sans-serif;
+	--store-font-heading: "Archivo", ui-sans-serif, system-ui, sans-serif;
+	--store-button-case: none;
+	--store-button-tracking: 0;
+	--store-input-bg: #121217;
+
+	--mono: "IBM Plex Mono", ui-monospace, monospace;
+	/* hairlines between grid cells and around the header */
+	--hair: #1c1c21;
+	/* borders of controls */
+	--edge: #33333b;
+	--faint: #8b8b93;
+	--dim: #71717a;
+	--hover: #1a1a1e;
+	--ctl: 40px;
+
+	/*
+	 * The solid blocks: the banner, a picked chip or option, a hovered button.
+	 * The shop's own secondary colour replaces them (Template › Customize).
+	 */
+	--ink: var(--theme-secondary, var(--store-fg));
+	--on-ink: var(--theme-on-secondary, var(--store-bg));
+	color-scheme: dark;
+}
+
+/* ── Base ─────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	background: var(--store-bg);
+	color: var(--store-fg);
+	font: 15px / 1.5 var(--store-font);
+	-webkit-font-smoothing: antialiased;
+}
+/*
+ * Form controls take the page font, like Tailwind's preflight.
+ * :where() keeps it at zero weight, so any class
+ * (ours or the checkout island's) wins over it.
+ */
+:where(button, input, select, textarea) {
+	font: inherit;
+	color: inherit;
+}
+:where(img) {
+	max-width: 100%;
+}
+a {
+	color: inherit;
+}
+:focus-visible {
+	outline: 2px solid var(--store-accent);
+	outline-offset: 2px;
+}
+[hidden] {
+	/* biome-ignore lint/complexity/noImportantStyles: `hidden` must beat every display rule here */
+	display: none !important;
+}
+.n-icon {
+	flex: none;
+	width: 16px;
+	height: 16px;
+}
+.n-icon-lg {
+	width: 40px;
+	height: 40px;
+	opacity: 0.3;
+}
+
+/* ── Small helpers ────────────────────────────────────── */
+
+.n-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+.n-muted {
+	color: var(--store-muted);
+}
+.n-faint {
+	color: var(--faint);
+}
+.n-small {
+	font-size: 13px;
+}
+.n-strong {
+	font-weight: 600;
+}
+.n-mono {
+	font-family: var(--mono);
+}
+.n-block {
+	display: block;
+}
+.n-pre {
+	white-space: pre-line;
+}
+.n-upper {
+	text-transform: uppercase;
+}
+.n-center {
+	text-align: center;
+	justify-items: center;
+}
+.n-ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.n-error {
+	color: var(--store-danger);
+}
+.n-stack {
+	display: grid;
+	gap: 16px;
+}
+.n-stack > p {
+	margin: 0;
+}
+.n-plain {
+	display: grid;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.n-label {
+	margin: 0;
+	font: 500 11px / 1.4 var(--mono);
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--faint);
+}
+/* The mono line under a card and a product's title. */
+.n-spec {
+	min-height: 16px;
+	margin: 0;
+	overflow: hidden;
+	font: 400 11px / 1.45 var(--mono);
+	letter-spacing: 0.1em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--dim);
+}
+/* The diagonal hatch behind every product photo, and alone when there is none. */
+.n-hatch {
+	background: repeating-linear-gradient(
+		135deg,
+		#16161c 0 8px,
+		#1d1d24 8px 16px
+	);
+}
+
+/* ── Page frame ───────────────────────────────────────── */
+
+.n-page {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+.n-wrap {
+	width: 100%;
+	max-width: 72rem;
+	margin-inline: auto;
+	padding-inline: 16px;
+}
+.n-main {
+	flex: 1;
+}
+.n-top {
+	padding-block: 32px 64px;
+}
+.n-column {
+	max-width: 46rem;
+}
+
+/* Announcement strip. `info` is lime, the others a colour everyone reads the same way. */
+.n-banner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin: 0;
+	padding: 8px 16px;
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+	text-align: center;
+	font: 500 11px / 1.5 var(--mono);
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+.n-banner .n-icon {
+	width: 14px;
+	height: 14px;
+}
+.n-banner--success {
+	background: #059669;
+	color: #fff;
+}
+.n-banner--warning {
+	background: #fbbf24;
+	color: #16130f;
+}
+.n-banner--danger {
+	background: #dc2626;
+	color: #fff;
+}
+
+/* ── Header ───────────────────────────────────────────── */
+
+.n-head {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	border-bottom: 1px solid var(--hair);
+	background: rgb(11 11 13 / 0.9);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+}
+.n-head-row {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	padding-block: 16px;
+}
+.n-brand {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	text-decoration: none;
+}
+.n-mark {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex: none;
+	border-radius: 8px;
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+	object-fit: cover;
+	font: 700 18px / 1 var(--store-font);
+}
+.n-brand-name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: 700 20px / 1.2 var(--store-font);
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+.n-nav {
+	display: none;
+	gap: 28px;
+	font-size: 14px;
+	color: var(--store-muted);
+	white-space: nowrap;
+}
+.n-nav a {
+	text-decoration: none;
+	transition: color 0.15s;
+}
+.n-nav a:hover {
+	color: var(--store-fg);
+}
+.n-search {
+	position: relative;
+	flex: 0 1 240px;
+	min-width: 140px;
+	margin-left: auto;
+}
+.n-search .n-icon {
+	position: absolute;
+	top: 12px;
+	left: 14px;
+	color: var(--faint);
+	pointer-events: none;
+}
+.n-search input {
+	width: 100%;
+	height: var(--ctl);
+	padding: 0 12px 0 40px;
+	border: 1px solid var(--store-line);
+	border-radius: 8px;
+	background: transparent;
+	font-size: 14px;
+	outline: none;
+	appearance: none;
+}
+.n-search input::placeholder {
+	color: var(--faint);
+}
+.n-search input:focus {
+	border-color: var(--store-accent);
+}
+.n-tools {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: none;
+	margin-left: auto;
+}
+.n-search + .n-tools {
+	margin-left: 0;
+}
+/* One header / toolbar control: currency, account, cart, sort, "In stock", pager. */
+.n-ctl {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: var(--ctl);
+	padding: 0 14px;
+	border: 1px solid var(--store-line);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--store-fg);
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1;
+	white-space: nowrap;
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		border-color 0.15s,
+		background 0.15s,
+		color 0.15s;
+}
+.n-ctl:hover {
+	border-color: var(--edge);
+	background: var(--hover);
+}
+.n-ctl--solid {
+	border-color: var(--ink);
+	background: var(--ink);
+	color: var(--on-ink);
+	font-weight: 600;
+}
+.n-ctl--solid:hover {
+	border-color: #fff;
+	background: #fff;
+}
+.n-ctl[aria-disabled="true"] {
+	opacity: 0.35;
+	pointer-events: none;
+}
+.n-ctl-text {
+	max-width: 8rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+/* A native select inside a control, with our own arrow. */
+.n-select {
+	padding: 0;
+}
+.n-select select {
+	height: 100%;
+	padding: 0 34px 0 14px;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	font-size: 14px;
+	font-weight: 500;
+	outline: none;
+	appearance: none;
+	cursor: pointer;
+}
+.n-select select option {
+	background: var(--store-surface);
+	color: var(--store-fg);
+}
+.n-select .n-icon {
+	position: absolute;
+	right: 12px;
+	width: 14px;
+	height: 14px;
+	color: var(--faint);
+	pointer-events: none;
+}
+.n-select:has(:focus-visible) {
+	outline: 2px solid var(--store-accent);
+	outline-offset: 2px;
+}
+.n-badge {
+	position: absolute;
+	top: -7px;
+	right: -7px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 5px;
+	border-radius: 6px;
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+	font: 600 11px / 1 var(--mono);
+}
+/* The badge pops when something is added (script.js replays the class). */
+.n-badge.is-bump {
+	animation: n-bump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes n-bump {
+	0% {
+		transform: scale(1);
+	}
+	40% {
+		transform: scale(1.45);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+/* ── Buttons and fields ───────────────────────────────── */
+
+.n-btn,
+.n-btn-line {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: var(--ctl);
+	padding: 0 18px;
+	border: 1px solid var(--store-accent);
+	border-radius: var(--store-button-radius);
+	background: var(--store-accent);
+	color: var(--store-on-accent);
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.2;
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
+}
+.n-btn:hover {
+	border-color: var(--ink);
+	background: var(--ink);
+	color: var(--on-ink);
+}
+.n-btn-line {
+	border-color: var(--edge);
+	background: transparent;
+	color: var(--store-fg);
+	font-weight: 500;
+}
+.n-btn-line:hover {
+	background: var(--hover);
+}
+.n-btn-line:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+/* A lime button at half strength looks muddy: a disabled one turns grey. */
+.n-btn:disabled {
+	border-color: var(--store-line);
+	background: var(--hover);
+	color: var(--dim);
+	cursor: not-allowed;
+}
+.n-btn-block {
+	width: 100%;
+}
+.n-btn-big {
+	min-height: 48px;
+}
+.n-btn-square {
+	width: var(--ctl);
+	padding: 0;
+}
+.n-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex: none;
+	padding: 0;
+	border: 0;
+	border-radius: 8px;
+	background: none;
+	color: var(--store-muted);
+	font-size: 22px;
+	line-height: 1;
+	cursor: pointer;
+}
+.n-icon-btn:hover {
+	background: var(--hover);
+	color: var(--store-fg);
+}
+.n-link-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 0;
+	border: 0;
+	background: none;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	cursor: pointer;
+}
+.n-link-btn:hover {
+	color: var(--store-accent);
+}
+.n-field {
+	display: grid;
+	gap: 6px;
+}
+.n-field > span {
+	font: 500 11px / 1.4 var(--mono);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--faint);
+}
+.n-field input,
+.n-field select,
+.n-field textarea {
+	width: 100%;
+	min-height: var(--ctl);
+	padding: 0 12px;
+	border: 1px solid var(--edge);
+	border-radius: var(--store-radius);
+	background: var(--store-input-bg);
+	font-size: 14px;
+	outline: none;
+}
+.n-field input::placeholder {
+	color: var(--faint);
+}
+.n-field input:focus {
+	border-color: var(--store-accent);
+	box-shadow: 0 0 0 3px
+		color-mix(in oklch, var(--store-accent) 25%, transparent);
+}
+.n-field [aria-invalid="true"] {
+	border-color: var(--store-danger);
+}
+.n-field small {
+	font-size: 12px;
+}
+/* Next to the island's address boxes a label reads like theirs. */
+.n-field--plain > span {
+	font: 500 14px / 1.4 var(--store-font);
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--store-fg);
+}
+
+/* ── Catalog ──────────────────────────────────────────── */
+
+.n-bar {
+	border-bottom: 1px solid var(--hair);
+}
+.n-bar-row {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding-block: 16px;
+}
+.n-cats {
+	display: flex;
+	gap: 8px;
+	min-width: 0;
+	margin-inline: -16px;
+	padding-inline: 16px;
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.n-cats::-webkit-scrollbar {
+	display: none;
+}
+.n-pill {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 8px;
+	height: var(--ctl);
+	padding: 0 16px;
+	border: 1px solid var(--store-line);
+	border-radius: 8px;
+	color: var(--store-muted);
+	font-size: 13px;
+	white-space: nowrap;
+	text-decoration: none;
+	transition:
+		border-color 0.15s,
+		color 0.15s;
+}
+.n-pill:hover {
+	border-color: var(--edge);
+	color: var(--store-fg);
+}
+.n-pill.is-on {
+	border-color: var(--ink);
+	background: var(--ink);
+	color: var(--on-ink);
+	font-weight: 600;
+}
+.n-pill-count {
+	font: 400 12px / 1 var(--mono);
+	font-variant-numeric: tabular-nums;
+	opacity: 0.7;
+}
+.n-dot {
+	width: 8px;
+	height: 8px;
+	flex: none;
+	border-radius: 50%;
+}
+.n-sort {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 8px;
+}
+.n-sort .n-ctl {
+	color: var(--store-muted);
+}
+.n-sort .n-select {
+	min-width: 0;
+	flex: 1;
+}
+.n-sort .n-select select {
+	width: 100%;
+}
+/* "In stock": a real checkbox stretched over its label, the label is the control. */
+.n-chip {
+	user-select: none;
+}
+.n-chip input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	appearance: none;
+	cursor: pointer;
+}
+.n-sort .n-chip:has(:checked) {
+	border-color: var(--store-accent);
+	color: var(--store-accent);
+}
+.n-chip:has(:focus-visible) {
+	outline: 2px solid var(--store-accent);
+	outline-offset: 2px;
+}
+.n-empty {
+	margin: 0;
+	padding: 112px 16px;
+	text-align: center;
+	font: 400 11px / 1.5 var(--mono);
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--faint);
+}
+/* The grid: cells share hairlines, so the photos run edge to edge. */
+.n-grid-wrap {
+	padding-inline: 0;
+}
+.n-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	border-top: 1px solid var(--hair);
+}
+.n-card {
+	display: block;
+	min-width: 0;
+	padding: 12px;
+	border-right: 1px solid var(--hair);
+	border-bottom: 1px solid var(--hair);
+	text-decoration: none;
+	transition: background 0.15s;
+}
+.n-grid > .n-card:nth-child(2n) {
+	border-right: 0;
+}
+.n-card:hover {
+	background: var(--store-surface);
+}
+.n-card:focus-visible {
+	outline-offset: -2px;
+}
+.n-card.is-sold-out {
+	opacity: 0.55;
+}
+.n-frame {
+	position: relative;
+	aspect-ratio: 1;
+	overflow: hidden;
+}
+.n-card-img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.5s;
+}
+.n-card:hover .n-card-img {
+	transform: scale(1.03);
+}
+.n-letter {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font: 700 48px / 1 var(--store-font);
+	color: #33333b;
+}
+/* Stock tag in the photo's corner. */
+.n-tag {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	padding: 3px 6px;
+	border-radius: 3px;
+	background: rgb(11 11 13 / 0.75);
+	box-shadow: 0 1px 6px rgb(0 0 0 / 0.6);
+	backdrop-filter: blur(4px);
+	color: #d4d4d8;
+	font: 500 10px / 1.3 var(--mono);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+.n-tag--low {
+	color: var(--store-accent);
+}
+/* The same tag, in the text flow (product page, option rows). */
+.n-tag--static {
+	position: static;
+	display: inline-block;
+	box-shadow: none;
+	border: 1px solid var(--edge);
+}
+.n-card-row {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin-top: 12px;
+}
+.n-card-name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 500;
+}
+.n-card-price {
+	font: 400 13px / 1.4 var(--mono);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+.n-was {
+	margin-left: 6px;
+	color: var(--dim);
+}
+.n-off {
+	font: 500 12px / 1 var(--mono);
+	color: var(--store-accent);
+}
+.n-card .n-spec {
+	margin-top: 6px;
+}
+.n-pager {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding-block: 32px 48px;
+}
+.n-pager-count {
+	font: 400 11px / 1 var(--mono);
+	letter-spacing: 0.14em;
+	color: var(--dim);
+}
+
+/* ── Product page ─────────────────────────────────────── */
+
+.n-back {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 24px;
+	font-size: 14px;
+	color: var(--store-muted);
+	text-decoration: none;
+}
+.n-back:hover {
+	color: var(--store-accent);
+}
+.n-title {
+	margin: 0 0 24px;
+	font: 700 30px / 1.1 var(--store-font-heading);
+	letter-spacing: -0.04em;
+	overflow-wrap: anywhere;
+}
+.n-product .n-title,
+.n-account-head .n-title {
+	margin: 0;
+}
+.n-panel .n-title {
+	margin: 0;
+	font-size: 26px;
+}
+.n-product {
+	display: grid;
+	gap: 32px;
+}
+.n-product-info {
+	display: grid;
+	align-content: start;
+	gap: 16px;
+	min-width: 0;
+}
+.n-product-info > p {
+	margin: 0;
+}
+.n-product-price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px;
+	font: 500 20px / 1.3 var(--mono);
+	font-variant-numeric: tabular-nums;
+}
+.n-product-price .n-was {
+	margin: 0;
+	font-size: 15px;
+}
+.n-gallery {
+	min-width: 0;
+}
+.n-gallery-main {
+	position: relative;
+	aspect-ratio: 1;
+	overflow: hidden;
+	border: 1px solid var(--hair);
+}
+.n-gallery-main img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.n-thumbs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 8px;
+}
+.n-thumb {
+	width: 64px;
+	height: 64px;
+	padding: 0;
+	overflow: hidden;
+	border: 2px solid transparent;
+	border-radius: 8px;
+	background: #16161c;
+	opacity: 0.6;
+	cursor: pointer;
+}
+.n-thumb[aria-pressed="true"] {
+	border-color: var(--store-accent);
+	opacity: 1;
+}
+.n-thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.n-details {
+	display: grid;
+	gap: 10px;
+	padding-top: 20px;
+	border-top: 1px solid var(--hair);
+}
+.n-extra {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 4px 16px;
+	margin: 0;
+	font-size: 14px;
+}
+.n-extra dt {
+	font-weight: 500;
+}
+.n-extra dd {
+	margin: 0;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	color: var(--store-muted);
+}
+.n-share-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.n-related {
+	padding-bottom: 32px;
+}
+.n-section-title {
+	margin: 0 0 16px;
+	font: 500 11px / 1.4 var(--mono);
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--faint);
+}
+
+/* ── Option picker (product page + product sheet, drawn by script.js) ── */
+
+.n-picker {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+.n-picker-body {
+	display: grid;
+	align-content: start;
+	gap: 24px;
+}
+/* A product with no options draws an empty box: it must not add a gap. */
+.n-picker-body > .n-stack:empty {
+	display: none;
+}
+.n-picker-foot {
+	display: grid;
+	gap: 8px;
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid var(--hair);
+}
+.n-picker-foot p {
+	margin: 0;
+}
+.n-opt-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+.n-opt-values {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.n-opt {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-width: 48px;
+	height: var(--ctl);
+	padding: 0 16px;
+	border: 1px solid var(--edge);
+	border-radius: 8px;
+	background: transparent;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+}
+.n-opt:hover {
+	border-color: #52525b;
+	background: var(--hover);
+}
+.n-opt[aria-pressed="true"] {
+	border-color: var(--ink);
+	background: var(--ink);
+	color: var(--on-ink);
+	font-weight: 600;
+}
+.n-opt:disabled {
+	opacity: 0.35;
+	text-decoration: line-through;
+	cursor: not-allowed;
+}
+.n-swatch {
+	width: 16px;
+	height: 16px;
+	border: 1px solid rgb(255 255 255 / 0.25);
+	border-radius: 50%;
+}
+.n-opt-list {
+	display: grid;
+	gap: 8px;
+}
+.n-opt-list .n-label {
+	margin-bottom: 2px;
+}
+.n-opt-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	min-height: 48px;
+	padding: 0 14px;
+	border: 1px solid var(--edge);
+	border-radius: 8px;
+	background: transparent;
+	text-align: left;
+	cursor: pointer;
+}
+.n-opt-row:hover {
+	background: var(--hover);
+}
+.n-opt-row[aria-pressed="true"] {
+	border-color: var(--store-accent);
+}
+.n-opt-row:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.n-opt-row-name {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+	font-weight: 500;
+}
+/* The round "radio" mark of a plain option row. */
+.n-opt-mark {
+	width: 16px;
+	height: 16px;
+	flex: none;
+	border: 1px solid var(--edge);
+	border-radius: 50%;
+}
+.n-opt-row[aria-pressed="true"] .n-opt-mark {
+	border: 5px solid var(--store-accent);
+}
+.n-picker-add {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.n-stepper {
+	display: flex;
+	flex: none;
+	align-items: center;
+	height: 32px;
+	border: 1px solid var(--edge);
+	border-radius: 8px;
+}
+.n-stepper button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: 0;
+	border-radius: 7px;
+	background: none;
+	cursor: pointer;
+}
+.n-stepper button:hover {
+	background: var(--hover);
+}
+.n-stepper button:disabled {
+	opacity: 0.35;
+	cursor: not-allowed;
+}
+.n-stepper span {
+	min-width: 24px;
+	text-align: center;
+	font: 500 13px / 1 var(--mono);
+	font-variant-numeric: tabular-nums;
+}
+/* The picker's big row: stepper and "Add to cart" share one height. */
+.n-stepper--big {
+	height: 48px;
+}
+.n-stepper--big button {
+	width: 44px;
+	height: 46px;
+}
+.n-stepper--big span {
+	min-width: 28px;
+	font-size: 15px;
+}
+.n-add-button {
+	flex: 1;
+	justify-content: space-between;
+	min-width: 0;
+	min-height: 48px;
+	padding: 0 16px;
+}
+.n-add-text {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.n-add-price {
+	flex: none;
+	font: 500 14px / 1 var(--mono);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Dialogs: cart drawer, product sheet, sign-in ─────── */
+
+.n-dialog {
+	padding: 0;
+	border: 1px solid var(--hair);
+	border-radius: 12px;
+	background: var(--store-bg);
+	color: var(--store-fg);
+}
+.n-dialog::backdrop {
+	background: rgb(0 0 0 / 0.7);
+	backdrop-filter: blur(2px);
+}
+.n-dialog-close {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	z-index: 1;
+}
+.n-drawer {
+	width: min(28rem, 100%);
+	max-width: 100%;
+	height: 100dvh;
+	max-height: 100dvh;
+	margin: 0 0 0 auto;
+	border-width: 0 0 0 1px;
+	border-radius: 0;
+}
+.n-drawer[open] {
+	display: flex;
+	flex-direction: column;
+	animation: n-slide 0.2s ease-out;
+}
+@keyframes n-slide {
+	from {
+		transform: translateX(100%);
+	}
+}
+.n-drawer-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 14px 16px 14px 20px;
+	border-bottom: 1px solid var(--hair);
+}
+.n-drawer-head h2 {
+	margin: 0;
+	font: 700 20px / 1.2 var(--store-font-heading);
+	letter-spacing: -0.03em;
+}
+.n-drawer-empty {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 32px;
+	text-align: center;
+}
+.n-drawer-empty p {
+	margin: 0;
+}
+.n-drawer-empty-title {
+	font-size: 18px;
+	font-weight: 600;
+}
+.n-lines {
+	display: grid;
+	flex: 1;
+	grid-template-columns: minmax(0, 1fr);
+	align-content: start;
+	gap: 16px;
+	min-height: 0;
+	margin: 0;
+	padding: 20px;
+	overflow-y: auto;
+	list-style: none;
+}
+.n-line {
+	display: flex;
+	gap: 12px;
+}
+.n-line-thumb {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 64px;
+	height: 64px;
+	flex: none;
+	padding: 0;
+	overflow: hidden;
+	border: 1px solid var(--hair);
+	border-radius: 8px;
+	background: #16161c;
+	color: #52525b;
+	font: 700 24px / 1 var(--store-font);
+	cursor: pointer;
+}
+.n-line-thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.n-line-body {
+	flex: 1;
+	min-width: 0;
+}
+.n-line-name {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	text-align: left;
+	cursor: pointer;
+}
+.n-line-title,
+.n-line-variant {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.n-line-title {
+	font-size: 14px;
+	font-weight: 500;
+}
+.n-line-variant {
+	font-size: 12px;
+}
+.n-line-name:hover .n-line-title {
+	color: var(--store-accent);
+}
+.n-line-qty {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 8px;
+}
+.n-line-remove {
+	width: 32px;
+	height: 32px;
+}
+.n-line-remove:hover {
+	color: var(--store-danger);
+}
+.n-line-note {
+	margin: 4px 0 0;
+	font-size: 12px;
+}
+.n-line-price {
+	font: 500 13px / 1.4 var(--mono);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+.n-drawer-foot {
+	display: grid;
+	gap: 12px;
+	padding: 16px 20px 20px;
+	border-top: 1px solid var(--hair);
+}
+.n-drawer-total {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	font-size: 16px;
+	font-weight: 600;
+}
+.n-drawer-total span:last-child {
+	font: 500 18px / 1 var(--mono);
+	font-variant-numeric: tabular-nums;
+}
+.n-fine {
+	margin: 0;
+	font-size: 12px;
+	text-align: center;
+	color: var(--dim);
+}
+.n-sheet {
+	width: min(56rem, calc(100% - 24px));
+	max-width: none;
+	max-height: 88dvh;
+	overflow: hidden;
+}
+.n-sheet[open] {
+	display: flex;
+	flex-direction: column;
+}
+.n-sheet-grid {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr);
+	min-height: 0;
+	max-height: 88dvh;
+}
+.n-sheet-side {
+	display: flex;
+	gap: 14px;
+	padding: 16px;
+	border-bottom: 1px solid var(--hair);
+	background: var(--store-surface);
+}
+.n-sheet-side .n-gallery {
+	width: 88px;
+	flex: none;
+}
+.n-sheet-side .n-thumbs {
+	display: none;
+}
+.n-sheet-side .n-thumb {
+	width: 48px;
+	height: 48px;
+}
+.n-sheet-info {
+	display: grid;
+	align-content: start;
+	gap: 4px;
+	min-width: 0;
+	padding-right: 36px;
+}
+.n-sheet-info p {
+	margin: 0;
+}
+.n-sheet-info p:empty {
+	display: none;
+}
+.n-sheet-name {
+	margin: 0;
+	font: 700 20px / 1.15 var(--store-font-heading);
+	letter-spacing: -0.03em;
+	overflow-wrap: anywhere;
+}
+.n-sheet-price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px;
+	font: 500 15px / 1.3 var(--mono);
+	font-variant-numeric: tabular-nums;
+}
+.n-sheet-price .n-was {
+	margin: 0;
+	font-size: 13px;
+}
+.n-sheet-links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin-top: 4px;
+	color: var(--store-muted);
+}
+.n-sheet-links a:hover {
+	color: var(--store-accent);
+}
+.n-sheet-main {
+	min-height: 0;
+}
+.n-sheet-main .n-picker {
+	height: 100%;
+}
+.n-sheet-main .n-picker-body {
+	flex: 1;
+	min-height: 0;
+	padding: 20px;
+	overflow-y: auto;
+}
+.n-sheet-main .n-opt-head {
+	padding-right: 36px;
+}
+.n-sheet-main .n-picker-foot {
+	margin: 0;
+	padding: 16px 20px;
+}
+.n-modal {
+	width: min(24rem, calc(100% - 24px));
+	padding: 24px;
+}
+.n-modal-title {
+	margin: 0 0 4px;
+	padding-right: 36px;
+	font: 700 22px / 1.2 var(--store-font-heading);
+	letter-spacing: -0.03em;
+}
+.n-modal > p {
+	margin: 0 0 16px;
+}
+.n-login-social {
+	display: grid;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+.n-login-or {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 4px 0 0;
+}
+.n-login-or::before,
+.n-login-or::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: var(--store-line);
+}
+.n-login-links {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 8px;
+}
+.n-modal [role="alert"],
+.n-modal [role="status"] {
+	margin: 16px 0 0;
+}
+
+/* ── Panels: page, track, account ─────────────────────── */
+
+.n-panel {
+	padding: 24px;
+	border: 1px solid var(--hair);
+	border-radius: 12px;
+	background: var(--store-surface);
+}
+.n-track-fields {
+	display: grid;
+	gap: 16px;
+}
+.n-account-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 24px;
+}
+.n-account-head p {
+	margin: 4px 0 0;
+}
+.n-tabs {
+	display: flex;
+	gap: 24px;
+	margin-bottom: 16px;
+	overflow-x: auto;
+	border-bottom: 1px solid var(--hair);
+	scrollbar-width: none;
+}
+.n-tabs a {
+	flex: none;
+	margin-bottom: -1px;
+	padding: 0 2px 10px;
+	border-bottom: 2px solid transparent;
+	font: 500 12px / 1.4 var(--mono);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--faint);
+	text-decoration: none;
+}
+.n-tabs a:hover {
+	color: var(--store-fg);
+}
+.n-tabs a[aria-current="page"] {
+	border-color: var(--store-accent);
+	color: var(--store-fg);
+}
+.n-rows {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.n-rows > li {
+	border-bottom: 1px solid var(--hair);
+}
+.n-rows > li:last-child {
+	border-bottom: 0;
+}
+.n-row-main {
+	flex: 1;
+	min-width: 0;
+}
+.n-order-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	padding: 14px 0;
+	font-size: 14px;
+	text-decoration: none;
+}
+.n-order-row:hover .n-strong {
+	color: var(--store-accent);
+}
+/* The code and items shrink and wrap; badges and the sum keep their line. */
+.n-order-row .n-row-main {
+	flex: 1 1 0;
+	min-width: 9rem;
+}
+.n-track-note {
+	margin: 16px 0;
+}
+.n-track-order {
+	margin-top: 16px;
+}
+.n-order-sum {
+	flex: none;
+	text-align: right;
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+}
+/* Order status badges (the same rule as the staff app's statusBadges). */
+.n-status {
+	flex: none;
+	padding: 2px 8px;
+	border: 1px solid;
+	border-radius: 4px;
+	font: 500 10px / 1.5 var(--mono);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.n-status--completed,
+.n-status--delivered {
+	border-color: rgb(52 211 153 / 0.4);
+	background: rgb(16 185 129 / 0.12);
+	color: #6ee7b7;
+}
+.n-status--partially_refunded,
+.n-status--refunded {
+	border-color: rgb(251 191 36 / 0.4);
+	background: rgb(245 158 11 / 0.12);
+	color: #fcd34d;
+}
+.n-status--voided {
+	border-color: var(--edge);
+	background: rgb(161 161 170 / 0.1);
+	color: var(--store-muted);
+	text-decoration: line-through;
+}
+.n-status--new {
+	border-color: rgb(125 211 252 / 0.4);
+	background: rgb(14 165 233 / 0.12);
+	color: #7dd3fc;
+}
+.n-status--packing {
+	border-color: rgb(196 181 253 / 0.4);
+	background: rgb(139 92 246 / 0.12);
+	color: #c4b5fd;
+}
+.n-status--shipped {
+	border-color: rgb(147 197 253 / 0.4);
+	background: rgb(59 130 246 / 0.12);
+	color: #93c5fd;
+}
+/* Unpaid / partly paid: a small pie filled by the share already paid. */
+.n-pay {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font: 500 12px / 1.4 var(--store-font);
+	white-space: nowrap;
+}
+.n-pay--unpaid {
+	color: var(--store-danger);
+}
+.n-pay--partial {
+	color: #fbbf24;
+}
+.n-pie {
+	width: 12px;
+	height: 12px;
+	flex: none;
+	border: 1px solid currentColor;
+	border-radius: 50%;
+}
+.n-address-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+	gap: 8px 12px;
+	padding: 14px 0;
+	font-size: 14px;
+}
+.n-row-tools form {
+	margin: 0;
+}
+.n-address-edit {
+	grid-column: 1 / -1;
+}
+.n-address-edit > form,
+.n-address-add > form {
+	margin-top: 16px;
+}
+.n-address-edit > summary,
+.n-address-add > summary {
+	width: fit-content;
+	list-style: none;
+}
+.n-address-edit > summary::-webkit-details-marker,
+.n-address-add > summary::-webkit-details-marker {
+	display: none;
+}
+.n-big {
+	margin: 0;
+	font: 700 96px / 1 var(--store-font);
+	letter-spacing: -0.04em;
+	color: #26262c;
+}
+
+/* ── Footer ───────────────────────────────────────────── */
+
+.n-foot {
+	margin-top: auto;
+	border-top: 1px solid var(--hair);
+	color: var(--store-muted);
+	font-size: 14px;
+}
+.n-foot-cols {
+	display: flex;
+	flex-direction: column;
+	gap: 40px;
+	padding-block: 56px 40px;
+}
+.n-foot-brand {
+	display: grid;
+	align-content: start;
+	gap: 12px;
+	font-style: normal;
+}
+.n-foot-brand p {
+	margin: 0;
+}
+.n-foot-name {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.n-foot-name strong {
+	font-size: 18px;
+	font-weight: 700;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--store-fg);
+	overflow-wrap: anywhere;
+}
+.n-foot-line {
+	display: flex;
+	gap: 8px;
+}
+.n-foot-line .n-icon {
+	width: 14px;
+	height: 14px;
+	margin-top: 3px;
+}
+.n-foot-head {
+	margin: 0 0 12px;
+	font: 500 11px / 1.4 var(--mono);
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--faint);
+}
+.n-foot-list {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.n-foot a,
+.n-langs button {
+	text-decoration: none;
+	transition: color 0.15s;
+}
+.n-foot a:hover,
+.n-langs button:hover {
+	color: var(--store-accent);
+}
+.n-langs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-top: 12px;
+}
+.n-langs button {
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+.n-langs [aria-current="true"] {
+	color: var(--store-fg);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.n-foot-copy {
+	margin: 0;
+	padding-block: 20px 28px;
+	border-top: 1px solid var(--hair);
+	font: 400 12px / 1.5 var(--mono);
+	color: var(--dim);
+}
+
+/* ── Rich text: product descriptions and custom pages ── */
+
+.n-rich {
+	font-size: 14px;
+	line-height: 1.65;
+	overflow-wrap: anywhere;
+}
+.n-rich a {
+	color: var(--store-accent);
+	text-decoration: underline;
+}
+.n-rich h1,
+.n-rich h2,
+.n-rich h3 {
+	margin: 16px 0 8px;
+	color: var(--store-fg);
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	line-height: 1.25;
+}
+.n-rich h1 {
+	font-size: 24px;
+}
+.n-rich h2 {
+	font-size: 20px;
+}
+.n-rich h3 {
+	font-size: 17px;
+}
+.n-rich > :first-child {
+	margin-top: 0;
+}
+.n-rich p {
+	margin: 8px 0;
+}
+.n-rich ul,
+.n-rich ol {
+	padding-left: 20px;
+}
+.n-rich img {
+	margin: 12px 0;
+	max-width: 100%;
+}
+.n-rich blockquote {
+	margin: 12px 0;
+	padding-left: 12px;
+	border-left: 2px solid var(--store-accent);
+}
+.n-rich table {
+	width: 100%;
+	margin: 12px 0;
+	border-collapse: collapse;
+}
+.n-rich :is(td, th) {
+	padding: 6px 8px;
+	border: 1px solid var(--store-line);
+	text-align: left;
+	vertical-align: top;
+}
+.n-rich details {
+	border-top: 1px solid var(--store-line);
+}
+.n-rich details:last-child {
+	border-bottom: 1px solid var(--store-line);
+}
+.n-rich summary {
+	padding: 14px 0;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+/* ── Phones ───────────────────────────────────────────── */
+
+/*
+ * Two header rows: the brand and the controls first,
+ * then the search on a row of its own, as wide as the screen.
+ * The account and cart buttons show only their icon,
+ * so the shop name keeps its room.
+ */
+@media (max-width: 639px) {
+	.n-head-row {
+		flex-wrap: wrap;
+		gap: 12px;
+		padding-block: 12px;
+	}
+	.n-brand {
+		flex: 1;
+	}
+	.n-brand-name {
+		font-size: 16px;
+		letter-spacing: 0.12em;
+	}
+	.n-search {
+		order: 3;
+		flex: 1 0 100%;
+		margin-left: 0;
+	}
+	.n-tools,
+	.n-search + .n-tools {
+		margin-left: 0;
+	}
+	.n-tools .n-ctl-text {
+		display: none;
+	}
+	.n-tools > .n-ctl:not(.n-select) {
+		width: var(--ctl);
+		padding: 0;
+	}
+	.n-select select {
+		padding-left: 12px;
+		padding-right: 30px;
+	}
+	.n-select .n-icon {
+		right: 10px;
+	}
+	.n-sort .n-select {
+		flex: 1;
+	}
+	.n-panel {
+		padding: 20px;
+	}
+}
+
+/* ── Wider screens ────────────────────────────────────── */
+
+@media (min-width: 640px) {
+	.n-card-row {
+		flex-direction: row;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 12px;
+	}
+	.n-card-price {
+		flex: none;
+		font-size: 14px;
+	}
+	.n-grid--four {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.n-grid--four > .n-card:nth-child(2n) {
+		border-right: 1px solid var(--hair);
+	}
+	.n-grid--four > .n-card:nth-child(4n) {
+		border-right: 0;
+	}
+	.n-track-fields {
+		grid-template-columns: 220px 1fr;
+	}
+	.n-foot-cols {
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 40px 64px;
+	}
+	.n-foot-brand {
+		flex: 1;
+		min-width: 14rem;
+	}
+	.n-title {
+		font-size: 36px;
+	}
+	.n-sheet-grid {
+		grid-template-columns: 300px minmax(0, 1fr);
+		grid-template-rows: minmax(0, 1fr);
+	}
+	.n-sheet-side {
+		flex-direction: column;
+		padding: 20px;
+		overflow-y: auto;
+		border-right: 1px solid var(--hair);
+		border-bottom: 0;
+	}
+	.n-sheet-side .n-gallery {
+		width: 100%;
+	}
+	.n-sheet-side .n-thumbs {
+		display: flex;
+	}
+	.n-sheet-info {
+		padding-right: 0;
+	}
+	.n-sheet-name {
+		font-size: 24px;
+	}
+}
+@media (min-width: 768px) {
+	.n-bar-row {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.n-cats {
+		margin-inline: 0;
+		padding-inline: 0;
+	}
+	.n-product {
+		grid-template-columns: 1fr 1fr;
+		gap: 48px;
+	}
+	.n-panel {
+		padding: 32px;
+	}
+	.n-grid-wrap {
+		padding-inline: 24px;
+	}
+	.n-grid {
+		border-left: 1px solid var(--hair);
+	}
+	.n-card {
+		padding: 16px;
+	}
+	.n-grid > .n-card:nth-child(2n) {
+		border-right: 1px solid var(--hair);
+	}
+}
+@media (min-width: 1024px) {
+	.n-wrap {
+		padding-inline: 24px;
+	}
+	.n-head-row {
+		gap: 32px;
+	}
+	.n-nav {
+		display: flex;
+	}
+	.n-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+	.n-grid--four {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.n-card {
+		padding: 22px;
+	}
+}
+
+/* the buyer's custom request box in the picker */
+.note-field textarea {
+	min-height: 88px;
+	padding: 10px 12px;
+	resize: vertical;
+}
+
+/* the buyer's custom request, on its own row under a cart line (lined up with the name) */
+.n-line {
+	flex-wrap: wrap;
+	row-gap: 6px;
+}
+.n-line-request {
+	flex-basis: 100%;
+	margin: 0;
+	padding-left: 76px;
+	font-size: 12px;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}
+
+/*
+ * The shop's own footer colours (Template › Customize).
+ * document.edge puts `.theme-footer` on <html> when a background is picked,
+ * and `.theme-footer-text` when the footer has its own text colour:
+ * the shop's, else black or white, whichever reads best on that background.
+ * Every footer text is exactly that colour, never a softer shade of it.
+ */
+.theme-footer .n-foot {
+	background: var(--theme-footer);
+}
+.theme-footer-text .n-foot {
+	color: var(--theme-on-footer);
+}
+.theme-footer-text
+	.n-foot
+	:is(
+		.n-foot-name strong,
+		.n-foot-head,
+		a:hover,
+		.n-langs button:hover,
+		.n-langs [aria-current="true"]
+	) {
+	color: var(--theme-on-footer);
+}
+.theme-footer-text .n-foot-copy {
+	color: inherit;
+	border-top-color: color-mix(in srgb, var(--theme-on-footer) 15%, transparent);
+}
+
+/*
+ * The shop's own card text (Template › Customize): document.edge puts
+ * `.theme-surface-text` on <html> when the cards have their own text colour:
+ * the shop's, else black or white, whichever reads best on the card colour.
+ * Every box drawn in `--store-surface` takes it, and so does all text inside.
+ * `:where()` keeps the rule as weak as the box's own class,
+ * so a picked or dark state still wins.
+ */
+:where(.theme-surface-text) .n-ctl--solid:hover,
+:where(.theme-surface-text) .n-card:hover,
+:where(.theme-surface-text) .n-sheet-side,
+:where(.theme-surface-text) .n-panel {
+	--store-fg: var(--theme-on-surface);
+	--store-muted: color-mix(in srgb, var(--theme-on-surface) 65%, transparent);
+	color: var(--store-fg);
+}

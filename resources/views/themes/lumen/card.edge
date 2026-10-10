@@ -1,0 +1,36 @@
+{{--
+  One product as a glass card (catalog and related products). Expects `p`.
+  A real link, so crawlers and cmd-click reach the product page.
+  script.js opens the product sheet on a plain click ([data-product]).
+  The category line needs `categories` (the catalog has it; else the shop name).
+--}}
+<a class="glass card {{ p.sold_out ? 'is-sold-out' : '' }}" href="{{ url.product(p) }}" aria-label="{{ p.name }}" data-product="{{ p.id }}">
+  <div class="card-frame">
+    @if(p.images[0])
+    <img class="card-img" src="{{ p.images[0] }}" alt="{{ p.name }}" loading="lazy">
+    @else
+    <span class="card-letter" aria-hidden="true">{{ p.name.trim().charAt(0).toUpperCase() }}</span>
+    @end
+    @if(p.sold_out)
+    <span class="card-tag is-out">{{ t('store.sold_out') }}</span>
+    @elseif(p.stock !== null)
+    <span class="card-tag">{{ p.stock <= 5 ? t('store.stock_left', { count: p.stock }) : t('store.in_stock') }}</span>
+    @end
+  </div>
+  <div class="card-body">
+    <div class="card-cat">{{ ((categories || []).find((c) => p.category_ids.includes(c.id)) || {}).name || store.name }}</div>
+    <div class="card-name">{{ p.name }}</div>
+    <div class="card-row">
+      <span class="card-price">
+        @if(p.variants.length > 1)
+        <span class="card-from">{{ t('store.from') }}</span>
+        @end
+        {{ price(p.price) }}
+        @if(discountPct(p))
+        <s class="card-was">{{ price(p.original_price) }}</s>
+        @end
+      </span>
+      <span class="card-add">{{ t('common.add') }}</span>
+    </div>
+  </div>
+</a>

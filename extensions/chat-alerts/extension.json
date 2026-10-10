@@ -1,0 +1,57 @@
+{
+	"key": "chat-alerts",
+	"name": "name",
+	"version": "1.0.0",
+	"description": "description",
+	"help_url": "https://api.slack.com/messaging/webhooks",
+	"icon": "assets/icon.svg",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "events",
+			"label": "field.events",
+			"type": "multiselect",
+			"required": true,
+			"options": [
+				{ "value": "order.online", "label": "option.order.online" },
+				{ "value": "order.pos", "label": "option.order.pos" },
+				{ "value": "order.paid", "label": "option.order.paid" },
+				{ "value": "order.refunded", "label": "option.order.refunded" },
+				{ "value": "order.voided", "label": "option.order.voided" },
+				{ "value": "stock.low", "label": "option.stock.low" }
+			]
+		},
+		{
+			"name": "slack_url",
+			"label": "field.slack_url",
+			"type": "url",
+			"secret": true,
+			"starts_with": "https://hooks.slack.com/",
+			"placeholder": "https://hooks.slack.com/services/…",
+			"hint": "field.slack_url_hint"
+		},
+		{
+			"name": "discord_url",
+			"label": "field.discord_url",
+			"type": "url",
+			"secret": true,
+			"starts_with": "https://discord.com/api/webhooks/",
+			"placeholder": "https://discord.com/api/webhooks/…",
+			"hint": "field.discord_url_hint"
+		},
+		{
+			"name": "line_token",
+			"label": "field.line_token",
+			"secret": true,
+			"grid": 4,
+			"hint": "field.line_token_hint"
+		},
+		{
+			"name": "line_to",
+			"label": "field.line_to",
+			"grid": 4,
+			"placeholder": "U… / C…",
+			"hint": "field.line_to_hint"
+		}
+	]
+}

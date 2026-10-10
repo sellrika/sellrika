@@ -1,0 +1,35 @@
+{
+	"key": "2c2p",
+	"name": "name",
+	"version": "1.0.0",
+	"description": "description",
+	"help_url": "https://developer.2c2p.com/docs/sandbox-setup",
+	"icon": "assets/icon.png",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "api_url",
+			"label": "field.api_url",
+			"type": "select",
+			"required": true,
+			"options": [
+				{ "value": "https://pgw.2c2p.com", "label": "option.production" },
+				{ "value": "https://sandbox-pgw.2c2p.com", "label": "option.sandbox" }
+			]
+		},
+		{
+			"name": "merchant_id",
+			"label": "field.merchant_id",
+			"required": true,
+			"placeholder": "field.merchant_id_hint"
+		},
+		{
+			"name": "secret_key",
+			"label": "field.secret_key",
+			"secret": true,
+			"required": true,
+			"hint": "field.secret_key_hint"
+		}
+	],
+	"payment": { "mode": "hosted" }
+}

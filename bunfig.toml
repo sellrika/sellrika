@@ -1,0 +1,4 @@
+[test]
+preload = ["./app/test.preload.ts"] # env every test file must agree on (see the file)
+root = "app" # keeps bare `bun test` off e2e/*.spec.ts (playwright owns those); `bun run test`
+# passes ./app ./resources as PATHS — bare names would be read as filters under this root and silently match nothing

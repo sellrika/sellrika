@@ -1,0 +1,39 @@
+{{--
+  One product in a grid (catalog and related products). Expects `p`.
+  A real link, so crawlers and cmd-click reach the product page.
+  script.js opens the product sheet on a plain click ([data-product]).
+--}}
+<a class="card {{ p.sold_out ? 'is-sold-out' : '' }}" href="{{ url.product(p) }}" aria-label="{{ p.name }}" data-product="{{ p.id }}">
+  <div class="card-frame hatch">
+    @if(p.images[0])
+    <img class="card-img" src="{{ p.images[0] }}" alt="{{ p.name }}" loading="lazy">
+    @else
+    <span class="card-letter" aria-hidden="true">{{ p.name.trim().charAt(0).toUpperCase() }}</span>
+    @end
+    <span class="card-tag {{ p.sold_out ? 'is-out' : '' }}">
+      @if(p.sold_out)
+      {{ t('store.sold_out') }}
+      @elseif(p.stock !== null && p.stock <= 5)
+      {{ t('store.stock_left', { count: p.stock }) }}
+      @else
+      {{ t('store.in_stock') }}
+      @end
+    </span>
+  </div>
+  <div class="card-row">
+    <span class="card-name">{{ p.name }}</span>
+    <span class="card-price">
+      @if(p.variants.length > 1)
+      <span>{{ t('store.from') }}</span>
+      @end
+      {{ price(p.price) }}
+      @if(discountPct(p))
+      <s class="card-was">{{ price(p.original_price) }}</s>
+      <span class="card-off">−{{ discountPct(p) }}%</span>
+      @end
+    </span>
+  </div>
+  @if(categories)
+  <div class="card-cat">{{ (categories.find((c) => p.category_ids.includes(c.id)) || {}).name || '' }}</div>
+  @end
+</a>

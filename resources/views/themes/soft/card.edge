@@ -1,0 +1,44 @@
+{{--
+  One product in a grid (catalog and related products). Expects `p`.
+  A real link, so crawlers and cmd-click reach the product page.
+  script.js opens the product sheet on a plain click ([data-product]).
+  The category line only prints when the product has one, and the old
+  price sits next to the price, so a card never ends in empty space.
+--}}
+@let(cat = categories ? (categories.find((c) => p.category_ids.includes(c.id)) || {}).name : '')
+<a class="card {{ p.sold_out ? 'is-sold-out' : '' }}" href="{{ url.product(p) }}" aria-label="{{ p.name }}" data-product="{{ p.id }}">
+  <div class="card-frame">
+    @if(p.images[0])
+    <img class="card-img" src="{{ p.images[0] }}" alt="{{ p.name }}" loading="lazy">
+    @else
+    <span class="card-letter" aria-hidden="true">{{ p.name.trim().charAt(0).toUpperCase() }}</span>
+    @end
+    @if(p.sold_out)
+    <span class="card-tag is-out">{{ t('store.sold_out') }}</span>
+    @elseif(p.stock !== null && p.stock <= 5)
+    <span class="card-tag">{{ t('store.stock_left', { count: p.stock }) }}</span>
+    @else
+    <span class="card-tag">{{ t('store.in_stock') }}</span>
+    @end
+    @if(discountPct(p))
+    <span class="card-off">−{{ discountPct(p) }}%</span>
+    @end
+  </div>
+  <div class="card-body">
+    @if(cat)
+    <span class="card-cat">{{ cat }}</span>
+    @end
+    <span class="card-row">
+      <span class="card-name">{{ p.name }}</span>
+      <span class="card-price">
+        @if(p.variants.length > 1)
+        <span class="card-from">{{ t('store.from') }}</span>
+        @end
+        {{ price(p.price) }}
+        @if(discountPct(p))
+        <s class="card-was">{{ price(p.original_price) }}</s>
+        @end
+      </span>
+    </span>
+  </div>
+</a>
