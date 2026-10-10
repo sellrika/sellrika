@@ -26,4 +26,4 @@ Copy `Pages/Customers/Index.vue` (list + dialog + server search + pager) or `Pag
 - Every user-visible text goes through `t("area.key")` from `@/lib/i18n` (keys in `i18n/en.ts` + `i18n/de.ts`); call it at render time, never at module load.
 - Tailwind utility classes + existing theme tokens (`text-muted-foreground`, `bg-muted`…); no new CSS files, no new deps.
 - Empty state + loading/disabled states for every list/form.
-- Any new page or user flow gets e2e coverage → load the `e2e-test` skill. `bun run lint && bunx tsc --noEmit -p .` must pass (Biome formats the `<script>` of Vue files; Vue files are type-checked through the TS project).
+- Any new page or user flow gets e2e coverage → load the `e2e-test` skill. `bun run lint && bun check` must pass (Biome formats the `<script>` of Vue files; Vue files are type-checked through the TS project).

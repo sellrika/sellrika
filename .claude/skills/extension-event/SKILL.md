@@ -17,7 +17,7 @@ Names are `<thing>.<past-tense verb>` in lower case (`order.created`, `order.ref
    `void this.extensions.emit("<name>", shop, { … });` — `void`, never awaited, with a short comment. Inject `ExtensionService` in the constructor if the service doesn't have it yet (`private extensions: ExtensionService`; no circular imports — `ExtensionService` must not import that service). Fire it from **every** place the thing happens (POS and online store both create orders, for example).
 5. **Docs**: the JSDoc of the event in `extensions/types.ts` is what authors read: say there when it fires and what it carries.
 6. **Tests**: `app/services/settings/__tests__/ExtensionEvents.test.ts` uploads one recorder extension that listens for every name in `EXTENSION_EVENTS` (so a new event is recorded with no change there), then drives the real services. Add a step for the new event: do the thing through the service, `await events(n)` (it calls `ExtensionService.idle()`, which waits for every `void` emit in flight, and fails on any extra event — `reset()` first) and assert the payload. Cover every fire site.
-7. **Verify**: `bunx tsc --noEmit -p . && bun test`.
+7. **Verify**: `bun check && bun test`.
 
 ## Don't
 - Don't await `emit()` on a request path; don't let it throw (it already catches — keep it that way).

@@ -39,4 +39,4 @@ const S = shop.id as number;
 ## Style
 - Few, dense tests: one `test()` per scenario chain, many `expect`s, comments stating the arithmetic (`// pro-rata 1000 * 2700/3000 = 900`).
 - Cover: happy path, the guard (insufficient stock, duplicate, wrong shop), and the side effects (ledger rows, caches, sessions dropped).
-- Finish with `bun test` green and `bunx tsc --noEmit -p .`.
+- Finish with `bun test` green and `bun check`.
