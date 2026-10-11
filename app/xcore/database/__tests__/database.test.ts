@@ -92,11 +92,19 @@ test("Db.upsert / insertOnce: a row that is there is updated or left alone", asy
 	expect(await value()).toBe("b");
 	await sql`delete from settings where ${sql("key")} = ${key}`;
 
-	const row = { shop_id: 987654, email: `${key}@x.io` };
+	// a real shop: Postgres checks the foreign key
+	const [shop] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency) values ('Db Once', 'USD')`,
+		sql`id`,
+	);
+	const row = { shop_id: Number(shop.id), email: `${key}@x.io` };
 	const keys = ["shop_id", "email"];
 	// email_unsubscribes has an id: the first call adds, the second finds it
 	const id = await Db.insertOnce(sql, "email_unsubscribes", row, keys);
 	expect(id).toBeGreaterThan(0);
 	expect(await Db.insertOnce(sql, "email_unsubscribes", row, keys)).toBeNull();
 	await sql`delete from email_unsubscribes where shop_id = ${row.shop_id}`;
+	await sql`delete from shops where id = ${row.shop_id}`;
 });
