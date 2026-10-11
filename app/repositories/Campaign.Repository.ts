@@ -100,8 +100,12 @@ export class CampaignRepository {
 	async create(shopId: number, d: CampaignData, userId: number) {
 		return this.#row(
 			(
-				await sql`insert into campaigns (shop_id, subject, body, product_ids, customer_ids, created_by)
-      values (${shopId}, ${d.subject}, ${d.body}, ${JSON.stringify(d.product_ids)}, ${JSON.stringify(d.customer_ids)}, ${userId}) returning *`
+				await Db.insert(
+					sql,
+					"campaigns",
+					sql`insert into campaigns (shop_id, subject, body, product_ids, customer_ids, created_by)
+      values (${shopId}, ${d.subject}, ${d.body}, ${JSON.stringify(d.product_ids)}, ${JSON.stringify(d.customer_ids)}, ${userId})`,
+				)
 			)[0],
 		);
 	}
@@ -116,9 +120,13 @@ export class CampaignRepository {
 	 */
 	async update(id: number, shopId: number, d: CampaignData) {
 		return Db.exists(
-			sql`update campaigns set subject = ${d.subject}, body = ${d.body}, product_ids = ${JSON.stringify(d.product_ids)},
-      customer_ids = ${JSON.stringify(d.customer_ids)}, updated_at = current_timestamp
-      where id = ${id} and shop_id = ${shopId} and status in ('draft', 'scheduled') returning id`,
+			Db.update(
+				sql,
+				"campaigns",
+				sql`subject = ${d.subject}, body = ${d.body}, product_ids = ${JSON.stringify(d.product_ids)},
+      customer_ids = ${JSON.stringify(d.customer_ids)}, updated_at = current_timestamp`,
+				sql`id = ${id} and shop_id = ${shopId} and status in ('draft', 'scheduled')`,
+			),
 		);
 	}
 
@@ -134,8 +142,12 @@ export class CampaignRepository {
 		const status: CampaignStatus = sendAt ? "scheduled" : "draft";
 		const at = sendAt ? sqlStamp(sendAt) : null;
 		return Db.exists(
-			sql`update campaigns set status = ${status}, send_at = ${at}, updated_at = current_timestamp
-      where id = ${id} and shop_id = ${shopId} and status in ('draft', 'scheduled') returning id`,
+			Db.update(
+				sql,
+				"campaigns",
+				sql`status = ${status}, send_at = ${at}, updated_at = current_timestamp`,
+				sql`id = ${id} and shop_id = ${shopId} and status in ('draft', 'scheduled')`,
+			),
 		);
 	}
 
@@ -165,17 +177,25 @@ export class CampaignRepository {
 	 * Move a due campaign from scheduled to sending. Atomic.
 	 * Refused while another campaign of the same account is sending.
 	 * One at a time per account.
+	 * The sending ones are read through `busy`: MySQL refuses
+	 * a plain subquery on the table it updates.
 	 * @param id Campaign id.
 	 * @returns False when another sweep, "Cancel schedule",
 	 *   or another campaign got there first.
 	 */
 	async claim(id: number) {
 		return Db.exists(
-			sql`update campaigns set status = 'sending', updated_at = current_timestamp
-      where id = ${id} and status = 'scheduled' and not exists (
-        select 1 from campaigns o join shops s on s.id = o.shop_id
-        where o.status = 'sending' and s.owner_id = (select owner_id from shops where id = campaigns.shop_id)
-      ) returning id`,
+			Db.update(
+				sql,
+				"campaigns",
+				sql`status = 'sending', updated_at = current_timestamp`,
+				sql`id = ${id} and status = 'scheduled' and not exists (
+        select 1 from (
+          select s.owner_id from campaigns o join shops s on s.id = o.shop_id where o.status = 'sending'
+        ) busy
+        where busy.owner_id = (select owner_id from shops where id = campaigns.shop_id)
+      )`,
+			),
 		);
 	}
 
@@ -207,11 +227,12 @@ export class CampaignRepository {
 		email: string,
 		platform = false,
 	) {
-		const r = (
-			await sql`insert into campaign_sends (campaign_id, customer_id, email, platform) values (${campaignId}, ${customerId}, ${email}, ${platform})
-      on conflict (campaign_id, customer_id) do nothing returning id`
-		)[0];
-		return r ? Number(r.id) : null;
+		return Db.insertOnce(
+			sql,
+			"campaign_sends",
+			{ campaign_id: campaignId, customer_id: customerId, email, platform },
+			["campaign_id", "customer_id"],
+		);
 	}
 
 	/**
@@ -376,11 +397,13 @@ export class CampaignRepository {
 	 * @returns False when nothing was deleted.
 	 */
 	async #drop(tx: SQL, id: number, shopId: number) {
-		const gone =
-			await tx`delete from campaigns where id = ${id} and shop_id = ${shopId} and status <> 'sending' returning id`;
-		if (gone.length)
-			await tx`delete from campaign_sends where campaign_id = ${id}`;
-		return gone.length > 0;
+		const gone = await Db.delete(
+			tx,
+			"campaigns",
+			tx`id = ${id} and shop_id = ${shopId} and status <> 'sending'`,
+		);
+		if (gone) await tx`delete from campaign_sends where campaign_id = ${id}`;
+		return gone;
 	}
 
 	/**
@@ -411,14 +434,39 @@ export class CampaignRepository {
 					platform,
 					error: r.unsubscribed ? unsubscribed : null,
 				});
-			const booked: { id: unknown; email: string; error: string | null }[] =
-				await tx`insert into campaign_sends ${tx(rows)}
-          on conflict (campaign_id, customer_id) do nothing returning id, email, error`;
+			const booked = await this.#bookAll(tx, campaignId, rows);
 			const emails: QueueEntry[] = [];
 			for (const b of booked)
 				if (!b.error) emails.push({ ref_id: Number(b.id), to_email: b.email });
 			await this.queue.pushAll(tx, "campaign", campaignId, emails);
 		}
+	}
+
+	/**
+	 * Book many recipients of a campaign with one insert.
+	 * MySQL cannot say which rows an insert added.
+	 * So the ones booked before are read first and left out.
+	 * @param tx The open transaction.
+	 * @param campaignId Campaign id.
+	 * @param rows The `campaign_sends` rows to add.
+	 * @returns The rows this call added, with their ids.
+	 */
+	async #bookAll(
+		tx: SQL,
+		campaignId: number,
+		rows: { customer_id: number }[],
+	): Promise<{ id: unknown; email: string; error: string | null }[]> {
+		const ids = rows.map((r) => r.customer_id);
+		const before: { customer_id: unknown }[] =
+			await tx`select customer_id from campaign_sends where campaign_id = ${campaignId} and customer_id in ${tx(ids)}`;
+		const known = new Set(before.map((r) => Number(r.customer_id)));
+		const fresh = rows.filter((r) => !known.has(r.customer_id));
+		if (!fresh.length) return [];
+		await Db.upsert(tx, "campaign_sends", fresh, [
+			"campaign_id",
+			"customer_id",
+		]);
+		return tx`select id, email, error from campaign_sends where campaign_id = ${campaignId} and customer_id in ${tx(fresh.map((r) => r.customer_id))} order by id`;
 	}
 
 	/**

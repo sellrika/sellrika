@@ -2,8 +2,8 @@ import { tmpdir } from "node:os"; // Bun has no equivalent
 import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { dialect, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { ShopService: _ShopService } = await import("../Shop.Service");
 const ShopService = Container.get(_ShopService);
 const { ShopRepository: _ShopRepository } = await import(
@@ -21,15 +21,7 @@ const ProductRepository = Container.get(_ProductRepository);
 const { ShopInput } = await import("@validators/Shop.Validator");
 const { StoreDeliveryInput } = await import("@validators/Store.Validator");
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 // this file's own owner, so other files' shops never count here
 const OWNER = 9101;
@@ -313,21 +305,25 @@ test('shop + delivery validators: the country must be on the list, blank means "
 	).toMatchObject({ tax_rate: 750, tax_label: "GST", tax_included: true });
 });
 
-test("shops: deleting a shop names every table that holds its rows", async () => {
-	// A new table with a `shop_id` must be added to `ShopRepository.#drop`,
-	// or a deleted shop leaves buyer data behind (and Postgres refuses the delete).
-	const source = await Bun.file("app/repositories/Shop.Repository.ts").text();
-	const tables: { name: string }[] =
-		await sql`select name from sqlite_master where type = 'table'`;
-	const missing: string[] = [];
-	for (const { name } of tables) {
-		const columns: { name: string }[] = await sql.unsafe(
-			`pragma table_info(${name})`,
-		);
-		// `sessions` only forgets the shop; a shop with products can not be deleted
-		if (!columns.some((c) => c.name === "shop_id")) continue;
-		if (["sessions", "products"].includes(name)) continue;
-		if (!source.includes(`delete from ${name} `)) missing.push(name);
-	}
-	expect(missing).toEqual([]);
-});
+// reads SQLite's own table list; the tables are the same on every database
+test.skipIf(dialect !== "sqlite")(
+	"shops: deleting a shop names every table that holds its rows",
+	async () => {
+		// A new table with a `shop_id` must be added to `ShopRepository.#drop`,
+		// or a deleted shop leaves buyer data behind (and Postgres refuses the delete).
+		const source = await Bun.file("app/repositories/Shop.Repository.ts").text();
+		const tables: { name: string }[] =
+			await sql`select name from sqlite_master where type = 'table'`;
+		const missing: string[] = [];
+		for (const { name } of tables) {
+			const columns: { name: string }[] = await sql.unsafe(
+				`pragma table_info(${name})`,
+			);
+			// `sessions` only forgets the shop; a shop with products can not be deleted
+			if (!columns.some((c) => c.name === "shop_id")) continue;
+			if (["sessions", "products"].includes(name)) continue;
+			if (!source.includes(`delete from ${name} `)) missing.push(name);
+		}
+		expect(missing).toEqual([]);
+	},
+);

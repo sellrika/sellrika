@@ -892,8 +892,12 @@ export class ProductRepository {
 					continue;
 				}
 			}
-			const [row] =
-				await tx`insert into product_variants (product_id, name, price, purchase_price, position, attributes, sku, barcode, images, stock) values (${productId}, ${v.name}, ${v.price}, ${v.purchase_price}, ${i}, ${this.#attrs(v)}, ${v.sku}, ${v.barcode}, ${this.#images(v)}, ${v.stock ?? 0}) returning id`;
+			const [row] = await Db.insert(
+				tx,
+				"product_variants",
+				tx`insert into product_variants (product_id, name, price, purchase_price, position, attributes, sku, barcode, images, stock) values (${productId}, ${v.name}, ${v.price}, ${v.purchase_price}, ${i}, ${this.#attrs(v)}, ${v.sku}, ${v.barcode}, ${this.#images(v)}, ${v.stock ?? 0})`,
+				tx`id`,
+			);
 			if (v.stock)
 				await this.#formMovement(
 					tx,
@@ -1054,9 +1058,12 @@ export class ProductRepository {
 	) {
 		// with variants the count lives on each variant
 		const stock = d.variants.length ? 0 : (d.stock ?? 0);
-		const [p] =
-			await tx`insert into products (shop_id, name, slug, description, price, purchase_price, original_price, images, sku, barcode, unit, amount, extra, track_stock, stock, low_stock_at, featured, custom_request, custom_request_label, active, kind, updated_at)
-        values (${shopId}, ${d.name}, ${await this.#uniqueSlug(tx, shopId, d.name)}, ${d.description}, ${d.price}, ${d.purchase_price}, ${d.original_price}, ${this.#images(d)}, ${d.sku}, ${d.barcode}, ${d.unit}, ${d.amount ?? null}, ${this.#extra(d)}, ${d.track_stock}, ${stock}, ${d.low_stock_at}, ${d.featured}, ${d.custom_request ?? false}, ${d.custom_request_label ?? ""}, ${d.active}, ${d.kind === "bundle" ? "bundle" : "item"}, current_timestamp) returning *`;
+		const [p] = await Db.insert(
+			tx,
+			"products",
+			tx`insert into products (shop_id, name, slug, description, price, purchase_price, original_price, images, sku, barcode, unit, amount, extra, track_stock, stock, low_stock_at, featured, custom_request, custom_request_label, active, kind, updated_at)
+        values (${shopId}, ${d.name}, ${await this.#uniqueSlug(tx, shopId, d.name)}, ${d.description}, ${d.price}, ${d.purchase_price}, ${d.original_price}, ${this.#images(d)}, ${d.sku}, ${d.barcode}, ${d.unit}, ${d.amount ?? null}, ${this.#extra(d)}, ${d.track_stock}, ${stock}, ${d.low_stock_at}, ${d.featured}, ${d.custom_request ?? false}, ${d.custom_request_label ?? ""}, ${d.active}, ${d.kind === "bundle" ? "bundle" : "item"}, current_timestamp)`,
+		);
 		if (stock) await this.#formMovement(tx, shopId, p.id, null, stock, userId);
 		await this.#syncRelations(tx, shopId, p.id, d, userId);
 		return p as Product;
@@ -1085,9 +1092,14 @@ export class ProductRepository {
 		const stock = d.variants.length ? 0 : (d.stock ?? Number(before.stock));
 		// Same name → same slug: only itself is left out of the collision check.
 		// A rename moves the page.
-		const [p] =
-			await tx`update products set name = ${d.name}, slug = ${await this.#uniqueSlug(tx, shopId, d.name, id)}, description = ${d.description}, price = ${d.price}, purchase_price = ${d.purchase_price}, original_price = ${d.original_price}, images = ${this.#images(d)}, sku = ${d.sku}, barcode = ${d.barcode}, unit = ${d.unit}, amount = ${d.amount ?? null}, extra = coalesce(${d.extra ? this.#extra(d) : null}, extra),
-        track_stock = ${d.track_stock}, stock = ${stock}, low_stock_at = ${d.low_stock_at}, featured = ${d.featured}, custom_request = coalesce(${d.custom_request ?? null}, custom_request), custom_request_label = coalesce(${d.custom_request_label ?? null}, custom_request_label), active = ${d.active}, kind = ${d.kind === "bundle" ? "bundle" : "item"}, updated_at = current_timestamp where id = ${id} and shop_id = ${shopId} returning *`;
+		const [p] = await Db.update(
+			tx,
+			"products",
+			tx`name = ${d.name}, slug = ${await this.#uniqueSlug(tx, shopId, d.name, id)}, description = ${d.description}, price = ${d.price}, purchase_price = ${d.purchase_price}, original_price = ${d.original_price}, images = ${this.#images(d)}, sku = ${d.sku}, barcode = ${d.barcode}, unit = ${d.unit}, amount = ${d.amount ?? null}, extra = coalesce(${d.extra ? this.#extra(d) : null}, extra),
+        track_stock = ${d.track_stock}, stock = ${stock}, low_stock_at = ${d.low_stock_at}, featured = ${d.featured}, custom_request = coalesce(${d.custom_request ?? null}, custom_request), custom_request_label = coalesce(${d.custom_request_label ?? null}, custom_request_label), active = ${d.active}, kind = ${d.kind === "bundle" ? "bundle" : "item"}, updated_at = current_timestamp`,
+			tx`id = ${id} and shop_id = ${shopId}`,
+			tx`*`,
+		);
 		if (stock !== Number(before.stock))
 			await this.#formMovement(
 				tx,

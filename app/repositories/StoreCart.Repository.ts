@@ -118,7 +118,11 @@ export class StoreCartRepository {
 		const holder = couponId ? (payload.customer_id ?? null) : null;
 		return this.#row(
 			(
-				await sql`insert into store_carts (shop_id, payload, coupon_id, coupon_email, coupon_customer_id) values (${shopId}, ${JSON.stringify(payload)}, ${couponId}, ${email}, ${holder}) returning *`
+				await Db.insert(
+					sql,
+					"store_carts",
+					sql`insert into store_carts (shop_id, payload, coupon_id, coupon_email, coupon_customer_id) values (${shopId}, ${JSON.stringify(payload)}, ${couponId}, ${email}, ${holder})`,
+				)
 			)[0],
 		);
 	}
@@ -166,7 +170,12 @@ export class StoreCartRepository {
 	 */
 	async claim(id: number) {
 		return Db.exists(
-			sql`update store_carts set order_id = 0 where id = ${id} and order_id is null returning id`,
+			Db.update(
+				sql,
+				"store_carts",
+				sql`order_id = 0`,
+				sql`id = ${id} and order_id is null`,
+			),
 		);
 	}
 
@@ -242,7 +251,12 @@ export class StoreCartRepository {
 	 */
 	async remind(id: number, token: string, now: Date) {
 		return Db.exists(
-			sql`update store_carts set reminded_at = ${sqlStamp(now)}, restore_token = ${token} where id = ${id} and reminded_at is null and order_id is null returning id`,
+			Db.update(
+				sql,
+				"store_carts",
+				sql`reminded_at = ${sqlStamp(now)}, restore_token = ${token}`,
+				sql`id = ${id} and reminded_at is null and order_id is null`,
+			),
 		);
 	}
 

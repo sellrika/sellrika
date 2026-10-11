@@ -7,8 +7,8 @@ import { OAUTH_CODE_TTL_MS } from "@constants/OAuth.Constant";
 // Temp SQLite DB (never the real one); db.ts reads DB_FILE at import.
 process.env.DB_FILE = `${tmpdir()}/pos-oauth-test-${process.pid}.db`;
 process.env.APP_KEY ??= "oauth-test-key";
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { app } = await import("@config/app");
 const { pkceChallenge, signed } = await import("@helpers/crypto");
 const { OAuthService: _OAuthService } = await import("../OAuth.Service");
@@ -24,15 +24,7 @@ const { ShopRepository: _ShopRepository } = await import(
 );
 const ShopRepository = Container.get(_ShopRepository);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 const tag = `${process.pid}-${Date.now()}`;
 
@@ -47,8 +39,12 @@ async function ownerWithShop(name: string) {
 		"x",
 		null,
 	);
-	const [row] =
-		await sql`insert into shops (name, slug, currency, timezone, owner_id) values (${name}, ${`oauth-${name}-${tag}`}, 'USD', 'UTC', ${user.id}) returning id`;
+	const [row] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, slug, currency, timezone, owner_id) values (${name}, ${`oauth-${name}-${tag}`}, 'USD', 'UTC', ${user.id})`,
+		sql`id`,
+	);
 	const shop = await ShopRepository.findOwned(row.id as number, user.id);
 	if (!shop) throw new Error("no shop");
 	return { user, shop };

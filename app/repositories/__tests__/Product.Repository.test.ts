@@ -5,7 +5,8 @@ import { SQL } from "bun";
 // Temp SQLite DB (never the real data/pos.db); db.ts reads DB_FILE at import, hence the dynamic imports.
 // The module cache is shared across test files, so never `sql.close()` here — other tests reuse this connection.
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
-const { sql } = await import("@xcore/database/Database");
+const { dialect, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const registry = await import("@database/migrations");
 const { ProductRepository: _ProductRepository } = await import(
 	"../Product.Repository"
@@ -13,28 +14,28 @@ const { ProductRepository: _ProductRepository } = await import(
 const ProductRepository = Container.get(_ProductRepository);
 const ordered = Object.entries(registry).sort(([a], [b]) => a.localeCompare(b));
 
-test("0007 keeps the old single image (fresh DB, migrations replayed one by one)", async () => {
-	// migrations take the connection as a parameter, so this runs on its own throw-away file
-	const db = new SQL(`sqlite://${tmpdir()}/pos-test-0007-${process.pid}.db`);
-	for (const [k, up] of ordered) {
-		if (k === "m0007_product_images")
-			await db`insert into products (shop_id, name, price, image) values (1, 'Old', 100, '/uploads/old.png')`;
-		await up(db);
-	}
-	expect(
-		(await db`select images from products`).map((p: any) =>
-			JSON.parse(p.images),
-		),
-	).toEqual([["/uploads/old.png"]]);
-	await db.close();
-});
+// its own SQLite file: only when the run's migrations are written for SQLite
+test.skipIf(dialect !== "sqlite")(
+	"0007 keeps the old single image (fresh DB, migrations replayed one by one)",
+	async () => {
+		// migrations take the connection as a parameter, so this runs on its own throw-away file
+		const db = new SQL(`sqlite://${tmpdir()}/pos-test-0007-${process.pid}.db`);
+		for (const [k, up] of ordered) {
+			if (k === "m0007_product_images")
+				await db`insert into products (shop_id, name, price, image) values (1, 'Old', 100, '/uploads/old.png')`;
+			await up(db);
+		}
+		expect(
+			(await db`select images from products`).map((p: any) =>
+				JSON.parse(p.images),
+			),
+		).toEqual([["/uploads/old.png"]]);
+		await db.close();
+	},
+);
 
 test("product + variant images round-trip; variants upsert by id", async () => {
-	const migrated = await sql`select 1 from users`.then(
-		() => true,
-		() => false,
-	);
-	if (!migrated) for (const [, up] of ordered) await up(sql);
+	await migrate(true);
 	const d: any = {
 		name: "New",
 		description: "",
@@ -84,11 +85,7 @@ test("product + variant images round-trip; variants upsert by id", async () => {
 });
 
 test("lists are ordered featured first, then most recently updated (SQLite ticks by the second, so id breaks ties)", async () => {
-	const migrated = await sql`select 1 from users`.then(
-		() => true,
-		() => false,
-	);
-	if (!migrated) for (const [, up] of ordered) await up(sql);
+	await migrate(true);
 	const S = 99; // own shop: the other tests use shop 1
 	const d: any = {
 		name: "",

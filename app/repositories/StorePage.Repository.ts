@@ -74,7 +74,11 @@ export class StorePageRepository {
 		d: { slug: string; title: string; body: string; css: string },
 	): Promise<StorePage> {
 		return (
-			await sql`insert into store_pages (shop_id, slug, title, body, css) values (${shopId}, ${d.slug}, ${d.title}, ${d.body}, ${d.css}) returning *`
+			await Db.insert(
+				sql,
+				"store_pages",
+				sql`insert into store_pages (shop_id, slug, title, body, css) values (${shopId}, ${d.slug}, ${d.title}, ${d.body}, ${d.css})`,
+			)
 		)[0];
 	}
 

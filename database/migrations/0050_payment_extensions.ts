@@ -1,4 +1,5 @@
 import type { SQL } from "bun";
+import { Db } from "@xcore/database/Database";
 
 // The online payment providers (stripe, omise, 2c2p, paypal) became extensions: the admin uploads a zip and
 // `shop_extensions` holds its switch and its keys. The manual options (cod, bank_transfer) stay built in, so
@@ -26,8 +27,17 @@ export async function up(db: SQL) {
 		}
 		for (const key of PROVIDERS) {
 			if (!creds[key] && s.payment_gateway !== key) continue;
-			await db`insert into shop_extensions (shop_id, key, enabled, config) values (${s.id}, ${key}, ${s.payment_gateway === key}, ${JSON.stringify(creds[key] ?? {})})
-        on conflict (shop_id, key) do nothing`;
+			await Db.upsert(
+				db,
+				"shop_extensions",
+				{
+					shop_id: s.id,
+					key,
+					enabled: s.payment_gateway === key,
+					config: JSON.stringify(creds[key] ?? {}),
+				},
+				["shop_id", "key"],
+			);
 			delete creds[key];
 		}
 		await db`update shops set payment_credentials = ${JSON.stringify(creds)} where id = ${s.id}`;

@@ -35,8 +35,12 @@ export class CustomerAddressRepository {
 		d: CustomerAddressInput,
 	): Promise<CustomerAddress> {
 		return (
-			await sql`insert into customer_addresses (customer_id, shop_id, label, phone, address_1, address_2, city, state, country, postal_code, tax_id)
-      values (${customerId}, ${shopId}, ${d.label}, ${d.phone}, ${d.address_1}, ${d.address_2}, ${d.city}, ${d.state}, ${d.country}, ${d.postal_code}, ${d.tax_id ?? ""}) returning *`
+			await Db.insert(
+				sql,
+				"customer_addresses",
+				sql`insert into customer_addresses (customer_id, shop_id, label, phone, address_1, address_2, city, state, country, postal_code, tax_id)
+      values (${customerId}, ${shopId}, ${d.label}, ${d.phone}, ${d.address_1}, ${d.address_2}, ${d.city}, ${d.state}, ${d.country}, ${d.postal_code}, ${d.tax_id ?? ""})`,
+			)
 		)[0];
 	}
 
@@ -54,8 +58,13 @@ export class CustomerAddressRepository {
 		d: CustomerAddressInput,
 	): Promise<CustomerAddress | null> {
 		return Db.one(
-			sql`update customer_addresses set label = ${d.label}, phone = ${d.phone}, address_1 = ${d.address_1}, address_2 = ${d.address_2}, city = ${d.city}, state = ${d.state}, country = ${d.country}, postal_code = ${d.postal_code}, tax_id = coalesce(${d.tax_id ?? null}, tax_id)
-      where id = ${id} and customer_id = ${customerId} returning *`,
+			Db.update(
+				sql,
+				"customer_addresses",
+				sql`label = ${d.label}, phone = ${d.phone}, address_1 = ${d.address_1}, address_2 = ${d.address_2}, city = ${d.city}, state = ${d.state}, country = ${d.country}, postal_code = ${d.postal_code}, tax_id = coalesce(${d.tax_id ?? null}, tax_id)`,
+				sql`id = ${id} and customer_id = ${customerId}`,
+				sql`*`,
+			),
 		);
 	}
 

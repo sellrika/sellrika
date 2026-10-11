@@ -51,7 +51,12 @@ export class MarketingRepository {
 	 * @param email The address.
 	 */
 	unsubscribe(shopId: number, email: string) {
-		return sql`insert into email_unsubscribes (shop_id, email) values (${shopId}, ${email.trim().toLowerCase()}) on conflict (shop_id, email) do nothing`;
+		return Db.upsert(
+			sql,
+			"email_unsubscribes",
+			{ shop_id: shopId, email: email.trim().toLowerCase() },
+			["shop_id", "email"],
+		);
 	}
 
 	/**

@@ -7,7 +7,7 @@ import { PASSKEY_MAX } from "@constants/Auth.Constant";
 // Temp SQLite DB (never the real one); db.ts reads DB_FILE at import.
 process.env.DB_FILE = `${tmpdir()}/pos-passkey-test-${process.pid}.db`;
 const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { migrate } = await import("@database/migrate");
 const { PasskeyService: _PasskeyService } = await import("../Passkey.Service");
 const PasskeyService = Container.get(_PasskeyService);
 const { PasskeyRepository: _PasskeyRepository } = await import(
@@ -157,15 +157,7 @@ function loginChallenge() {
 
 test("passkeys: add one with the password, sign in with it, and every guard", async () => {
 	// another test file may already have migrated the shared temp DB
-	const migrated = await sql`select 1 from users`.then(
-		() => true,
-		() => false,
-	);
-	if (!migrated)
-		for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-			a.localeCompare(b),
-		))
-			await up(sql);
+	await migrate(true);
 	const hash = await Bun.password.hash(PASSWORD);
 	const tag = `pk${process.pid}`;
 	await sql`insert into users (name, email, password_hash) values ('Ann', ${`${tag}-a@x.io`}, ${hash})`;

@@ -4,7 +4,7 @@ import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
 process.env.APP_KEY ||= "test-app-key-for-signup"; // CI has no .env; storing the mail key needs one
 const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { migrate } = await import("@database/migrate");
 const { app } = await import("@config/app");
 const { SignupService: _SignupService } = await import("../Signup.Service");
 const SignupService = Container.get(_SignupService);
@@ -21,15 +21,7 @@ const AuthService = Container.get(_AuthService);
 const { MailService: _MailService } = await import("../Mail.Service");
 const MailService = Container.get(_MailService);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 /**
  * A filled sign-up form.
@@ -93,7 +85,7 @@ function tokenIn(text: string) {
 }
 
 test("signup: off by default, and refused while off", async () => {
-	await sql`delete from settings where key = 'signup'`;
+	await sql`delete from settings where ${sql("key")} = 'signup'`;
 	expect(await SignupService.enabled()).toBe(false);
 	expect(await SignupService.register(form("off@signup.io"), ORIGIN)).toEqual({
 		errors: { email: "Sign-up is off" },

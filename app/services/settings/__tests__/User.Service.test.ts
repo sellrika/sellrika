@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
 const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { migrate } = await import("@database/migrate");
 const { UserService: _UserService } = await import("../User.Service");
 const UserService = Container.get(_UserService);
 const { UserRepository: _UserRepository } = await import(
@@ -17,15 +17,7 @@ const SessionRepository = Container.get(_SessionRepository);
 const { AuthService: _AuthService } = await import("../Auth.Service");
 const AuthService = Container.get(_AuthService);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 /**
  * A new owner: an admin with their own account.

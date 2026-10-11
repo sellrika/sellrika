@@ -40,8 +40,11 @@ export class CategoryRepository {
 	 * @returns The created row.
 	 */
 	async create(shopId: number, d: CategoryInput): Promise<Category> {
-		const rows =
-			await sql`insert into categories (shop_id, name, color, image) values (${shopId}, ${d.name}, ${d.color}, ${d.image}) returning *`;
+		const rows = await Db.insert(
+			sql,
+			"categories",
+			sql`insert into categories (shop_id, name, color, image) values (${shopId}, ${d.name}, ${d.color}, ${d.image})`,
+		);
 		catalogChanged(shopId);
 		return rows[0];
 	}
@@ -59,7 +62,13 @@ export class CategoryRepository {
 		d: CategoryInput,
 	): Promise<Category | null> {
 		const row = await Db.one<Category>(
-			sql`update categories set name = ${d.name}, color = ${d.color}, image = ${d.image} where id = ${id} and shop_id = ${shopId} returning *`,
+			Db.update(
+				sql,
+				"categories",
+				sql`name = ${d.name}, color = ${d.color}, image = ${d.image}`,
+				sql`id = ${id} and shop_id = ${shopId}`,
+				sql`*`,
+			),
 		);
 		catalogChanged(shopId);
 		return row;
@@ -86,9 +95,12 @@ export class CategoryRepository {
 	 * @param shopId Shop it must belong to.
 	 */
 	async #drop(tx: SQL, id: number, shopId: number) {
-		const gone =
-			await tx`delete from categories where id = ${id} and shop_id = ${shopId} returning id`;
-		if (!gone.length) return;
+		const gone = await Db.delete(
+			tx,
+			"categories",
+			tx`id = ${id} and shop_id = ${shopId}`,
+		);
+		if (!gone) return;
 		await tx`delete from product_categories where category_id = ${id}`;
 	}
 }

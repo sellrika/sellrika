@@ -3,8 +3,8 @@ import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 // Temp SQLite DB (never the real data/pos.db); db.ts reads DB_FILE at import, hence the dynamic imports.
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { CouponService: _CouponService } = await import("../Coupon.Service");
 const CouponService = Container.get(_CouponService);
 const { CouponRepository: _CouponRepository } = await import(
@@ -18,27 +18,35 @@ const { ShopRepository: _ShopRepository } = await import(
 const ShopRepository = Container.get(_ShopRepository);
 const { ymd } = await import("@helpers/time");
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 // fixtures: a shop, two products (one in a category), and a cart of both
-const [s] =
-	await sql`insert into shops (name, currency, timezone, slug) values ('Coupon Shop', 'USD', 'UTC', 'coupon-shop') returning id`;
+const [s] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, slug) values ('Coupon Shop', 'USD', 'UTC', 'coupon-shop')`,
+	sql`id`,
+);
 const S = s.id as number;
 const shop = (await ShopRepository.find(S))!;
-const [cat] =
-	await sql`insert into categories (shop_id, name, position) values (${S}, 'Drinks', 0) returning id`;
-const [mug] =
-	await sql`insert into products (shop_id, name, slug, price) values (${S}, 'Mug', 'mug', 1000) returning id`;
-const [tea] =
-	await sql`insert into products (shop_id, name, slug, price) values (${S}, 'Tea', 'tea', 500) returning id`;
+const [cat] = await Db.insert(
+	sql,
+	"categories",
+	sql`insert into categories (shop_id, name, position) values (${S}, 'Drinks', 0)`,
+	sql`id`,
+);
+const [mug] = await Db.insert(
+	sql,
+	"products",
+	sql`insert into products (shop_id, name, slug, price) values (${S}, 'Mug', 'mug', 1000)`,
+	sql`id`,
+);
+const [tea] = await Db.insert(
+	sql,
+	"products",
+	sql`insert into products (shop_id, name, slug, price) values (${S}, 'Tea', 'tea', 500)`,
+	sql`id`,
+);
 await sql`insert into product_categories (product_id, category_id) values (${tea.id}, ${cat.id})`;
 const cart = {
 	lines: [
@@ -161,8 +169,12 @@ test("create/update: the code is unique per shop; another shop may reuse it", as
 			)
 		).coupon?.description,
 	).toBe("same code, new text");
-	const [other] =
-		await sql`insert into shops (name, currency, slug) values ('Other', 'USD', 'coupon-other') returning id`;
+	const [other] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug) values ('Other', 'USD', 'coupon-other')`,
+		sql`id`,
+	);
 	expect(
 		(await CouponService.create(other.id, input({ code: "TWICE" }))).errors,
 	).toBeUndefined();
@@ -277,12 +289,24 @@ test("resolve: free delivery waives the fee (and is pointless when there is none
 
 test("history: every order that used the code, newest first, with the order's code and customer; the header carries the totals", async () => {
 	const c = await make({ code: "HIST", usage_limit: 10 });
-	const [cust] =
-		await sql`insert into customers (shop_id, name, email) values (${S}, 'Ann', 'ann@example.com') returning id`;
-	const [o1] =
-		await sql`insert into orders (reference, shop_id, user_id, customer_id, subtotal, total, paid, payment_method) values ('HIST-0001-AAAA-BBBB', ${S}, 1, ${cust.id}, 2500, 2250, 2250, 'Cash') returning id`;
-	const [o2] =
-		await sql`insert into orders (reference, shop_id, user_id, subtotal, total, paid, payment_method) values ('HIST-0002-AAAA-BBBB', ${S}, 1, 2500, 2250, 2250, 'Cash') returning id`;
+	const [cust] = await Db.insert(
+		sql,
+		"customers",
+		sql`insert into customers (shop_id, name, email) values (${S}, 'Ann', 'ann@example.com')`,
+		sql`id`,
+	);
+	const [o1] = await Db.insert(
+		sql,
+		"orders",
+		sql`insert into orders (reference, shop_id, user_id, customer_id, subtotal, total, paid, payment_method) values ('HIST-0001-AAAA-BBBB', ${S}, 1, ${cust.id}, 2500, 2250, 2250, 'Cash')`,
+		sql`id`,
+	);
+	const [o2] = await Db.insert(
+		sql,
+		"orders",
+		sql`insert into orders (reference, shop_id, user_id, subtotal, total, paid, payment_method) values ('HIST-0002-AAAA-BBBB', ${S}, 1, 2500, 2250, 2250, 'Cash')`,
+		sql`id`,
+	);
 	await CouponService.redeem(
 		{ id: c.id, saved: 250 },
 		S,
@@ -315,14 +339,22 @@ test("history: every order that used the code, newest first, with the order's co
 		["HIST-0001-AAAA-BBBB", "ann@example.com", 250, 2250, "Ann"],
 	]);
 	expect((await CouponService.history(c.id, S, 1, 1)).data).toHaveLength(1); // paged
-	const [other] =
-		await sql`insert into shops (name, currency, slug) values ('Other2', 'USD', 'coupon-other2') returning id`;
+	const [other] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug) values ('Other2', 'USD', 'coupon-other2')`,
+		sql`id`,
+	);
 	expect(await CouponService.find(c.id, other.id)).toBeNull(); // shop-scoped
 });
 
 test("summary: uses, discount given and order totals over every code of the shop, and only that shop", async () => {
-	const [own] =
-		await sql`insert into shops (name, currency, slug) values ('Sum', 'USD', 'coupon-sum') returning id`;
+	const [own] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug) values ('Sum', 'USD', 'coupon-sum')`,
+		sql`id`,
+	);
 	expect(await CouponService.summary(own.id)).toEqual({
 		uses: 0,
 		saved: 0,
@@ -332,8 +364,12 @@ test("summary: uses, discount given and order totals over every code of the shop
 		.coupon!;
 	const b = (await CouponService.create(own.id, input({ code: "SUMB" })))
 		.coupon!;
-	const [o] =
-		await sql`insert into orders (reference, shop_id, user_id, subtotal, total, paid, payment_method) values ('SUMM-0001-AAAA-BBBB', ${own.id}, 1, 2000, 1800, 1800, 'Cash') returning id`;
+	const [o] = await Db.insert(
+		sql,
+		"orders",
+		sql`insert into orders (reference, shop_id, user_id, subtotal, total, paid, payment_method) values ('SUMM-0001-AAAA-BBBB', ${own.id}, 1, 2000, 1800, 1800, 'Cash')`,
+		sql`id`,
+	);
 	await CouponService.redeem(
 		{ id: a.id, saved: 200 },
 		own.id,

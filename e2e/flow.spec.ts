@@ -337,6 +337,9 @@ test("delete: category, payment method, product — orders keep their history", 
 
 	await page.goto("/products");
 	await confirmDelete(SIMPLE);
+	// the message comes when the server is done: the open dialog hides the rows,
+	// so "no row" alone is true before the delete has finished
+	await expect(page.getByText(`Deleted “${SIMPLE}”`)).toBeVisible();
 	await expect(row(SIMPLE)).toHaveCount(0);
 	await page.goto("/pos");
 	await expect(page.locator("section button", { hasText: SIMPLE })).toHaveCount(

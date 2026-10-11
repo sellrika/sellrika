@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
 const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { migrate } = await import("@database/migrate");
 const { InviteService: _InviteService } = await import("../Invite.Service");
 const InviteService = Container.get(_InviteService);
 const { UserRepository: _UserRepository } = await import(
@@ -17,15 +17,7 @@ const ShopRepository = Container.get(_ShopRepository);
 const { AuthService: _AuthService } = await import("../Auth.Service");
 const AuthService = Container.get(_AuthService);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 const shop = {
 	name: "Invited Shop",

@@ -36,9 +36,8 @@ export class CustomerSessionRepository {
 	): Promise<CustomerSession> {
 		const id = randomToken(32);
 		const expires = sqlStamp(new Date(Date.now() + ttlDays * DAY_MS));
-		return (
-			await sql`insert into customer_sessions (id, customer_id, shop_id, expires_at) values (${id}, ${customerId}, ${shopId}, ${expires}) returning *`
-		)[0];
+		await sql`insert into customer_sessions (id, customer_id, shop_id, expires_at) values (${id}, ${customerId}, ${shopId}, ${expires})`;
+		return (await sql`select * from customer_sessions where id = ${id}`)[0];
 	}
 
 	/**

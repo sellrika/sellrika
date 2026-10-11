@@ -168,8 +168,12 @@ export class OwnerRepository {
 	 */
 	async setCampaignLimit(id: number, limit: number | null) {
 		return Db.exists(
-			sql`update users set campaign_email_limit = ${limit}
-        where id = ${id} and owner_id is null and email <> ${STORE_SYSTEM_EMAIL} returning id`,
+			Db.update(
+				sql,
+				"users",
+				sql`campaign_email_limit = ${limit}`,
+				sql`id = ${id} and owner_id is null and email <> ${STORE_SYSTEM_EMAIL}`,
+			),
 		);
 	}
 

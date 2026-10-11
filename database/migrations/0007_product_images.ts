@@ -5,7 +5,7 @@ import type { SQL } from "bun";
 export async function up(db: SQL) {
 	await db.unsafe(`alter table products add column images text`);
 	await db.unsafe(
-		`update products set images = '["' || image || '"]' where image is not null and image <> ''`,
+		`update products set images = concat('["', image, '"]') where image is not null and image <> ''`,
 	);
 	await db.unsafe(`alter table products drop column image`);
 	await db.unsafe(`alter table product_variants add column images text`);

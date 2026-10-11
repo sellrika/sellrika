@@ -30,7 +30,7 @@ docker build -t sellrika .
 docker run -p 3000:3000 -v sellrika-data:/app/data -v sellrika-storage:/app/storage --env-file .env sellrika
 ```
 
-The default database is SQLite. Set `DB_CONNECTION=postgres` to use Postgres.
+The default database is SQLite. Set `DB_CONNECTION=postgres` to use Postgres, or `DB_CONNECTION=mysql` to use MySQL 8 or MariaDB.
 `.env.example` lists every setting.
 
 ## Custom domains with SSL

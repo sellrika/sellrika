@@ -4,8 +4,8 @@ import { Container } from "@xcore/di";
 // Temp SQLite DB (never the real data/pos.db); db.ts reads DB_FILE at import, hence the dynamic imports.
 // The module cache is shared across test files, so never `sql.close()` here.
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate, migrationDb } = await import("@database/migrate");
 const { OrderService: _OrderService } = await import("../Order.Service");
 const { CartPricer } = await import("../CartPricer.Service");
 const { discountAmount } = await import("@helpers/discount");
@@ -52,24 +52,24 @@ const MAILERS = Object.fromEntries(
 		.map((m) => [m.key, m]),
 );
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 // fixtures: a shop, a user, Cash, one tracked product (stock 3) and one tracked product with variants
-const [shop] =
-	await sql`insert into shops (name, currency, timezone) values ('T', 'USD', 'UTC') returning id`;
+const [shop] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone) values ('T', 'USD', 'UTC')`,
+	sql`id`,
+);
 const S = shop.id as number;
 if (!(await PaymentMethodRepository.count(S)))
 	await PaymentMethodRepository.seedDefaults(S);
-const [u] =
-	await sql`insert into users (name, email, password_hash, role) values ('Cashier', ${`c${S}@x.io`}, 'x', 'cashier') returning id`;
+const [u] = await Db.insert(
+	sql,
+	"users",
+	sql`insert into users (name, email, password_hash, role) values ('Cashier', ${`c${S}@x.io`}, 'x', 'cashier')`,
+	sql`id`,
+);
 const U = u.id as number;
 const base = {
 	description: "",
@@ -823,8 +823,12 @@ test("manual online order: unpaid → partly paid → paid; refunds only what ca
 });
 
 test("checkout: the shop's tax line — added on top of the total, or backed out of prices that already hold it — is frozen on the order", async () => {
-	const [t] =
-		await sql`insert into shops (name, currency, timezone, tax_rate, tax_label, tax_included) values ('Taxed', 'USD', 'UTC', 700, 'VAT', ${false}) returning id`;
+	const [t] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, tax_rate, tax_label, tax_included) values ('Taxed', 'USD', 'UTC', 700, 'VAT', ${false})`,
+		sql`id`,
+	);
 	const T = t.id as number;
 	await PaymentMethodRepository.seedDefaults(T);
 	const pen = await ProductRepository.create(
@@ -1139,14 +1143,18 @@ test("migration 0059: an old line's product picture becomes an order copy; an or
 	 * @returns The new line's id.
 	 */
 	async function line(image: string) {
-		const [row] =
-			await sql`insert into order_items (order_id, product_id, variant_id, name, price, cost, qty, image)
-        values (${o.id}, ${mug.id}, ${null}, 'Old', 100, ${null}, 1, ${image}) returning id`;
+		const [row] = await Db.insert(
+			sql,
+			"order_items",
+			sql`insert into order_items (order_id, product_id, variant_id, name, price, cost, qty, image)
+        values (${o.id}, ${mug.id}, ${null}, 'Old', 100, ${null}, 1, ${image})`,
+			sql`id`,
+		);
 		return row.id as number;
 	}
 	const a = await line(product);
 	const b = await line(own);
-	await up(sql);
+	await up(migrationDb(sql));
 	/**
 	 * Read a line's picture back.
 	 * @param id The line.
@@ -1160,14 +1168,18 @@ test("migration 0059: an old line's product picture becomes an order copy; an or
 	expect(copied).toMatch(/^\/uploads\/\d+\/orders\/.+\.png$/);
 	expect(await Bun.file(`${UPLOAD_DIR}${copied!}`).exists()).toBe(true);
 	expect(await imageOf(b)).toBe(own);
-	await up(sql); // a second run changes nothing
+	await up(migrationDb(sql)); // a second run changes nothing
 	expect(await imageOf(a)).toBe(copied);
 	await sql`delete from order_items where id in (${a}, ${b})`;
 });
 
 test("orders list: the cashier filter shows only that cashier's sales, and the list offers each cashier once", async () => {
-	const [second] =
-		await sql`insert into users (name, email, password_hash, role) values ('Second Till', ${`c2${S}@x.io`}, 'x', 'cashier') returning id`;
+	const [second] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('Second Till', ${`c2${S}@x.io`}, 'x', 'cashier')`,
+		sql`id`,
+	);
 	const sale = await OrderService.checkout(S, Number(second.id), {
 		items: [{ product_id: untracked.id, variant_id: null, qty: 1 }],
 		paid: 10000,
@@ -1316,8 +1328,12 @@ test("delivery steps: a shop adds, renames and reorders its own; orders move alo
 	const { FulfillmentStepsInput } = await import("@validators/Order.Validator");
 	const { validate } = await import("@validators/validate");
 	const shops = Container.get(ShopRepository);
-	const [row] =
-		await sql`insert into shops (name, currency, timezone) values ('Steps', 'USD', 'UTC') returning id`;
+	const [row] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone) values ('Steps', 'USD', 'UTC')`,
+		sql`id`,
+	);
 	const T = row.id as number;
 	// a new shop has the built-in list
 	expect((await shops.find(T))!.fulfillment_steps.map((s) => s.key)).toEqual([
@@ -1455,11 +1471,19 @@ test("sales staff: named on a sale; the commission is worked out from the sales 
 		"@services/settings/SalesStaff.Service"
 	);
 	const SalesStaff = Container.get(_SalesStaffService);
-	const [boss] =
-		await sql`insert into users (name, email, password_hash, role) values ('Boss', ${`sales-boss-${S}@x.io`}, 'x', 'admin') returning id`;
+	const [boss] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('Boss', ${`sales-boss-${S}@x.io`}, 'x', 'admin')`,
+		sql`id`,
+	);
 	const B = boss.id as number;
-	const [row] =
-		await sql`insert into shops (name, currency, timezone, owner_id) values ('Sales', 'USD', 'UTC', ${B}) returning id`;
+	const [row] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, owner_id) values ('Sales', 'USD', 'UTC', ${B})`,
+		sql`id`,
+	);
 	const T = row.id as number;
 	await PaymentMethodRepository.seedDefaults(T);
 	const pen = await ProductRepository.create(
@@ -1622,8 +1646,12 @@ test("sales staff: named on a sale; the commission is worked out from the sales 
 	]);
 
 	// another shop's sales person, an unknown one and a switched-off one are refused
-	const [other] =
-		await sql`insert into sales_staff (shop_id, name) values (${S}, 'Eve') returning id`;
+	const [other] = await Db.insert(
+		sql,
+		"sales_staff",
+		sql`insert into sales_staff (shop_id, name) values (${S}, 'Eve')`,
+		sql`id`,
+	);
 	for (const id of [other.id as number, 999999])
 		expect((await sell(1, id)).errors?.cart).toBe(
 			"That sales person is no longer available",
@@ -1705,8 +1733,12 @@ test("report periods: last week is the Monday to Sunday before this week", async
 
 test("an open order: opened unpaid, it takes more lines and gives lines back, and keeps its history", async () => {
 	// its own shop, with 10% tax added on top, and one dish with 6 in stock
-	const [row] =
-		await sql`insert into shops (name, currency, timezone, tax_rate, tax_label) values ('Diner', 'USD', 'UTC', 1000, 'VAT') returning id`;
+	const [row] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, tax_rate, tax_label) values ('Diner', 'USD', 'UTC', 1000, 'VAT')`,
+		sql`id`,
+	);
 	const D = row.id as number;
 	const soup = await ProductRepository.create(
 		D,
@@ -1736,8 +1768,12 @@ test("an open order: opened unpaid, it takes more lines and gives lines back, an
 
 	// open: unpaid, tax on top, the stock is taken, the note stays on the line
 	expect(await OrderService.openFor(D, table.id)).toBeNull();
-	const [waiter] =
-		await sql`insert into sales_staff (shop_id, name) values (${D}, 'Wes') returning id`;
+	const [waiter] = await Db.insert(
+		sql,
+		"sales_staff",
+		sql`insert into sales_staff (shop_id, name) values (${D}, 'Wes')`,
+		sql`id`,
+	);
 	// a sales person of another shop is refused, and nothing is written
 	const wrong = await OrderService.open(D, U, {
 		items: [line(1)],
@@ -1902,8 +1938,12 @@ const NO_DISCOUNT = { discount_type: null, discount_value: 0 } as const;
 
 test("open orders move to another customer and join into one: lines, totals and history follow, stock stays, the emptied order is gone", async () => {
 	// its own shop with 10% tax on top, one dish with 10 in stock, two tables
-	const [row] =
-		await sql`insert into shops (name, currency, timezone, tax_rate, tax_label) values ('Bistro', 'USD', 'UTC', 1000, 'VAT') returning id`;
+	const [row] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, tax_rate, tax_label) values ('Bistro', 'USD', 'UTC', 1000, 'VAT')`,
+		sql`id`,
+	);
 	const B = row.id as number;
 	const dish = await ProductRepository.create(
 		B,

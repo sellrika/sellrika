@@ -2,22 +2,18 @@ import { tmpdir } from "node:os"; // Bun has no equivalent
 import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { ProductService: _ProductService } = await import("../Product.Service");
 const ProductService = Container.get(_ProductService);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
+await migrate(true);
+const [shop] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency) values ('Prod', 'USD')`,
+	sql`id`,
 );
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
-const [shop] =
-	await sql`insert into shops (name, currency) values ('Prod', 'USD') returning id`;
 const S = shop.id as number;
 const base = {
 	description: "",
@@ -693,8 +689,12 @@ test("a picture used only in a campaign email is still in use", async () => {
 	const uploads = Container.get(UploadRepository);
 	const pic = "/uploads/campaign-only-pic.png";
 	expect(await uploads.inUse(pic)).toBe(false);
-	const [c] =
-		await sql`insert into campaigns (shop_id, subject, body) values (${S}, 'Sale', ${`<p><img src="${pic}"></p>`}) returning id`;
+	const [c] = await Db.insert(
+		sql,
+		"campaigns",
+		sql`insert into campaigns (shop_id, subject, body) values (${S}, 'Sale', ${`<p><img src="${pic}"></p>`})`,
+		sql`id`,
+	);
 	expect(await uploads.inUse(pic)).toBe(true);
 	await sql`delete from campaigns where id = ${c.id}`;
 });

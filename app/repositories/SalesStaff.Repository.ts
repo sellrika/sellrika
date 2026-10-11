@@ -87,8 +87,12 @@ export class SalesStaffRepository {
 	 * @returns The new row's id.
 	 */
 	async create(shopId: number, d: SalesStaffInput): Promise<number> {
-		const [r] =
-			await sql`insert into sales_staff (shop_id, name, commission, active) values (${shopId}, ${d.name}, ${d.commission}, ${d.active}) returning id`;
+		const [r] = await Db.insert(
+			sql,
+			"sales_staff",
+			sql`insert into sales_staff (shop_id, name, commission, active) values (${shopId}, ${d.name}, ${d.commission}, ${d.active})`,
+			sql`id`,
+		);
 		return Number(r.id);
 	}
 

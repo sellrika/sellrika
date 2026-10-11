@@ -5,8 +5,8 @@ import { Container } from "@xcore/di";
 // Temp SQLite DB (never the real data/pos.db); db.ts reads DB_FILE at import, hence the dynamic imports.
 // The module cache is shared across test files, so never `sql.close()` here.
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { app } = await import("@config/app");
 const { domainToken } = await import("@helpers/crypto");
 const { DomainService: _DomainService } = await import("../Domain.Service");
@@ -18,15 +18,7 @@ const { ShopRepository: _ShopRepository } = await import(
 );
 const ShopRepository = Container.get(_ShopRepository);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 /**
  * The fake DNS: hostname → addresses, null = the lookup fails.
@@ -71,8 +63,12 @@ afterAll(() => {
  * @returns The shop id.
  */
 async function shopWith(domain: string, status: "pending" | "live") {
-	const [s] =
-		await sql`insert into shops (name, currency, slug, domain, domain_status) values ('Dom', 'USD', ${`dom-${domain.replaceAll(".", "-")}`}, ${domain}, ${status}) returning id`;
+	const [s] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug, domain, domain_status) values ('Dom', 'USD', ${`dom-${domain.replaceAll(".", "-")}`}, ${domain}, ${status})`,
+		sql`id`,
+	);
 	return s.id as number;
 }
 
@@ -238,8 +234,12 @@ test("info: the records to add, and what the domain points at while it waits", a
 });
 
 test("saving the settings: a new domain waits, and goes live at once when its DNS is ready", async () => {
-	const [s] =
-		await sql`insert into shops (name, currency, slug) values ('Dom Save', 'USD', 'dom-save') returning id`;
+	const [s] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug) values ('Dom Save', 'USD', 'dom-save')`,
+		sql`id`,
+	);
 	const input = (domain: string | null) =>
 		({
 			enabled: true,
@@ -272,10 +272,18 @@ test("saving the settings: a new domain waits, and goes live at once when its DN
 
 test("free subdomain: an open store's <slug>.<store domain> is routed; the host finds the shop", async () => {
 	app.domains.store = "shops.test";
-	const [open] =
-		await sql`insert into shops (name, currency, slug, online_enabled) values ('Sub Open', 'USD', 'sub-open', ${true}) returning id`;
-	const [closed] =
-		await sql`insert into shops (name, currency, slug, online_enabled) values ('Sub Closed', 'USD', 'sub-closed', ${false}) returning id`;
+	const [open] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug, online_enabled) values ('Sub Open', 'USD', 'sub-open', ${true})`,
+		sql`id`,
+	);
+	const [closed] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug, online_enabled) values ('Sub Closed', 'USD', 'sub-closed', ${false})`,
+		sql`id`,
+	);
 	dns["sub-open.shops.test"] = ["10.0.0.1"]; // the wildcard record
 	dns["sub-closed.shops.test"] = ["10.0.0.1"];
 	await Domains.run();
@@ -294,14 +302,13 @@ test("free subdomain: an open store's <slug>.<store domain> is routed; the host 
 
 test("free subdomain: one that points here stands for the rest (one wildcard record)", async () => {
 	app.domains.store = "shops.test";
-	const rows =
-		await sql`insert into shops (name, currency, slug, online_enabled) values ('Wild A', 'USD', 'wild-a', ${true}), ('Wild B', 'USD', 'wild-b', ${true}) returning id`;
+	await sql`insert into shops (name, currency, slug, online_enabled) values ('Wild A', 'USD', 'wild-a', ${true}), ('Wild B', 'USD', 'wild-b', ${true})`;
 	// only the first is in the fake DNS: the second is never looked up
 	dns["wild-a.shops.test"] = ["10.0.0.1"];
 	await Domains.run();
 	expect(await routed()).toContain("wild-a.shops.test");
 	expect(await routed()).toContain("wild-b.shops.test");
-	await sql`delete from shops where id in (${rows[0].id}, ${rows[1].id})`;
+	await sql`delete from shops where slug in ('wild-a', 'wild-b')`;
 	delete dns["wild-a.shops.test"];
 	app.domains.store = saved.store;
 });
@@ -344,10 +351,18 @@ test("a custom domain with sellrika.com in it is refused", async () => {
 test("ownership: a domain someone else pointed at us never goes live for a shop without its TXT record", async () => {
 	// the real owner pointed victim.test at us but has not saved it; another shop saves it first
 	dns["victim.test"] = ["10.0.0.1"];
-	const [squatter] =
-		await sql`insert into shops (name, currency, slug) values ('Squatter', 'USD', 'dom-squat') returning id`;
-	const [owner] =
-		await sql`insert into shops (name, currency, slug) values ('Owner', 'USD', 'dom-owner') returning id`;
+	const [squatter] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug) values ('Squatter', 'USD', 'dom-squat')`,
+		sql`id`,
+	);
+	const [owner] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug) values ('Owner', 'USD', 'dom-owner')`,
+		sql`id`,
+	);
 	const input = (slug: string) =>
 		({
 			enabled: true,
@@ -387,12 +402,24 @@ test("a domain that is not proved serves nothing; the exact host wins; the app's
 	const { OnlineStoreInput } = await import("@validators/Store.Validator");
 	app.domains.cname = "edge.shops.test";
 	app.domains.store = "shops.test";
-	const [real] =
-		await sql`insert into shops (name, currency, slug, domain, domain_status) values ('Real', 'USD', 'dom-real', 'xyz-shop.test', 'live') returning id`;
-	const [www] =
-		await sql`insert into shops (name, currency, slug, domain, domain_status) values ('Www', 'USD', 'dom-www', 'www.xyz-shop.test', 'live') returning id`;
-	const [waiting] =
-		await sql`insert into shops (name, currency, slug, domain, domain_status) values ('Waiting', 'USD', 'dom-wait', 'waiting-shop.test', 'pending') returning id`;
+	const [real] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug, domain, domain_status) values ('Real', 'USD', 'dom-real', 'xyz-shop.test', 'live')`,
+		sql`id`,
+	);
+	const [www] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug, domain, domain_status) values ('Www', 'USD', 'dom-www', 'www.xyz-shop.test', 'live')`,
+		sql`id`,
+	);
+	const [waiting] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug, domain, domain_status) values ('Waiting', 'USD', 'dom-wait', 'waiting-shop.test', 'pending')`,
+		sql`id`,
+	);
 	expect((await ShopRepository.findByHost("xyz-shop.test"))?.id).toBe(real.id);
 	expect((await ShopRepository.findByHost("www.xyz-shop.test"))?.id).toBe(
 		www.id,

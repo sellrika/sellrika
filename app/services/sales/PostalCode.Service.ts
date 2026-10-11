@@ -131,9 +131,10 @@ export class PostalCodeService {
 	 * Where the download stands.
 	 * Live progress while a run is on, else the stored outcome of the last
 	 * one. Plus the downloaded countries.
+	 * @param started A run that began just now: reported even when it is over already.
 	 * @returns The status for the Delivery section.
 	 */
-	async status(): Promise<PostalStatus> {
+	async status(started: LastRun | null = null): Promise<PostalStatus> {
 		await this.#dropStalled();
 		const stored = await this.#stored();
 		const countries: PostalCountry[] = [];
@@ -145,7 +146,7 @@ export class PostalCodeService {
 				updated_at: stored.updated[c.country] ?? null,
 			});
 		countries.sort((a, b) => this.#byName(a, b));
-		return { ...(this.live ?? stored.last), countries };
+		return { ...(started ?? this.live ?? stored.last), countries };
 	}
 
 	/**
@@ -184,7 +185,8 @@ export class PostalCodeService {
 		this.job = I18n.withLocale(I18n.current(), () =>
 			this.#run(scope, c?.code ?? null),
 		).finally(() => this.#release(live));
-		return { status: await this.status() };
+		// a fast run may be over before the database answers: report its start
+		return { status: await this.status(live) };
 	}
 
 	/**

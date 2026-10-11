@@ -21,8 +21,8 @@ import type { Role } from "@constants/User.Constant";
 process.env.DB_FILE = `${tmpdir()}/pos-api-test-${process.pid}.db`;
 process.env.APP_KEY ??= "test-app-key-for-api";
 process.env.UPLOAD_DIR ??= `${tmpdir()}/pos-api-test-${process.pid}-uploads`;
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { router } = await import("@xcore/http/Router");
 const { app } = await import("@config/app");
 const { Url } = await import("@xcore/http/Url");
@@ -45,15 +45,7 @@ const { PaymentMethodRepository: _PaymentMethodRepository } = await import(
 );
 const PaymentMethodRepository = Container.get(_PaymentMethodRepository);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 // another test file may have loaded the routes already: register them once
 if (!apiDocs.length) apiRoutes();
 
@@ -68,8 +60,12 @@ const owner = await UserRepository.create(
 	"x",
 	null,
 );
-const [shop] =
-	await sql`insert into shops (name, currency, timezone, owner_id) values ('Api Shop', 'USD', 'UTC', ${owner.id}) returning id`;
+const [shop] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, owner_id) values ('Api Shop', 'USD', 'UTC', ${owner.id})`,
+	sql`id`,
+);
 const S = shop.id as number;
 await PaymentMethodRepository.seedDefaults(S);
 
@@ -1311,8 +1307,8 @@ test("MCP: a running extension adds its own tools and its own guide topic", asyn
 	await ExtensionService.save(S, "mcp-notes", { enabled: false });
 	expect(await names("admin")).not.toContain("mcp_notes_get_note");
 	expect((await tool("read_user_guide", {})).data.topics).toHaveLength(13);
-	await sql`delete from shop_extensions where key = 'mcp-notes'`;
-	await sql`delete from platform_extensions where key = 'mcp-notes'`;
+	await sql`delete from shop_extensions where ${sql("key")} = 'mcp-notes'`;
+	await sql`delete from platform_extensions where ${sql("key")} = 'mcp-notes'`;
 	await ExtensionFiles.remove(process.env.EXTENSION_BUILTIN_DIR!);
 });
 

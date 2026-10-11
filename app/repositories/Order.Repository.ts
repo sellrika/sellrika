@@ -137,6 +137,8 @@ const customerOf = sql`(select c.name from customers c where c.id = o.customer_i
  * and not paid in full. A condition over `orders`.
  */
 const open = sql`status = 'completed' and payment_status <> 'paid'`;
+/** `orders.change`: a reserved word in MySQL, so it is always quoted. */
+const CHANGE = sql("change");
 /**
  * An `orders` row with the cashier and `customerOf` columns.
  * `tax_included` is still 0/1 on SQLite.
@@ -314,7 +316,12 @@ export class OrderRepository {
 	 */
 	async moveTo(order: Order, customerId: number) {
 		return Db.exists(
-			sql`update orders set customer_id = ${customerId} where id = ${order.id} and ${open} returning id`,
+			Db.update(
+				sql,
+				"orders",
+				sql`customer_id = ${customerId}`,
+				sql`id = ${order.id} and ${open}`,
+			),
 		);
 	}
 
@@ -428,7 +435,7 @@ export class OrderRepository {
 		const { voided_by_name, ...rest } = o;
 		const [order] = await this.#withItems([this.#shape(rest)]);
 		const refunds: (Refund & { by: string | null })[] =
-			await sql`select r.*, u.name as by from refunds r left join users u on u.id = r.user_id where r.order_id = ${id} order by r.id`;
+			await sql`select r.*, u.name as "by" from refunds r left join users u on u.id = r.user_id where r.order_id = ${id} order by r.id`;
 		const refundItems = refunds.length
 			? await sql`select ri.*, i.name from refund_items ri join order_items i on i.id = ri.order_item_id where ri.refund_id in ${sql(refunds.map((r) => r.id))} order by ri.id`
 			: [];
@@ -436,7 +443,7 @@ export class OrderRepository {
 			this.#refundWithItems(r, refundItems),
 		);
 		const history: OrderHistory[] = (
-			await sql`select h.*, u.name as by from order_history h left join users u on u.id = h.user_id where h.order_id = ${id} order by h.id`
+			await sql`select h.*, u.name as "by" from order_history h left join users u on u.id = h.user_id where h.order_id = ${id} order by h.id`
 		).map((x: HistoryRow) => this.#shapeHistory(x));
 		return {
 			...order!,
@@ -542,9 +549,12 @@ export class OrderRepository {
 			| "coupon_code"
 		>,
 	) {
-		const hit =
-			await sql`update orders set discount_type = ${to.discount_type}, discount_value = ${to.discount_value}, discount = ${to.discount}, tax = ${to.tax}, total = ${to.total}, payment_status = ${to.payment_status}, coupon_code = ${to.coupon_code}
-        where id = ${order.id} and ${open} and subtotal = ${order.subtotal} returning id`;
+		const hit = await Db.update(
+			sql,
+			"orders",
+			sql`discount_type = ${to.discount_type}, discount_value = ${to.discount_value}, discount = ${to.discount}, tax = ${to.tax}, total = ${to.total}, payment_status = ${to.payment_status}, coupon_code = ${to.coupon_code}`,
+			sql`id = ${order.id} and ${open} and subtotal = ${order.subtotal}`,
+		);
 		return hit.length > 0;
 	}
 
@@ -580,12 +590,16 @@ export class OrderRepository {
 			more.sales_staff_id === undefined
 				? order.sales_staff_id
 				: more.sales_staff_id;
-		const [row] = await sql`update orders set
-        paid = paid + ${amount + change}, change = change + ${change},
-        payment_status = case when paid - change + ${amount} >= total then 'paid' else 'partial' end,
-        payment_method = ${method}, sales_staff_id = ${seller}
-      where id = ${order.id} and status <> 'voided' and paid - change + ${amount} <= total
-      returning paid, payment_status`;
+		// the status first: MySQL would read the new `paid` after it is set
+		const [row] = await Db.update(
+			sql,
+			"orders",
+			sql`payment_status = case when paid - ${CHANGE} + ${amount} >= total then 'paid' else 'partial' end,
+        paid = paid + ${amount + change}, ${CHANGE} = ${CHANGE} + ${change},
+        payment_method = ${method}, sales_staff_id = ${seller}`,
+			sql`id = ${order.id} and status <> 'voided' and paid - ${CHANGE} + ${amount} <= total`,
+			sql`paid, payment_status`,
+		);
 		if (!row) return null;
 		this.#forget(order.shop_id);
 		return {
@@ -935,9 +949,12 @@ export class OrderRepository {
 		o: NewOrder,
 		items: NewItem[],
 	): Promise<OrderFull> {
-		const [order] =
-			await tx`insert into orders (reference, shop_id, user_id, customer_id, subtotal, discount_type, discount_value, discount, delivery_fee, tax, tax_rate, tax_label, tax_included, total, paid, change, payment_method, payment_status, fulfillment, note, coupon_code, sales_staff_id)
-        values (${orderReference()}, ${o.shop_id}, ${o.user_id}, ${o.customer_id}, ${o.subtotal}, ${o.discount_type}, ${o.discount_value}, ${o.discount}, ${o.delivery_fee}, ${o.tax}, ${o.tax_rate}, ${o.tax_label}, ${o.tax_included}, ${o.total}, ${o.paid}, ${o.change}, ${o.payment_method}, ${o.payment_status}, ${o.fulfillment}, ${o.note}, ${o.coupon_code ?? null}, ${o.sales_staff_id ?? null}) returning *`;
+		const [order] = await Db.insert(
+			tx,
+			"orders",
+			tx`insert into orders (reference, shop_id, user_id, customer_id, subtotal, discount_type, discount_value, discount, delivery_fee, tax, tax_rate, tax_label, tax_included, total, paid, ${CHANGE}, payment_method, payment_status, fulfillment, note, coupon_code, sales_staff_id)
+        values (${orderReference()}, ${o.shop_id}, ${o.user_id}, ${o.customer_id}, ${o.subtotal}, ${o.discount_type}, ${o.discount_value}, ${o.discount}, ${o.delivery_fee}, ${o.tax}, ${o.tax_rate}, ${o.tax_label}, ${o.tax_included}, ${o.total}, ${o.paid}, ${o.change}, ${o.payment_method}, ${o.payment_status}, ${o.fulfillment}, ${o.note}, ${o.coupon_code ?? null}, ${o.sales_staff_id ?? null})`,
+		);
 		const rows = await this.#insertLines(tx, order, items);
 		return {
 			...order,
@@ -963,9 +980,12 @@ export class OrderRepository {
 	) {
 		const rows: OrderItem[] = [];
 		for (const it of items) {
-			const [row] =
-				await tx`insert into order_items (order_id, product_id, variant_id, name, price, cost, qty, components, image, note)
-          values (${order.id}, ${it.product_id}, ${it.variant_id}, ${it.name}, ${it.price}, ${it.cost}, ${it.qty}, ${this.#snapshot(it.components)}, ${this.#ownImage(it.image)}, ${it.note ?? ""}) returning *`;
+			const [row] = await Db.insert(
+				tx,
+				"order_items",
+				tx`insert into order_items (order_id, product_id, variant_id, name, price, cost, qty, components, image, note)
+          values (${order.id}, ${it.product_id}, ${it.variant_id}, ${it.name}, ${it.price}, ${it.cost}, ${it.qty}, ${this.#snapshot(it.components)}, ${this.#ownImage(it.image)}, ${it.note ?? ""})`,
+			);
 			rows.push(this.#shapeItem(row));
 			for (const u of this.#unitsOf(it)) {
 				const ok = await this.stock.move(tx, {
@@ -1017,9 +1037,12 @@ export class OrderRepository {
 		items: OrderItem[],
 		changed: OrderSnapshot["items"],
 	) {
-		const hit =
-			await tx`update orders set subtotal = ${totals.subtotal}, discount = ${totals.discount}, tax = ${totals.tax}, total = ${totals.total}, payment_status = ${totals.payment_status}
-        where id = ${order.id} and ${open} and subtotal = ${order.subtotal} returning id`;
+		const hit = await Db.update(
+			tx,
+			"orders",
+			tx`subtotal = ${totals.subtotal}, discount = ${totals.discount}, tax = ${totals.tax}, total = ${totals.total}, payment_status = ${totals.payment_status}`,
+			tx`id = ${order.id} and ${open} and subtotal = ${order.subtotal}`,
+		);
 		if (!hit.length) throw new StaleOrder();
 		const data: OrderHistory["data"] = {
 			changed,
@@ -1118,8 +1141,13 @@ export class OrderRepository {
 		const changed: OrderSnapshot["items"] = [];
 		for (const r of removals) {
 			const line = order.items.find((l) => l.id === r.order_item_id)!;
-			const taken =
-				await tx`update order_items set qty = qty - ${r.qty} where id = ${line.id} and order_id = ${order.id} and qty >= ${r.qty} returning qty`;
+			const taken = await Db.update(
+				tx,
+				"order_items",
+				tx`qty = qty - ${r.qty}`,
+				tx`id = ${line.id} and order_id = ${order.id} and qty >= ${r.qty}`,
+				tx`qty`,
+			);
 			if (!taken.length) throw new StaleOrder();
 			left.set(line.id, Number(taken[0].qty));
 			if (Number(taken[0].qty) === 0)
@@ -1182,9 +1210,12 @@ export class OrderRepository {
 			[...into.items, ...from.items],
 			from.items.map((x) => this.#lineOf(x)),
 		);
-		const gone =
-			await tx`delete from orders where id = ${from.id} and ${open} and paid = 0 and subtotal = ${from.subtotal} returning id`;
-		if (!gone.length) throw new StaleOrder();
+		const gone = await Db.delete(
+			tx,
+			"orders",
+			tx`id = ${from.id} and ${open} and paid = 0 and subtotal = ${from.subtotal}`,
+		);
+		if (!gone) throw new StaleOrder();
 		return true;
 	}
 
@@ -1233,16 +1264,27 @@ export class OrderRepository {
 		d: RefundInput,
 		lines: OrderItem[],
 	): Promise<Refund> {
-		const moved =
-			await tx`update orders set refunded = refunded + ${d.amount}, status = case when refunded + ${d.amount} >= total then 'refunded' else 'partially_refunded' end where id = ${order.id} and status <> 'voided' and refunded + ${d.amount} <= paid - change returning id`;
+		const moved = await Db.update(
+			tx,
+			"orders",
+			tx`status = case when refunded + ${d.amount} >= total then 'refunded' else 'partially_refunded' end, refunded = refunded + ${d.amount}`,
+			tx`id = ${order.id} and status <> 'voided' and refunded + ${d.amount} <= paid - ${CHANGE}`,
+		);
 		if (!moved.length) throw new StaleOrder();
-		const [r] =
-			await tx`insert into refunds (order_id, shop_id, user_id, amount, reason, restock) values (${order.id}, ${order.shop_id}, ${userId}, ${d.amount}, ${d.reason}, ${d.restock}) returning *`;
+		const [r] = await Db.insert(
+			tx,
+			"refunds",
+			tx`insert into refunds (order_id, shop_id, user_id, amount, reason, restock) values (${order.id}, ${order.shop_id}, ${userId}, ${d.amount}, ${d.reason}, ${d.restock})`,
+		);
 		for (const it of d.items) {
 			const line = lines.find((l) => l.id === it.order_item_id)!;
 			await tx`insert into refund_items (refund_id, order_item_id, qty) values (${r.id}, ${it.order_item_id}, ${it.qty})`;
-			const taken =
-				await tx`update order_items set refunded_qty = refunded_qty + ${it.qty} where id = ${it.order_item_id} and order_id = ${order.id} and refunded_qty + ${it.qty} <= qty returning id`;
+			const taken = await Db.update(
+				tx,
+				"order_items",
+				tx`refunded_qty = refunded_qty + ${it.qty}`,
+				tx`id = ${it.order_item_id} and order_id = ${order.id} and refunded_qty + ${it.qty} <= qty`,
+			);
 			if (!taken.length) throw new StaleOrder();
 			if (!d.restock) continue;
 			await this.#putBack(
@@ -1276,8 +1318,12 @@ export class OrderRepository {
 		reason: string,
 		lines: OrderItem[],
 	) {
-		const hit =
-			await tx`update orders set status = 'voided', voided_at = current_timestamp, voided_by = ${userId}, void_reason = ${reason} where id = ${order.id} and status = 'completed' returning id`;
+		const hit = await Db.update(
+			tx,
+			"orders",
+			tx`status = 'voided', voided_at = current_timestamp, voided_by = ${userId}, void_reason = ${reason}`,
+			tx`id = ${order.id} and status = 'completed'`,
+		);
 		if (!hit.length) return false;
 		for (const l of lines)
 			await this.#putBack(

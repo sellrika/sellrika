@@ -155,7 +155,13 @@ export class CustomerRepository {
 		d: { name: string; phone: string },
 	): Promise<Customer | null> {
 		return Db.one(
-			sql`update customers set name = ${d.name}, phone = ${d.phone}, updated_at = current_timestamp where id = ${id} and shop_id = ${shopId} returning *`,
+			Db.update(
+				sql,
+				"customers",
+				sql`name = ${d.name}, phone = ${d.phone}, updated_at = current_timestamp`,
+				sql`id = ${id} and shop_id = ${shopId}`,
+				sql`*`,
+			),
 			(r) => this.#shape(r),
 		);
 	}
@@ -192,7 +198,11 @@ export class CustomerRepository {
 	): Promise<Customer> {
 		return this.#shape(
 			(
-				await db`insert into customers (shop_id, name, phone, email, note) values (${shopId}, ${d.name}, ${d.phone}, ${this.#email(d.email)}, ${d.note}) returning *`
+				await Db.insert(
+					db,
+					"customers",
+					db`insert into customers (shop_id, name, phone, email, note) values (${shopId}, ${d.name}, ${d.phone}, ${this.#email(d.email)}, ${d.note})`,
+				)
 			)[0],
 		);
 	}
@@ -210,7 +220,13 @@ export class CustomerRepository {
 		d: CustomerInput,
 	): Promise<Customer | null> {
 		return Db.one(
-			sql`update customers set name = ${d.name}, phone = ${d.phone}, email = ${this.#email(d.email)}, note = ${d.note}, updated_at = current_timestamp where id = ${id} and shop_id = ${shopId} returning *`,
+			Db.update(
+				sql,
+				"customers",
+				sql`name = ${d.name}, phone = ${d.phone}, email = ${this.#email(d.email)}, note = ${d.note}, updated_at = current_timestamp`,
+				sql`id = ${id} and shop_id = ${shopId}`,
+				sql`*`,
+			),
 			(r) => this.#shape(r),
 		);
 	}

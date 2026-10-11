@@ -195,8 +195,12 @@ export class CouponRepository {
 	async create(shopId: number, d: CouponInput): Promise<Coupon> {
 		return this.#row(
 			(
-				await sql`insert into coupons (shop_id, code, description, type, value, min_subtotal, max_discount, starts_at, ends_at, usage_limit, per_customer_limit, product_ids, category_ids, emails, active)
-      values (${shopId}, ${d.code}, ${d.description}, ${d.type}, ${d.value}, ${d.min_subtotal}, ${d.max_discount}, ${d.starts_at}, ${d.ends_at}, ${d.usage_limit}, ${d.per_customer_limit}, ${JSON.stringify(d.product_ids)}, ${JSON.stringify(d.category_ids)}, ${JSON.stringify(d.emails)}, ${d.active}) returning *`
+				await Db.insert(
+					sql,
+					"coupons",
+					sql`insert into coupons (shop_id, code, description, type, value, min_subtotal, max_discount, starts_at, ends_at, usage_limit, per_customer_limit, product_ids, category_ids, emails, active)
+      values (${shopId}, ${d.code}, ${d.description}, ${d.type}, ${d.value}, ${d.min_subtotal}, ${d.max_discount}, ${d.starts_at}, ${d.ends_at}, ${d.usage_limit}, ${d.per_customer_limit}, ${JSON.stringify(d.product_ids)}, ${JSON.stringify(d.category_ids)}, ${JSON.stringify(d.emails)}, ${d.active})`,
+				)
 			)[0],
 		);
 	}
@@ -214,9 +218,15 @@ export class CouponRepository {
 		d: CouponInput,
 	): Promise<Coupon | null> {
 		return Db.one(
-			sql`update coupons set code = ${d.code}, description = ${d.description}, type = ${d.type}, value = ${d.value}, min_subtotal = ${d.min_subtotal}, max_discount = ${d.max_discount},
+			Db.update(
+				sql,
+				"coupons",
+				sql`code = ${d.code}, description = ${d.description}, type = ${d.type}, value = ${d.value}, min_subtotal = ${d.min_subtotal}, max_discount = ${d.max_discount},
       starts_at = ${d.starts_at}, ends_at = ${d.ends_at}, usage_limit = ${d.usage_limit}, per_customer_limit = ${d.per_customer_limit}, product_ids = ${JSON.stringify(d.product_ids)}, category_ids = ${JSON.stringify(d.category_ids)},
-      emails = ${JSON.stringify(d.emails)}, active = ${d.active}, updated_at = current_timestamp where id = ${id} and shop_id = ${shopId} returning *`,
+      emails = ${JSON.stringify(d.emails)}, active = ${d.active}, updated_at = current_timestamp`,
+				sql`id = ${id} and shop_id = ${shopId}`,
+				sql`*`,
+			),
 			(r) => this.#row(r),
 		);
 	}

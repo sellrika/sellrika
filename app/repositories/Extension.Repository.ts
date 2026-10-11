@@ -1,8 +1,12 @@
 import { Service } from "@xcore/di";
 import { Db, sql } from "@xcore/database/Database";
 import { parseJson } from "@helpers/json";
+import { sqlStamp } from "@helpers/time";
 import { Paginate } from "@xcore/http/Paginate";
 import type { ShopExtension } from "@models/Extension";
+
+/** The `key` column: a reserved word in MySQL, so it is always quoted. */
+const KEY = sql("key");
 
 /**
  * The platform admin's rule for one extension.
@@ -67,7 +71,7 @@ export class ExtensionRepository {
 	 */
 	async find(shopId: number, key: string): Promise<ShopExtension | null> {
 		return Db.one(
-			sql`select * from shop_extensions where shop_id = ${shopId} and key = ${key}`,
+			sql`select * from shop_extensions where shop_id = ${shopId} and ${KEY} = ${key}`,
 			(r) => this.#row(r),
 		);
 	}
@@ -88,8 +92,13 @@ export class ExtensionRepository {
 		config: ShopExtension["config"],
 	) {
 		const json = JSON.stringify(config);
-		await sql`insert into shop_extensions (shop_id, key, enabled, config) values (${shopId}, ${key}, ${enabled}, ${json})
-      on conflict (shop_id, key) do update set enabled = excluded.enabled, config = excluded.config`;
+		await Db.upsert(
+			sql,
+			"shop_extensions",
+			{ shop_id: shopId, key, enabled, config: json },
+			["shop_id", "key"],
+			["enabled", "config"],
+		);
 	}
 
 	/**
@@ -99,7 +108,7 @@ export class ExtensionRepository {
 	 */
 	async globalRules(): Promise<Map<string, GlobalRule>> {
 		const rows: RuleRow[] =
-			await sql`select key, enabled, users from platform_extensions`;
+			await sql`select ${KEY}, enabled, users from platform_extensions`;
 		return new Map(rows.map((r) => this.#ruleEntry(r)));
 	}
 
@@ -110,8 +119,13 @@ export class ExtensionRepository {
 	 */
 	async setUsers(key: string, users: number[]) {
 		const json = JSON.stringify(users);
-		await sql`insert into platform_extensions (key, enabled, users) values (${key}, ${false}, ${json})
-      on conflict (key) do update set users = excluded.users`;
+		await Db.upsert(
+			sql,
+			"platform_extensions",
+			{ key, enabled: false, users: json },
+			["key"],
+			["users"],
+		);
 	}
 
 	/**
@@ -120,8 +134,13 @@ export class ExtensionRepository {
 	 * @param enabled Whether it may run in the shops.
 	 */
 	async setGlobal(key: string, enabled: boolean) {
-		await sql`insert into platform_extensions (key, enabled) values (${key}, ${enabled})
-      on conflict (key) do update set enabled = excluded.enabled`;
+		await Db.upsert(
+			sql,
+			"platform_extensions",
+			{ key, enabled },
+			["key"],
+			["enabled"],
+		);
 	}
 
 	/**
@@ -130,7 +149,7 @@ export class ExtensionRepository {
 	 * @param key The extension key.
 	 */
 	async forgetGlobal(key: string) {
-		await sql`delete from platform_extensions where key = ${key}`;
+		await sql`delete from platform_extensions where ${KEY} = ${key}`;
 	}
 
 	/**
@@ -155,8 +174,19 @@ export class ExtensionRepository {
 	 */
 	async setData(shopId: number, key: string, name: string, value: unknown) {
 		const json = JSON.stringify(value ?? null);
-		await sql`insert into extension_data (shop_id, ext_key, name, value) values (${shopId}, ${key}, ${name}, ${json})
-      on conflict (shop_id, ext_key, name) do update set value = excluded.value, updated_at = current_timestamp`;
+		await Db.upsert(
+			sql,
+			"extension_data",
+			{
+				shop_id: shopId,
+				ext_key: key,
+				name,
+				value: json,
+				updated_at: sqlStamp(new Date()),
+			},
+			["shop_id", "ext_key", "name"],
+			["value", "updated_at"],
+		);
 	}
 
 	/**
@@ -178,9 +208,13 @@ export class ExtensionRepository {
 	 */
 	async addRow(list: DataList, value: unknown, ref: string): Promise<number> {
 		const json = JSON.stringify(value ?? null);
-		const [r] =
-			await sql`insert into extension_rows (shop_id, ext_key, collection, ref, value)
-      values (${list.shopId}, ${list.key}, ${list.name}, ${ref}, ${json}) returning id`;
+		const [r] = await Db.insert(
+			sql,
+			"extension_rows",
+			sql`insert into extension_rows (shop_id, ext_key, collection, ref, value)
+      values (${list.shopId}, ${list.key}, ${list.name}, ${ref}, ${json})`,
+			sql`id`,
+		);
 		return Number(r.id);
 	}
 

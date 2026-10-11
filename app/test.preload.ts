@@ -16,6 +16,13 @@ import { tmpdir } from "node:os";
 process.env.DB_CONNECTION = "sqlite";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
 delete process.env.DATABASE_URL;
+// A run on a database server names an empty, throwaway database itself:
+// TEST_DATABASE_URL=mysql://… or postgres://… (never the one in .env).
+const server = process.env.TEST_DATABASE_URL;
+if (server) {
+	process.env.DB_CONNECTION = server.startsWith("mysql") ? "mysql" : "postgres";
+	process.env.DATABASE_URL = server;
+}
 // Nothing a test sends reaches Resend: nothing listens on port 9.
 process.env.RESEND_API_URL = "http://127.0.0.1:9/emails";
 

@@ -5,8 +5,8 @@ import { Container } from "@xcore/di";
 // The module cache is shared across test files, so never `sql.close()` here.
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
 process.env.APP_KEY = process.env.APP_KEY || "store-service-test-key";
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { StoreService: _StoreService } = await import("../Store.Service");
 const StoreService = Container.get(_StoreService);
 const { OrderAlertService: _OrderAlertService } = await import(
@@ -21,18 +21,14 @@ const { ShopRepository: _ShopRepository } = await import(
 const ShopRepository = Container.get(_ShopRepository);
 const { decrypt } = await import("@helpers/crypto");
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
-const [s] =
-	await sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Alert Store', 'USD', 'UTC', 'alert-store', ${true}) returning id`;
+const [s] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Alert Store', 'USD', 'UTC', 'alert-store', ${true})`,
+	sql`id`,
+);
 const S = s.id as number;
 const store = (
 	over: Partial<Parameters<typeof StoreService.updateSettings>[1]> = {},

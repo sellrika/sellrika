@@ -77,7 +77,11 @@ export class PaymentMethodRepository {
 		const position = await this.#nextPosition(shopId);
 		return this.#row(
 			(
-				await sql`insert into payment_methods (shop_id, name, icon, color, image, tendered, enabled, position) values (${shopId}, ${d.name}, ${d.icon}, ${d.color}, ${d.image}, ${d.tendered}, ${d.enabled}, ${position}) returning *`
+				await Db.insert(
+					sql,
+					"payment_methods",
+					sql`insert into payment_methods (shop_id, name, icon, color, image, tendered, enabled, position) values (${shopId}, ${d.name}, ${d.icon}, ${d.color}, ${d.image}, ${d.tendered}, ${d.enabled}, ${position})`,
+				)
 			)[0],
 		);
 	}
@@ -95,7 +99,13 @@ export class PaymentMethodRepository {
 		d: PaymentMethodInput,
 	): Promise<PaymentMethod | null> {
 		return Db.one(
-			sql`update payment_methods set name = ${d.name}, icon = ${d.icon}, color = ${d.color}, image = ${d.image}, tendered = ${d.tendered}, enabled = ${d.enabled} where id = ${id} and shop_id = ${shopId} returning *`,
+			Db.update(
+				sql,
+				"payment_methods",
+				sql`name = ${d.name}, icon = ${d.icon}, color = ${d.color}, image = ${d.image}, tendered = ${d.tendered}, enabled = ${d.enabled}`,
+				sql`id = ${id} and shop_id = ${shopId}`,
+				sql`*`,
+			),
 			(r) => this.#row(r),
 		);
 	}
