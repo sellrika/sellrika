@@ -870,6 +870,7 @@ export const en = {
 	"online_store.contact_desc":
 		"Shown in the store's footer so customers can find and reach you. Every field is optional.",
 	"online_store.copy_link_aria": "Copy store link",
+	"online_store.copy_feed_aria": "Copy product feed link",
 	"online_store.copy_sitemap_aria": "Copy sitemap link",
 	"online_store.countries": "Countries",
 	"online_store.country": "Country",
@@ -930,6 +931,12 @@ export const en = {
 	"online_store.every_other_country": "Every other country",
 	"online_store.extensions_link": "Extensions",
 	"online_store.facebook_hint": "The full link to your page.",
+	"online_store.feed": "Product feed",
+	"online_store.feed_copied": "Product feed link copied",
+	"online_store.feed_desc":
+		"Show your products on Google Shopping, Facebook and Instagram shops and TikTok. Give them this link once. They read it again by themselves, so prices and stock stay up to date.",
+	"online_store.feed_hint":
+		"Add it as a data feed in Google Merchant Center, Meta Commerce Manager or TikTok catalog. A product with no picture is left out.",
 	"online_store.firebase_api_key": "Web API key",
 	"online_store.firebase_app": "Firebase web app",
 	"online_store.firebase_app_id": "App ID",

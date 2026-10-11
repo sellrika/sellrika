@@ -147,6 +147,15 @@ Both are optional. Leave a box blank to keep that one off.
 4. Go back to Search Console and press Verify.
 5. Copy the link under **Sitemap** and submit it in Search Console under Sitemaps.
 
+## How to show your products on Google Shopping, Facebook, Instagram and TikTok
+
+1. Open **Settings › Online Store › General** and find the **Product feed** box.
+2. Copy the link in it.
+3. Add the link as a data feed in Google Merchant Center, Meta Commerce Manager or your TikTok catalog.
+
+You do this once. They read the link again by themselves, so prices and stock stay up to date.
+A product with no picture is left out.
+
 ## How to get an alert for each new online order
 
 1. Open **Settings › Online Store › Alerts**.

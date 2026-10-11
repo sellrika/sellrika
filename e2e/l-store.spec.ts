@@ -196,6 +196,10 @@ test("admin: create a product and switch the online store on", async () => {
 		"href",
 		/^http:\/\/main-shop\.localhost:\d+\/sitemap\.xml$/,
 	);
+	// the product feed link for Google Merchant Center, Facebook and TikTok
+	await expect(
+		admin.getByRole("link", { name: /\/feed\.xml$/ }),
+	).toHaveAttribute("href", /^http:\/\/main-shop\.localhost:\d+\/feed\.xml$/);
 	await admin.reload();
 	await expect(admin.getByLabel("Custom domain (optional)")).toHaveValue(
 		"main-shop.test",
@@ -571,6 +575,13 @@ test("visitor: every product has its own page — shareable, with product meta, 
 	expect(
 		await (await visitor.request.get(`${STORE}/sitemap.xml`)).text(),
 	).toContain(`${href}</loc>`); // the shop's own sitemap
+	// the product feed (Google Merchant Center, Facebook, TikTok): store hosts only
+	const feed = await visitor.request.get(`${STORE}/feed.xml`);
+	expect(feed.headers()["content-type"]).toContain("application/xml");
+	expect(await feed.text()).toContain(
+		'xmlns:g="http://base.google.com/ns/1.0"',
+	);
+	expect((await visitor.request.get("/feed.xml")).status()).toBe(404);
 	// the main host: a sitemap of the app's own public pages only, no shops
 	const site = await (await visitor.request.get("/sitemap.xml")).text();
 	expect(site).toContain("<urlset");
