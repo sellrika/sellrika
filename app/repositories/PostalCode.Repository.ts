@@ -54,8 +54,11 @@ export class PostalCodeRepository {
 	 * Which countries are in the table and how many lines each has.
 	 * @returns One row per country.
 	 */
-	countries(): Promise<{ country: string; rows: number }[]> {
-		return sql`select country, count(*) as "rows" from postal_codes group by country`;
+	async countries(): Promise<{ country: string; rows: number }[]> {
+		const rows: { country: string; rows: unknown }[] =
+			await sql`select country, count(*) as "rows" from postal_codes group by country`;
+		// a count is text on Postgres
+		return rows.map((r) => ({ country: r.country, rows: Number(r.rows) }));
 	}
 
 	/**
@@ -180,8 +183,10 @@ export class PostalCodeRepository {
 		const { column, only } = SUGGEST[name];
 		const term = q.trim().toLowerCase();
 		const rows: Record<string, string>[] =
-			await sql`select distinct ${column} from postal_codes where ${only} lower(${column}) like ${`%${term}%`} ${countries.length ? sql`and country in ${sql(countries)}` : sql``}
-      order by case when lower(${column}) like ${`${term}%`} then 0 else 1 end, ${column} limit ${limit + 1}`;
+			// `group by`, not `distinct`: Postgres refuses a `distinct` sorted by another expression
+			await sql`select ${column} from postal_codes where ${only} lower(${column}) like ${`%${term}%`} ${countries.length ? sql`and country in ${sql(countries)}` : sql``}
+      group by ${column}
+      order by min(case when lower(${column}) like ${`${term}%`} then 0 else 1 end), ${column} limit ${limit + 1}`;
 		return {
 			places: rows.slice(0, limit).map((r) => r[name] as string),
 			more: rows.length > limit,

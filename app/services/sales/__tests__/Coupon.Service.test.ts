@@ -423,9 +423,11 @@ test("remove: the coupon and its usage rows go; a code can then be created again
 	await CouponService.remove(c.id, S);
 	expect(await CouponRepository.findByCode(S, "TEMP")).toBeNull();
 	expect(
-		(
-			await sql`select count(*) as n from coupon_redemptions where coupon_id = ${c.id}`
-		)[0].n,
+		Number(
+			(
+				await sql`select count(*) as n from coupon_redemptions where coupon_id = ${c.id}`
+			)[0].n,
+		),
 	).toBe(0);
 	expect(
 		(await CouponService.create(S, input({ code: "TEMP" }))).errors,

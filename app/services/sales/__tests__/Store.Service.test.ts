@@ -2417,9 +2417,11 @@ test("a guest checkout never lands in a store account's history", async () => {
 	).order!;
 	expect(order.customer_id).toBeNull();
 	expect(
-		(
-			await sql`select count(*) as n from orders where customer_id = ${victim.id}`
-		)[0].n,
+		Number(
+			(
+				await sql`select count(*) as n from orders where customer_id = ${victim.id}`
+			)[0].n,
+		),
 	).toBe(0);
 });
 
@@ -2636,7 +2638,9 @@ test("send order: a store with no payment option writes the cart as an unpaid or
 	});
 	// written once, and the stock left the shelf
 	expect(
-		(await sql`select count(*) as n from orders where shop_id = ${D}`)[0].n,
+		Number(
+			(await sql`select count(*) as n from orders where shop_id = ${D}`)[0].n,
+		),
 	).toBe(1);
 	expect((await ProductRepository.find(dish.id, D))!.stock).toBe(0);
 	// sold out now: refused with the reason

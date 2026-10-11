@@ -243,10 +243,9 @@ test("download: the shop's country → its rows, with progress along the way; a 
 	]);
 
 	// remove: the country's rows and date go, the others stay; the "last download" line no longer names it
+	// "no remove while a run is on" is checked in the cancel test below, where the run
+	// cannot end early: on a database server this one may be over already
 	await PostalCodeService.start("country", "th");
-	expect((await PostalCodeService.remove("TH")).error).toMatch(
-		/download is running/,
-	);
 	await PostalCodeService.wait();
 	expect((await PostalCodeService.remove("th")).status).toMatchObject({
 		status: "none",

@@ -1934,9 +1934,11 @@ test("the restaurant extension: managers add and remove tables, a table's QR cod
 	);
 	// the table list and the two codes are kept in the extension's own data, not the settings
 	expect(
-		(
-			await sql`select count(*) as n from extension_data where shop_id = ${S} and ext_key = 'restaurant'`
-		)[0].n,
+		Number(
+			(
+				await sql`select count(*) as n from extension_data where shop_id = ${S} and ext_key = 'restaurant'`
+			)[0].n,
+		),
 	).toBe(3);
 
 	// first round: the table's customer gets an unpaid order
@@ -2076,9 +2078,11 @@ test("the restaurant extension: managers add and remove tables, a table's QR cod
 	// the paid bill left the kitchen, and its steps are forgotten
 	expect((await call("routes", "GET", "/kitchen")).body.items).toEqual([]);
 	expect(
-		(
-			await sql`select count(*) as n from extension_data where shop_id = ${S} and name = ${`kitchen:${open.id}`}`
-		)[0].n,
+		Number(
+			(
+				await sql`select count(*) as n from extension_data where shop_id = ${S} and name = ${`kitchen:${open.id}`}`
+			)[0].n,
+		),
 	).toBe(0);
 	expect(
 		(await call("publicRoutes", "GET", `/bill?table=Table%2010&t=${ten}`))
