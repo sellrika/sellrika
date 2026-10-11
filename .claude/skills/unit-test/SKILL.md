@@ -21,17 +21,17 @@ import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 import { tmpdir } from "node:os";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`; // before any app import
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 // services/repositories are @Service() classes → resolve the singleton, then call it as before
 const { XService: _XService } = await import("../X.Service");
 const XService = Container.get(_XService);
 
-const migrated = await sql`select 1 from users`.then(() => true, () => false);
-if (!migrated) for (const [, up] of Object.entries(registry).sort(([a], [b]) => a.localeCompare(b))) await up(sql);
-const [shop] = await sql`insert into shops (name, currency, timezone) values ('T', 'USD', 'UTC') returning id`;
+await migrate(true); // safe to call in every file: it applies only what is missing
+const [shop] = await Db.insert(sql, "shops", sql`insert into shops (name, currency, timezone) values ('T', 'USD', 'UTC')`, sql`id`);
 const S = shop.id as number;
 ```
+- The tests also run on MySQL (`TEST_DATABASE_URL=mysql://…` names an empty database). So test SQL follows the same rules as app SQL: no `returning`, no `on conflict` (use `Db.insert` / `Db.upsert`), and a date or a sum may come back as a `Date` or as text — compare with `String()` / `Number()` / `dbDate()`.
 - All test files share one process and one DB → **never `sql.close()`**, never assume the DB is empty: create your own shop/users and scope assertions to them (unique emails like `` `u${S}@x.io` ``).
 - Need payment methods? `PaymentMethodRepository.seedDefaults(S)`. Need products? `ProductRepository.create(S, {...}, userId)` — pull both out of the container the same way (see `Order.Service.test.ts` fixtures).
 - Services return `{ errors }` for user mistakes — assert on the message (`toMatch(/Only 1 × Mug/)`), and assert that nothing was written (count rows before/after).

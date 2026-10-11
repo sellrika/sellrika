@@ -4,8 +4,8 @@ import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`; // before any app import
 process.env.APP_KEY ??= "test-app-key-for-extensions";
 // EXTENSION_UPLOAD_DIR (a temp folder, never storage/) is pinned for the whole run by app/test.preload.ts
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate, migrationDb } = await import("@database/migrate");
 const { ExtensionService: _ExtensionService } = await import(
 	"../extensions/Extension.Service"
 );
@@ -50,18 +50,14 @@ const DailyReportService = Container.get(_DailyReportService);
 const { zip } = await import("@helpers/zip");
 const { ExtensionFiles } = await import("@xcore/extensions/ExtensionFiles");
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
-const [s] =
-	await sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Ext Store', 'USD', 'UTC', 'ext-store', ${true}) returning id`;
+const [s] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Ext Store', 'USD', 'UTC', 'ext-store', ${true})`,
+	sql`id`,
+);
 const S = s.id as number;
 const shop = (await ShopRepository.find(S))!;
 const order = {
@@ -202,7 +198,7 @@ install.url = async function installUrl(url: string) {
  */
 async function uninstall(key: string) {
 	expect(await ExtensionService.remove(key)).toEqual({});
-	await sql`delete from shop_extensions where key = ${key}`;
+	await sql`delete from shop_extensions where ${sql("key")} = ${key}`;
 }
 const req = (method: string, path: string) =>
 	new Request(`http://pos.test${path}`, { method });
@@ -695,8 +691,12 @@ test("upload: per shop, a re-upload upgrades and keeps the settings, a handler t
 			e.ready,
 		]),
 	).toEqual([["greeter", "1.0.0", true, false, false]]);
-	const [other] =
-		await sql`insert into shops (name, currency, timezone, slug) values ('Other', 'USD', 'UTC', 'other-ext') returning id`;
+	const [other] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug) values ('Other', 'USD', 'UTC', 'other-ext')`,
+		sql`id`,
+	);
 	expect(
 		(await ExtensionService.list(other.id)).map((e) => [e.key, e.installed]),
 	).toEqual([["greeter", false]]); // on for all shops, but each shop enables it itself
@@ -1404,8 +1404,8 @@ test("built-in extensions: listed on the platform, live-edited, never deletable,
 	expect(await ExtensionService.active(S, "dev-greeter")).toBeNull();
 	await ExtensionService.setGlobal("dev-greeter", true);
 	expect(await ExtensionService.active(S, "dev-greeter")).not.toBeNull();
-	await sql`delete from shop_extensions where key = 'dev-greeter'`;
-	await sql`delete from platform_extensions where key = 'dev-greeter'`;
+	await sql`delete from shop_extensions where ${sql("key")} = 'dev-greeter'`;
+	await sql`delete from platform_extensions where ${sql("key")} = 'dev-greeter'`;
 	await ExtensionFiles.remove(process.env.EXTENSION_BUILTIN_DIR!);
 	expect(
 		(await ExtensionService.platformList()).find(
@@ -1429,16 +1429,36 @@ test("available to some users only: their shops list and run it, other owners' s
 		`${dir}/index.ts`,
 		`export default { "order.created": () => {} };`,
 	);
-	const [a] =
-		await sql`insert into users (name, email, password_hash, role) values ('A', 'vip-a@ext.io', 'x', 'admin') returning id`;
-	const [b] =
-		await sql`insert into users (name, email, password_hash, role) values ('B', 'vip-b@ext.io', 'x', 'admin') returning id`;
-	const [staff] =
-		await sql`insert into users (name, email, password_hash, role, owner_id) values ('S', 'vip-staff@ext.io', 'x', 'cashier', ${a.id}) returning id`;
-	const [shopA] =
-		await sql`insert into shops (name, currency, timezone, slug, owner_id) values ('VIP A', 'USD', 'UTC', 'vip-a', ${a.id}) returning id`;
-	const [shopB] =
-		await sql`insert into shops (name, currency, timezone, slug, owner_id) values ('VIP B', 'USD', 'UTC', 'vip-b', ${b.id}) returning id`;
+	const [a] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('A', 'vip-a@ext.io', 'x', 'admin')`,
+		sql`id`,
+	);
+	const [b] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('B', 'vip-b@ext.io', 'x', 'admin')`,
+		sql`id`,
+	);
+	const [staff] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role, owner_id) values ('S', 'vip-staff@ext.io', 'x', 'cashier', ${a.id})`,
+		sql`id`,
+	);
+	const [shopA] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, owner_id) values ('VIP A', 'USD', 'UTC', 'vip-a', ${a.id})`,
+		sql`id`,
+	);
+	const [shopB] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, owner_id) values ('VIP B', 'USD', 'UTC', 'vip-b', ${b.id})`,
+		sql`id`,
+	);
 	await ExtensionService.setGlobal("vip", true);
 	for (const shop of [shopA.id, shopB.id])
 		await ExtensionService.save(shop, "vip", { enabled: true, config: {} });
@@ -1482,8 +1502,8 @@ test("available to some users only: their shops list and run it, other owners' s
 	expect(await ExtensionService.setUsers("vip", [])).toEqual({});
 	expect(await seen(shopB.id)).toEqual([true, true]);
 
-	await sql`delete from shop_extensions where key = 'vip'`;
-	await sql`delete from platform_extensions where key = 'vip'`;
+	await sql`delete from shop_extensions where ${sql("key")} = 'vip'`;
+	await sql`delete from platform_extensions where ${sql("key")} = 'vip'`;
 	await sql`delete from shops where id in (${shopA.id}, ${shopB.id})`;
 	await sql`delete from users where id in (${a.id}, ${b.id}, ${staff.id})`;
 	await ExtensionFiles.remove(process.env.EXTENSION_BUILTIN_DIR!);
@@ -1536,18 +1556,18 @@ test("uploads a shop made before the platform catalog move into it on boot: newe
 test("migration 0055: every key a shop uses is switched on for all shops", async () => {
 	const { up } = await import("@database/migrations/0055_platform_extensions");
 	await sql`drop table platform_extensions`;
-	await sql`insert into shop_extensions (shop_id, key, enabled, config) values (${S}, 'in-use', ${false}, '{}')`;
-	await up(sql);
+	await sql`insert into shop_extensions (shop_id, ${sql("key")}, enabled, config) values (${S}, 'in-use', ${false}, '{}')`;
+	await up(migrationDb(sql));
 	expect(
 		!!(
-			await sql`select enabled from platform_extensions where key = 'in-use'`
+			await sql`select enabled from platform_extensions where ${sql("key")} = 'in-use'`
 		)[0]?.enabled,
 	).toBe(true);
-	await sql`delete from shop_extensions where key = 'in-use'`;
-	await sql`delete from platform_extensions where key = 'in-use'`;
+	await sql`delete from shop_extensions where ${sql("key")} = 'in-use'`;
+	await sql`delete from platform_extensions where ${sql("key")} = 'in-use'`;
 	// the table was rebuilt from 0055 alone: add what the later migrations add
 	const users = await import("@database/migrations/0056_extension_users");
-	await users.up(sql);
+	await users.up(migrationDb(sql));
 });
 
 test("a theme extension dresses the storefront: the picker lists it, the page gets its Edge templates", async () => {
@@ -1636,8 +1656,11 @@ test("an extension's functions: the API's own routes by name, the ones with no r
 		track_stock: true,
 		stock: 3,
 	} as any);
-	const [boss] =
-		await sql`insert into users (name, email, password_hash, role) values ('Ext Boss', ${`ext-boss-${S}@x.io`}, 'x', 'admin') returning *`;
+	const [boss] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('Ext Boss', ${`ext-boss-${S}@x.io`}, 'x', 'admin')`,
+	);
 	const fx = functionsAs(boss);
 	// every area of the API is there
 	expect(Object.keys(fx).sort()).toEqual([
@@ -1781,8 +1804,11 @@ test("the restaurant extension: managers add and remove tables, a table's QR cod
 		"orders.delivery": "hide", // set outright by the manifest: no delivery steps on the Orders list
 	});
 
-	const [u] =
-		await sql`insert into users (name, email, password_hash, role) values ('Rest Waiter', ${`rest-waiter-${S}@x.io`}, 'x', 'cashier') returning *`;
+	const [u] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('Rest Waiter', ${`rest-waiter-${S}@x.io`}, 'x', 'cashier')`,
+	);
 	const dish = await ProductRepository.create(S, {
 		name: "Rest Soup",
 		description: "",
@@ -2255,8 +2281,12 @@ export default { "order.created": async ({ account }) => { globalThis.__api = aw
 			),
 		),
 	).toEqual({ key: "api-probe" });
-	const [boss] =
-		await sql`insert into users (name, email, password_hash, role) values ('Probe Owner', ${`probe-owner-${S}@x.io`}, 'x', 'admin') returning id`;
+	const [boss] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('Probe Owner', ${`probe-owner-${S}@x.io`}, 'x', 'admin')`,
+		sql`id`,
+	);
 	await sql`update shops set owner_id = ${boss.id} where id = ${S}`;
 	const owned = (await ShopRepository.find(S))!;
 	/**
@@ -2362,8 +2392,11 @@ test("tax-invoice example: the order.show slot, a paid order with tax gets a num
 		/^\/ext\/tax-invoice\/assets\/order\.tsx\?v=/,
 	);
 
-	const [u] =
-		await sql`insert into users (name, email, password_hash, role) values ('Tax Clerk', ${`tax-clerk-${S}@x.io`}, 'x', 'cashier') returning *`;
+	const [u] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('Tax Clerk', ${`tax-clerk-${S}@x.io`}, 'x', 'cashier')`,
+	);
 	const mug = await ProductRepository.create(S, {
 		name: "Tax Mug",
 		description: "",
@@ -2631,8 +2664,12 @@ test("ctx.data: a collection keeps rows per shop, extension and list, pages them
 	await data.delete("count");
 
 	// a deleted shop takes its rows with it
-	const [gone] =
-		await sql`insert into shops (name, currency, timezone, slug) values ('Rows Gone', 'USD', 'UTC', 'rows-gone') returning id`;
+	const [gone] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug) values ('Rows Gone', 'USD', 'UTC', 'rows-gone')`,
+		sql`id`,
+	);
 	await runtime.dataOf(gone.id, "rows-test").collection("notes").add({});
 	await ShopRepository.delete(gone.id);
 	const [left] =
@@ -2666,8 +2703,11 @@ test("loyalty example: a paid order with a customer earns points once, the goal 
 	expect(row.config_script).toContain("/ext/loyalty/assets/config.tsx");
 	expect(row.strings["config.on"]).toBe("Loyalty points is on");
 
-	const [u] =
-		await sql`insert into users (name, email, password_hash, role) values ('Loyal Boss', ${`loyal-boss-${S}@x.io`}, 'x', 'admin') returning *`;
+	const [u] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('Loyal Boss', ${`loyal-boss-${S}@x.io`}, 'x', 'admin')`,
+	);
 	// a listener runs as the shop's owner
 	await sql`update shops set owner_id = ${u.id} where id = ${S}`;
 	const owned = (await ShopRepository.find(S))!;

@@ -64,7 +64,7 @@ Ask these about the change. One "yes" means the matching rule below applies.
 
 ## Money, stock, coupons
 
-- **One SQL statement changes the value and checks the rule**: `update … set paid = paid + x where … and paid + x <= total returning …`. Never write a total that was read earlier. No row back = refused.
+- **One SQL statement changes the value and checks the rule**: `update … set paid = paid + x where … and paid + x <= total` through `Db.update()`, which says if a row matched. Never write a total that was read earlier. No row back = refused.
 - **Stock moves only through `StockRepository.move`.** An unpaid order never sells what is not there. Add units up per product before the stock check.
 - **A hold and a payment page end together.** A new gateway honours `CheckoutArgs.expires_at`, or checks before it takes the money (`getPayment(…, { capture })`).
 - **After the order is written, nothing may fail the checkout.** Later steps are logged (`#quietly`), or the cart is released and a reload writes a second order.

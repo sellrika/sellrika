@@ -2,22 +2,14 @@ import { tmpdir } from "node:os"; // Bun has no equivalent
 import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`; // before any app import
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { OrderMailService } = await import("../OrderMail.Service");
 const mailer = Container.get(OrderMailService);
 const { OrderEmail } = await import("@emails/Order.Email");
 const { OrderShippedEmail } = await import("@emails/OrderShipped.Email");
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 /** Intl puts a non-breaking space after "THB" — normalise it so the expectations stay readable. */
 const plain = (s: string) => s.replace(/\u00a0/g, " ");
@@ -140,8 +132,12 @@ test("order confirmation: support address falls back to the owner, and it always
 	);
 
 	// no support address on the shop → the shop owner's account email
-	const [{ id }] =
-		await sql`insert into users (name, email, password_hash, role, active) values ('Owner', 'owner@mail-test.io', 'x', 'admin', ${true}) returning id`;
+	const [{ id }] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role, active) values ('Owner', 'owner@mail-test.io', 'x', 'admin', ${true})`,
+		sql`id`,
+	);
 	const owner = "owner@mail-test.io";
 	expect(await mailer.supportEmail({ ...shop(), owner_id: id })).toBe(owner);
 	expect(await mailer.supportEmail(shop("help@rattan.co"))).toBe(

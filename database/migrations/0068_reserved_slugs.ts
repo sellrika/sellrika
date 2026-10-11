@@ -10,6 +10,6 @@ export async function up(db: SQL) {
 	for (const slug of RESERVED_SLUGS) {
 		const next = `${slug}-shop`;
 		await db`update shops set slug = ${next} where slug = ${slug}
-			and not exists (select 1 from shops s where s.slug = ${next})`;
+			and not exists (select 1 from (select slug from shops) s where s.slug = ${next})`;
 	}
 }

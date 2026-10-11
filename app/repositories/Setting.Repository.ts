@@ -1,5 +1,7 @@
 import { Service } from "@xcore/di";
-import { sql } from "@xcore/database/Database";
+import { Db, sql } from "@xcore/database/Database";
+/** The `key` column: a reserved word in MySQL, so it is always quoted. */
+const KEY = sql("key");
 
 /**
  * App-level key/value settings.
@@ -15,7 +17,7 @@ export class SettingRepository {
 	 */
 	async get(key: string): Promise<string | null> {
 		return (
-			(await sql`select value from settings where key = ${key}`)[0]?.value ??
+			(await sql`select value from settings where ${KEY} = ${key}`)[0]?.value ??
 			null
 		);
 	}
@@ -26,7 +28,7 @@ export class SettingRepository {
 	 * @param value JSON string to store.
 	 */
 	set(key: string, value: string) {
-		return sql`insert into settings (key, value) values (${key}, ${value}) on conflict (key) do update set value = excluded.value`;
+		return Db.upsert(sql, "settings", { key, value }, ["key"], ["value"]);
 	}
 
 	/**
@@ -34,6 +36,6 @@ export class SettingRepository {
 	 * @param key Setting key.
 	 */
 	delete(key: string) {
-		return sql`delete from settings where key = ${key}`;
+		return sql`delete from settings where ${KEY} = ${key}`;
 	}
 }

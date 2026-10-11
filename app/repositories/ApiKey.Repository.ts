@@ -1,5 +1,5 @@
 import { Service } from "@xcore/di";
-import { sql } from "@xcore/database/Database";
+import { Db, sql } from "@xcore/database/Database";
 import { sqlStamp } from "@helpers/time";
 import type { ApiKey, ApiKeyRow } from "@models/ApiKey";
 import type { Role } from "@constants/User.Constant";
@@ -44,10 +44,13 @@ export class ApiKeyRepository {
 		hash: string;
 		last4: string;
 	}): Promise<ApiKey> {
-		const [r] =
-			await sql`insert into api_keys (shop_id, user_id, name, role, key_hash, last4)
-      values (${d.shopId}, ${d.userId}, ${d.name}, ${d.role}, ${d.hash}, ${d.last4})
-      returning id, shop_id, user_id, name, role, last4, last_used_at, created_at`;
+		const [r] = await Db.insert(
+			sql,
+			"api_keys",
+			sql`insert into api_keys (shop_id, user_id, name, role, key_hash, last4)
+      values (${d.shopId}, ${d.userId}, ${d.name}, ${d.role}, ${d.hash}, ${d.last4})`,
+			sql`id, shop_id, user_id, name, role, last4, last_used_at, created_at`,
+		);
 		return r;
 	}
 

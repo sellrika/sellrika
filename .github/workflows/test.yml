@@ -17,3 +17,28 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun check
       - run: bun test
+
+  # The same unit tests on MySQL (app/test.preload.ts reads TEST_DATABASE_URL).
+  unit-mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sellrika_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test
+        env:
+          TEST_DATABASE_URL: mysql://root:root@127.0.0.1:3306/sellrika_test
+          DB_ALLOW_PUBLIC_KEY_RETRIEVAL: "1"

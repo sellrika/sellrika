@@ -5,7 +5,7 @@ import { Container } from "@xcore/di";
 // Temp SQLite DB (never the real data/pos.db); db.ts reads DB_FILE at import, hence the dynamic imports.
 process.env.DB_FILE = `${tmpdir()}/pos-auth-test-${process.pid}.db`;
 const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { migrate } = await import("@database/migrate");
 const { AuthService: _AuthService } = await import("../Auth.Service");
 const AuthService = Container.get(_AuthService);
 const { UserRepository: _UserRepository } = await import(
@@ -19,15 +19,7 @@ const SessionRepository = Container.get(_SessionRepository);
 
 test("changePassword checks the old one, rehashes, and drops other sessions", async () => {
 	// another test file may already have migrated the shared temp DB
-	const migrated = await sql`select 1 from users`.then(
-		() => true,
-		() => false,
-	);
-	if (!migrated)
-		for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-			a.localeCompare(b),
-		))
-			await up(sql);
+	await migrate(true);
 	await sql`insert into users (name, email, password_hash) values ('A', 'a@x.io', ${await Bun.password.hash("oldpass123")})`;
 	const user = (await UserRepository.findByEmail("a@x.io"))!;
 	const keep = await SessionRepository.create(user.id, null, 1);

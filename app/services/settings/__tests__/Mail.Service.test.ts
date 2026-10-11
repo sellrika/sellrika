@@ -4,7 +4,7 @@ import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`; // before any app import
 process.env.APP_KEY ??= "test-app-key-for-mail-settings";
 const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { migrate } = await import("@database/migrate");
 const { MailService: _MailService } = await import("../Mail.Service");
 const MailService = Container.get(_MailService);
 const { MailError } = await import("@mail");
@@ -20,16 +20,8 @@ const { SettingRepository: _SettingRepository } = await import(
 );
 const SettingRepository = Container.get(_SettingRepository);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
-await sql`delete from settings where key like 'mail%'`; // every test file shares one DB — start from "not set up"
+await migrate(true);
+await sql`delete from settings where ${sql("key")} like 'mail%'`; // every test file shares one DB — start from "not set up"
 
 // the real mailers talk to the network — swap their send() for a recorder, and put them back
 // afterwards: every test file shares this process

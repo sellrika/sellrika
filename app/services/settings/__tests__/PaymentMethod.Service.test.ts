@@ -2,8 +2,8 @@ import { tmpdir } from "node:os"; // Bun has no equivalent
 import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { PaymentMethodService: _PaymentMethodService } = await import(
 	"../PaymentMethod.Service"
 );
@@ -13,17 +13,13 @@ const { PaymentMethodRepository: _PaymentMethodRepository } = await import(
 );
 const PaymentMethodRepository = Container.get(_PaymentMethodRepository);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
+await migrate(true);
+const [shop] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency) values ('Pay', 'USD')`,
+	sql`id`,
 );
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
-const [shop] =
-	await sql`insert into shops (name, currency) values ('Pay', 'USD') returning id`;
 const S = shop.id as number;
 
 test("payment methods: defaults, enabled filter, usable(), keep-one rule", async () => {

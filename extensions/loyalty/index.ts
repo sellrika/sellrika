@@ -403,17 +403,25 @@ export const routes: Routes = {
 	 */
 	"GET /orders/:id/receipt": async ({ params, data, config, orders }) => {
 		const order = await orders.get(Number(params.id));
-		if (!order?.customer_id) return null;
-		const given = await first(
-			data.collection<Earned>("earned"),
-			`order:${order.id}`,
-		);
-		const earned = given?.value.points ?? 0;
-		return {
-			...(await standing(data, config, order.customer_id)),
-			earned,
-			pending: pointsFor(order, Number(config.spend)) !== earned,
-		} satisfies ReceiptAnswer;
+		const customerId = order?.customer_id;
+		if (!order || !customerId) return null;
+		/**
+		 * Read inside the customer's lock.
+		 * A settle writes in several steps: read between two of them,
+		 * the receipt would print the old points.
+		 */
+		return data.lock(customerRef(customerId), async function read() {
+			const given = await first(
+				data.collection<Earned>("earned"),
+				`order:${order.id}`,
+			);
+			const earned = given?.value.points ?? 0;
+			return {
+				...(await standing(data, config, customerId)),
+				earned,
+				pending: pointsFor(order, Number(config.spend)) !== earned,
+			} satisfies ReceiptAnswer;
+		});
 	},
 	/**
 	 * One page of a customer's history, newest first.

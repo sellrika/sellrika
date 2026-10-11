@@ -5,8 +5,8 @@ import { Container } from "@xcore/di";
 // The module cache is shared across test files, so never `sql.close()` here.
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
 process.env.APP_KEY = process.env.APP_KEY || "store-service-test-key";
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { StoreService: _StoreService } = await import("../Store.Service");
 const StoreService = Container.get(_StoreService);
 const { StoreReconcileService: _Reconcile } = await import(
@@ -24,18 +24,14 @@ const { ShopRepository: _ShopRepository } = await import(
 const ShopRepository = Container.get(_ShopRepository);
 const { Schedule } = await import("@xcore/schedule/Schedule");
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
-const [s] =
-	await sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Rec Store', 'USD', 'UTC', 'rec-store', ${true}) returning id`;
+const [s] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Rec Store', 'USD', 'UTC', 'rec-store', ${true})`,
+	sql`id`,
+);
 const S = s.id as number;
 const shop = () => ShopRepository.find(S).then((x) => x!);
 const buyer = {
@@ -102,8 +98,14 @@ async function startCheckout(sessionId: string) {
 		await sql`select * from store_carts where stripe_session_id = ${sessionId}`
 	)[0];
 }
-const cartRow = async (id: number) =>
-	(await sql`select * from store_carts where id = ${id}`)[0];
+const { dbDate, sqlStamp } = await import("@helpers/time");
+const cartRow = async (id: number) => {
+	const [row] = await sql`select * from store_carts where id = ${id}`;
+	// a string on SQLite, a Date on a database server: always the same text
+	if (row.next_check_at)
+		row.next_check_at = sqlStamp(dbDate(row.next_check_at));
+	return row;
+};
 const orders = async () =>
 	Number(
 		(await sql`select count(*) as n from orders where shop_id = ${S}`)[0].n,

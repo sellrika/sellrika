@@ -6,8 +6,8 @@ import type { FirebaseUser } from "@gateways/firebase/Firebase.Api";
 // Temp SQLite DB (never the real data/pos.db); db.ts reads DB_FILE at import, hence the dynamic imports.
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
 process.env.APP_KEY = process.env.APP_KEY || "store-auth-test-key";
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { StoreAuthService: _StoreAuthService } = await import(
 	"../StoreAuth.Service"
 );
@@ -33,18 +33,14 @@ const { ProductRepository: _ProductRepository } = await import(
 );
 const ProductRepository = Container.get(_ProductRepository);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
-const [s] =
-	await sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Auth Store', 'USD', 'UTC', 'svc-auth', ${true}) returning id`;
+const [s] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Auth Store', 'USD', 'UTC', 'svc-auth', ${true})`,
+	sql`id`,
+);
 const S = s.id as number;
 const shop = () => ShopRepository.find(S).then((x) => x!);
 const config = {

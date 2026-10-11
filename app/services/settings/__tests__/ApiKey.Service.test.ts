@@ -9,8 +9,8 @@ import {
 
 // Temp SQLite DB (never the real one); db.ts reads DB_FILE at import.
 process.env.DB_FILE = `${tmpdir()}/pos-apikey-test-${process.pid}.db`;
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { ApiKeyService: _ApiKeyService } = await import("../ApiKey.Service");
 const ApiKeyService = Container.get(_ApiKeyService);
 const { UserRepository: _UserRepository } = await import(
@@ -20,15 +20,7 @@ const UserRepository = Container.get(_UserRepository);
 const { UserService: _UserService } = await import("../User.Service");
 const UserService = Container.get(_UserService);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 const tag = `${process.pid}-${Date.now()}`;
 const owner = await UserRepository.create(
@@ -41,8 +33,12 @@ const owner = await UserRepository.create(
 	"x",
 	null,
 );
-const [shop] =
-	await sql`insert into shops (name, currency, timezone, owner_id) values ('Keys', 'USD', 'UTC', ${owner.id}) returning id`;
+const [shop] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, owner_id) values ('Keys', 'USD', 'UTC', ${owner.id})`,
+	sql`id`,
+);
 const S = shop.id as number;
 
 test("a key is shown once, stored as a hash, and speaks for its maker in its shop", async () => {
@@ -146,16 +142,23 @@ test("a key never has more power than its role, or than its maker has today", as
 });
 
 test("last_used_at is written at most once a minute, and a shop has a key limit", async () => {
-	const [s2] =
-		await sql`insert into shops (name, currency, timezone, owner_id) values ('Keys 2', 'USD', 'UTC', ${owner.id}) returning id`;
+	const [s2] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, owner_id) values ('Keys 2', 'USD', 'UTC', ${owner.id})`,
+		sql`id`,
+	);
 	const r = await ApiKeyService.create(s2.id, owner, {
 		name: "First",
 		role: "manager",
 	});
 	if (r.errors) throw new Error("create failed");
-	const used = async () =>
-		(await sql`select last_used_at from api_keys where id = ${r.key.id}`)[0]
-			.last_used_at as string | null;
+	// a string on SQLite, a Date on a database server: compare as text
+	const used = async () => {
+		const [row] =
+			await sql`select last_used_at from api_keys where id = ${r.key.id}`;
+		return row.last_used_at === null ? null : String(row.last_used_at);
+	};
 	expect(await used()).toBeNull();
 	const t0 = Date.UTC(2026, 0, 1, 10, 0, 0);
 	await ApiKeyService.authenticate(r.token, t0);

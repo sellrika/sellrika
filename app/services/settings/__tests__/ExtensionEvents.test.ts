@@ -4,8 +4,8 @@ import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`; // before any app import
 process.env.APP_KEY ??= "test-app-key-for-extensions";
 // EXTENSION_UPLOAD_DIR (a temp folder, never storage/) is pinned for the whole run by app/test.preload.ts
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { ExtensionService: _ExtensionService } = await import(
 	"../extensions/Extension.Service"
 );
@@ -44,28 +44,32 @@ const { EXTENSION_EVENTS } = await import("@constants/Extension.Constant");
 const { zip } = await import("@helpers/zip");
 const { ExtensionFiles } = await import("@xcore/extensions/ExtensionFiles");
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 afterAll(() => ExtensionFiles.remove(process.env.EXTENSION_UPLOAD_DIR!));
 
 // a shop with one recorder extension that listens for every event, and a second shop to prove staff events reach every shop of the account
-const [s] =
-	await sql`insert into shops (name, currency, timezone, slug) values ('Events Shop', 'USD', 'UTC', 'events-shop') returning id`;
+const [s] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, slug) values ('Events Shop', 'USD', 'UTC', 'events-shop')`,
+	sql`id`,
+);
 const S = s.id as number;
-const [s2] =
-	await sql`insert into shops (name, currency, timezone, slug) values ('Events Shop 2', 'USD', 'UTC', 'events-shop-2') returning id`;
+const [s2] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, slug) values ('Events Shop 2', 'USD', 'UTC', 'events-shop-2')`,
+	sql`id`,
+);
 const S2 = s2.id as number;
 if (!(await PaymentMethodRepository.count(S)))
 	await PaymentMethodRepository.seedDefaults(S);
-const [u] =
-	await sql`insert into users (name, email, password_hash, role) values ('Ev Cashier', ${`ev${S}@x.io`}, 'x', 'admin') returning id, name, email, role, active, created_at, password_hash`;
+const [u] = await Db.insert(
+	sql,
+	"users",
+	sql`insert into users (name, email, password_hash, role) values ('Ev Cashier', ${`ev${S}@x.io`}, 'x', 'admin')`,
+	sql`id, name, email, role, active, created_at, password_hash`,
+);
 const U = u.id as number;
 // both shops are U's: staff events go to every shop of the owner's account
 await sql`update shops set owner_id = ${U} where id in (${S}, ${S2})`;

@@ -2,8 +2,8 @@ import { tmpdir } from "node:os"; // Bun has no equivalent
 import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { CustomerRepository: _CustomerRepository } = await import(
 	"../Customer.Repository"
 );
@@ -17,17 +17,13 @@ const { CustomerAddressRepository: _CustomerAddressRepository } = await import(
 );
 const CustomerAddressRepository = Container.get(_CustomerAddressRepository);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
+await migrate(true);
+const [shop] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency) values ('C', 'USD')`,
+	sql`id`,
 );
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
-const [shop] =
-	await sql`insert into shops (name, currency) values ('C', 'USD') returning id`;
 const S = shop.id as number;
 
 test("customers: search, unique phone per shop, stats, delete keeps orders", async () => {
@@ -72,8 +68,12 @@ test("customers: search, unique phone per shop, stats, delete keeps orders", asy
 	]); // name-prefix first; "Bob" only (Ann has no b)
 	expect((await CustomerRepository.search(S, "")).length).toBe(2);
 
-	const [u] =
-		await sql`insert into users (name, email, password_hash) values ('U', ${`u${S}@x.io`}, 'x') returning id`;
+	const [u] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash) values ('U', ${`u${S}@x.io`}, 'x')`,
+		sql`id`,
+	);
 	await sql`insert into orders (shop_id, user_id, customer_id, subtotal, total, paid, payment_method, status, refunded) values (${S}, ${u.id}, ${ann.id}, 500, 500, 500, 'Cash', 'completed', 100)`;
 	await sql`insert into orders (shop_id, user_id, customer_id, subtotal, total, paid, payment_method, status) values (${S}, ${u.id}, ${ann.id}, 900, 900, 900, 'Cash', 'voided')`;
 	const a = (await CustomerRepository.find(ann.id, S))!;

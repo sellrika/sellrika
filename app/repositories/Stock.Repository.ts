@@ -1,6 +1,6 @@
 import type { SQL } from "bun";
 import { Service } from "@xcore/di";
-import { sql } from "@xcore/database/Database";
+import { Db, sql } from "@xcore/database/Database";
 import { Paginate } from "@xcore/http/Paginate";
 import type {
 	StockItem,
@@ -70,9 +70,19 @@ export class StockRepository {
 		const floor = m.qty < 0 ? -m.qty : 0;
 		const rows =
 			m.variantId == null
-				? await tx`update products set stock = stock + ${m.qty} where id = ${m.productId} and shop_id = ${m.shopId} and track_stock = ${true} and stock >= ${floor} returning id`
-				: await tx`update product_variants set stock = stock + ${m.qty} where id = ${m.variantId} and product_id = ${m.productId} and stock >= ${floor}
-          and exists (select 1 from products p where p.id = ${m.productId} and p.shop_id = ${m.shopId} and p.track_stock = ${true}) returning id`;
+				? await Db.update(
+						tx,
+						"products",
+						tx`stock = stock + ${m.qty}`,
+						tx`id = ${m.productId} and shop_id = ${m.shopId} and track_stock = ${true} and stock >= ${floor}`,
+					)
+				: await Db.update(
+						tx,
+						"product_variants",
+						tx`stock = stock + ${m.qty}`,
+						tx`id = ${m.variantId} and product_id = ${m.productId} and stock >= ${floor}
+          and exists (select 1 from products p where p.id = ${m.productId} and p.shop_id = ${m.shopId} and p.track_stock = ${true})`,
+					);
 		if (!rows.length) return false;
 		StockRepository.forgetLow(m.shopId);
 		// ponytail: bumped before the commit. A store page loaded in that
@@ -207,7 +217,7 @@ export class StockRepository {
 	 */
 	async summary(shopId: number) {
 		const [r] =
-			await sql`select count(*) as n, coalesce(sum(case when stock <= low_stock_at then 1 else 0 end), 0) as low, coalesce(sum(case when stock <= 0 then 1 else 0 end), 0) as out from (
+			await sql`select count(*) as n, coalesce(sum(case when stock <= low_stock_at then 1 else 0 end), 0) as low, coalesce(sum(case when stock <= 0 then 1 else 0 end), 0) as "out" from (
         select p.stock, p.low_stock_at from products p where p.shop_id = ${shopId} and p.track_stock = ${true} and not exists (select 1 from product_variants v where v.product_id = p.id)
         union all
         select v.stock, p.low_stock_at from product_variants v join products p on p.id = v.product_id where p.shop_id = ${shopId} and p.track_stock = ${true}) u`;
@@ -248,7 +258,7 @@ export class StockRepository {
 		const [{ n }] =
 			await sql`select count(*) as n from stock_movements m ${where}`;
 		const rows: (StockMovement & { by: string | null })[] =
-			await sql`select m.*, u.name as by from stock_movements m left join users u on u.id = m.user_id ${where}
+			await sql`select m.*, u.name as "by" from stock_movements m left join users u on u.id = m.user_id ${where}
       order by m.id desc ${Paginate.limit(page, perPage)}`;
 		return Paginate.of(rows, Number(n), page, perPage);
 	}

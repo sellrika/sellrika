@@ -35,8 +35,7 @@ export class EmailQueueRepository {
 		refId: number,
 		to: string,
 	) {
-		await db`insert into email_queue (kind, group_id, ref_id, to_email) values (${kind}, ${groupId}, ${refId}, ${to})
-      on conflict (kind, ref_id) do nothing`;
+		await this.pushAll(db, kind, groupId, [{ ref_id: refId, to_email: to }]);
 	}
 
 	/**
@@ -62,7 +61,7 @@ export class EmailQueueRepository {
 				ref_id: e.ref_id,
 				to_email: e.to_email,
 			});
-		await db`insert into email_queue ${db(rows)} on conflict (kind, ref_id) do nothing`;
+		await Db.upsert(db, "email_queue", rows, ["kind", "ref_id"]);
 	}
 
 	/**
@@ -78,31 +77,29 @@ export class EmailQueueRepository {
 		groupId: number,
 		now: Date,
 	): Promise<QueuedEmail | null> {
+		/**
+		 * Two steps: find the oldest one, then claim it.
+		 * One statement with a subquery makes two workers wait
+		 * for each other's lock on MySQL (a deadlock).
+		 */
 		for (;;) {
-			const [row] =
-				await sql`update email_queue set status = 'sending', taken_at = ${sqlStamp(now)}
-        where id = (select id from email_queue where kind = ${kind} and group_id = ${groupId} and status = 'queued' order by id limit 1)
-        and status = 'queued' returning id, ref_id, to_email`;
+			const [next] =
+				await sql`select id from email_queue where kind = ${kind} and group_id = ${groupId} and status = 'queued' order by id limit 1`;
+			if (!next) return null;
+			const [row] = await Db.update(
+				sql,
+				"email_queue",
+				sql`status = 'sending', taken_at = ${sqlStamp(now)}`,
+				sql`id = ${next.id} and status = 'queued'`,
+				sql`id, ref_id, to_email`,
+			);
 			if (row)
 				return {
 					id: Number(row.id),
 					ref_id: Number(row.ref_id),
 					to_email: row.to_email,
 				};
-			if (!(await this.waiting(kind, groupId))) return null;
 		}
-	}
-
-	/**
-	 * Does a batch still have emails waiting?
-	 * @param kind What the emails are.
-	 * @param groupId The batch.
-	 * @returns True while one is queued.
-	 */
-	async waiting(kind: EmailQueueKind, groupId: number) {
-		return Db.exists(
-			sql`select 1 from email_queue where kind = ${kind} and group_id = ${groupId} and status = 'queued' limit 1`,
-		);
 	}
 
 	/**

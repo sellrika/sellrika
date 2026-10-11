@@ -188,6 +188,7 @@ test("send test to me → the unsubscribe link → button → done", async () =>
 });
 
 test("the Complete your order link refills the store cart", async () => {
+	test.skip(!!process.env.E2E_MYSQL_URL, "writes the SQLite file directly");
 	// the reminder email is sent hours later by the sweep; its cart row is written here directly
 	const db = new DatabaseSync(`${tmpOf(portOf("marketing"))}/pos.db`, {
 		timeout: 5000,

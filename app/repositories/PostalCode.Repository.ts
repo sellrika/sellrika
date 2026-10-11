@@ -55,7 +55,7 @@ export class PostalCodeRepository {
 	 * @returns One row per country.
 	 */
 	countries(): Promise<{ country: string; rows: number }[]> {
-		return sql`select country, count(*) as rows from postal_codes group by country`;
+		return sql`select country, count(*) as "rows" from postal_codes group by country`;
 	}
 
 	/**

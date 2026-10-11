@@ -2,8 +2,8 @@ import { tmpdir } from "node:os"; // Bun has no equivalent
 import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { ProductCsvService: _ProductCsvService } = await import(
 	"../ProductCsv.Service"
 );
@@ -17,19 +17,19 @@ const { CategoryRepository: _CategoryRepository } = await import(
 const CategoryRepository = Container.get(_CategoryRepository);
 const { parseCsv } = await import("@helpers/csv");
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
+await migrate(true);
+const [a] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency) values ('CsvA', 'USD')`,
+	sql`id`,
 );
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
-const [a] =
-	await sql`insert into shops (name, currency) values ('CsvA', 'USD') returning id`;
-const [b] =
-	await sql`insert into shops (name, currency) values ('CsvB', 'USD') returning id`;
+const [b] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency) values ('CsvB', 'USD')`,
+	sql`id`,
+);
 const A = a.id as number,
 	B = b.id as number;
 const base = {
@@ -167,10 +167,13 @@ test("import: round-trips an export into another shop (variants regrouped, categ
 		["M", 950, 0, expect.stringMatching(/^P\d+-\d+$/)],
 	]);
 	// stock typed in via import still lands in the ledger
+	// a sum is a number on SQLite and text on a database server
 	expect(
-		(
-			await sql`select sum(qty) as s from stock_movements where shop_id = ${B}`
-		)[0].s,
+		Number(
+			(
+				await sql`select sum(qty) as s from stock_movements where shop_id = ${B}`
+			)[0].s,
+		),
 	).toBe(10);
 });
 

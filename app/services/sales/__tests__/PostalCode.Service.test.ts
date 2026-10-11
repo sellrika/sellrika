@@ -5,7 +5,7 @@ import { Container } from "@xcore/di";
 
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
 const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { migrate } = await import("@database/migrate");
 const { PostalCodeService: _PostalCodeService } = await import(
 	"../PostalCode.Service"
 );
@@ -16,15 +16,7 @@ const { PostalCodeRepository: _PostalCodeRepository } = await import(
 const PostalCodeRepository = Container.get(_PostalCodeRepository);
 const { unzip } = await import("@helpers/zip");
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 /** A zip archive the way GeoNames ships them (deflated entries, a readme next to the data). */
 function zip(files: Record<string, string>, method: 0 | 8 = 8): Uint8Array {
@@ -158,9 +150,8 @@ test("download: the shop's country → its rows, with progress along the way; a 
 		code: "TH",
 	});
 	expect(["downloading", "importing"]).toContain(started.status!.status); // the stub answers at once, so it may be past the download already
-	expect((await PostalCodeService.start("all")).error).toMatch(
-		/already running/,
-	); // one at a time
+	// "one at a time" is checked in the stalled-run test below, where the run
+	// cannot end early: on a database server this one may be over already
 	await PostalCodeService.wait();
 	const ready = await PostalCodeService.status();
 	expect(ready).toMatchObject({

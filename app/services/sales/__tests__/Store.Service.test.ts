@@ -5,8 +5,8 @@ import { Container } from "@xcore/di";
 // The module cache is shared across test files, so never `sql.close()` here.
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
 process.env.APP_KEY = process.env.APP_KEY || "store-service-test-key";
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { StoreService: _StoreService } = await import("../Store.Service");
 const StoreService = Container.get(_StoreService);
 const { OnlineStoreInput } = await import("@validators/Store.Validator");
@@ -55,15 +55,7 @@ const MAILERS = Object.fromEntries(
 		.map((m) => [m.key, m]),
 );
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 /** Install + switch on a fake gateway for a shop (the zip lands in the temp EXTENSION_UPLOAD_DIR from app/test.preload.ts). */
 const gateway = (
 	id: number,
@@ -72,8 +64,12 @@ const gateway = (
 ) => useGateway(id, kind, config);
 
 // fixtures: an online shop with one tracked product and one variant product
-const [s] =
-	await sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Svc Store', 'USD', 'UTC', 'svc-store', ${true}) returning id`;
+const [s] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Svc Store', 'USD', 'UTC', 'svc-store', ${true})`,
+	sql`id`,
+);
 const S = s.id as number;
 const shop = () => ShopRepository.find(S).then((x) => x!);
 const base = {
@@ -235,8 +231,12 @@ test("browse: ?sort= orders by price or newest, ?stock=1 hides sold-out products
 });
 
 test("related: same category first, in stock before sold out, never the product itself, capped", async () => {
-	const [c] =
-		await sql`insert into categories (shop_id, name) values (${S}, 'Svc Rel') returning id`;
+	const [c] = await Db.insert(
+		sql,
+		"categories",
+		sql`insert into categories (shop_id, name) values (${S}, 'Svc Rel')`,
+		sql`id`,
+	);
 	const mk = (name: string, stock: number, cats: number[] = []) =>
 		ProductRepository.create(S, {
 			...base,
@@ -293,8 +293,12 @@ test("settings: the store's own settings round-trip; taken slugs and domains are
 	});
 	await StoreService.updateSettings(S, store());
 	// another shop can't take this slug
-	const [other] =
-		await sql`insert into shops (name, currency, slug) values ('Other', 'USD', 'svc-other') returning id`;
+	const [other] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug) values ('Other', 'USD', 'svc-other')`,
+		sql`id`,
+	);
 	expect(
 		(await StoreService.updateSettings(other.id, store({ enabled: false })))
 			.errors?.slug,
@@ -413,8 +417,12 @@ test("settings: the banner and the contact block round-trip, blank = off; links 
 });
 
 test("payments: no gateway switched on → the checkout says so; the one that is on is the gateway extension", async () => {
-	const [p] =
-		await sql`insert into shops (name, currency, slug) values ('Pay Shop', 'USD', 'svc-pay') returning id`;
+	const [p] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug) values ('Pay Shop', 'USD', 'svc-pay')`,
+		sql`id`,
+	);
 	const P = p.id as number;
 	const payShop = () => ShopRepository.find(P).then((x) => x!);
 	const pin = await ProductRepository.create(P, {
@@ -561,8 +569,12 @@ const paidBy = (buyer: any = null) => (pay().status = { paid: true, buyer });
 
 test("checkout: DB-priced hosted checkout + cart snapshot; stock and payments-off guards", async () => {
 	// a shop with no gateway switched on → refused
-	const [bare] =
-		await sql`insert into shops (name, currency, slug, online_enabled) values ('Bare', 'USD', 'svc-bare', ${true}) returning id`;
+	const [bare] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug, online_enabled) values ('Bare', 'USD', 'svc-bare', ${true})`,
+		sql`id`,
+	);
 	const bareShop = (await ShopRepository.find(bare.id))!;
 	expect(
 		(
@@ -833,8 +845,12 @@ test("store pages: sanitised on save, slug unique per shop, update + delete", as
 			})
 		).errors?.slug,
 	).toMatch(/already used/);
-	const [ps] =
-		await sql`insert into shops (name, currency, slug) values ('Pages Other', 'USD', 'svc-pages-other') returning id`;
+	const [ps] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, slug) values ('Pages Other', 'USD', 'svc-pages-other')`,
+		sql`id`,
+	);
 	expect(
 		(
 			await StoreService.savePage(ps.id, null, {
@@ -1023,9 +1039,13 @@ test("delivery: the zones decide the fee, undeliverable addresses are refused, a
 	};
 	const setZones = (id: number, zones: object[]) =>
 		sql`update shops set delivery_zones = ${JSON.stringify(zones)} where id = ${id}`;
-	const [d] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones)
-    values ('Del Store', 'USD', 'UTC', 'svc-del', ${true}, 'United States', ${JSON.stringify([US])}) returning id`;
+	const [d] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones)
+    values ('Del Store', 'USD', 'UTC', 'svc-del', ${true}, 'United States', ${JSON.stringify([US])})`,
+		sql`id`,
+	);
 	const D = d.id as number;
 	const delShop = () => ShopRepository.find(D).then((x) => x!);
 	await StoreService.updateSettings(D, {
@@ -1307,9 +1327,13 @@ test("delivery zones: the most specific zone wins, free from its threshold; pick
 		key: "store.validation_no_delivery_country",
 	});
 
-	const [o] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones)
-    values ('Opt Store', 'USD', 'UTC', 'svc-delopt', ${true}, 'United States', ${JSON.stringify(zones.slice(1, 3))}) returning id`;
+	const [o] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones)
+    values ('Opt Store', 'USD', 'UTC', 'svc-delopt', ${true}, 'United States', ${JSON.stringify(zones.slice(1, 3))})`,
+		sql`id`,
+	);
 	const O = o.id as number;
 	const oShop = () => ShopRepository.find(O).then((x) => x!);
 	await StoreService.updateSettings(O, {
@@ -1543,8 +1567,12 @@ test("delivery zones: the most specific zone wins, free from its threshold; pick
 });
 
 test("tokenize gateway: the browser gets the payload and the script, the nonce is charged server-side, and /done writes the order once", async () => {
-	const [o] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Tok Store', 'THB', 'UTC', 'svc-tok', ${true}) returning id`;
+	const [o] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Tok Store', 'THB', 'UTC', 'svc-tok', ${true})`,
+		sql`id`,
+	);
 	const O = o.id as number;
 	const tokShop = () => ShopRepository.find(O).then((x) => x!);
 	await gateway(O, "tokenize", {
@@ -1791,8 +1819,12 @@ test("tokenize gateway: the browser gets the payload and the script, the nonce i
 });
 
 test("manual payments: built in, switched on next to the gateway extension, the buyer picks one, the order is written unpaid and can be tracked", async () => {
-	const [m] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Manual Store', 'USD', 'UTC', 'svc-manual', ${true}) returning id`;
+	const [m] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Manual Store', 'USD', 'UTC', 'svc-manual', ${true})`,
+		sql`id`,
+	);
 	const M = m.id as number;
 	const mShop = () => ShopRepository.find(M).then((x) => x!);
 	const settings = (over: any = {}) =>
@@ -1972,8 +2004,12 @@ test("coupons: applied at the checkout, frozen on the snapshot, written on the o
 	const { CouponService: _CouponService } = await import("../Coupon.Service");
 	const CouponService = Container.get(_CouponService);
 	const { CouponInput } = await import("@validators/Coupon.Validator");
-	const [c] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones) values ('Coupon Store', 'USD', 'UTC', 'svc-coupon', ${true}, 'United States', ${JSON.stringify([{ name: "Domestic", countries: ["United States"], states: [], cities: [], fee: 300, free_delivery_min: null }])}) returning id`;
+	const [c] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones) values ('Coupon Store', 'USD', 'UTC', 'svc-coupon', ${true}, 'United States', ${JSON.stringify([{ name: "Domestic", countries: ["United States"], states: [], cities: [], fee: 300, free_delivery_min: null }])})`,
+		sql`id`,
+	);
 	const C = c.id as number;
 	const cShop = () => ShopRepository.find(C).then((x) => x!);
 	await StoreService.updateSettings(C, {
@@ -2156,9 +2192,13 @@ test("coupons: applied at the checkout, frozen on the snapshot, written on the o
 });
 
 test("tax: an added-on-top tax is a gateway line and lands on the order; an included one changes nothing but the order's tax fields", async () => {
-	const [t] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones, tax_rate, tax_label, tax_included)
-    values ('Tax Store', 'USD', 'UTC', 'svc-tax', ${true}, 'United States', ${JSON.stringify([{ name: "Domestic", countries: ["United States"], states: [], cities: [], fee: 200, free_delivery_min: null }])}, 750, 'Sales tax', ${false}) returning id`;
+	const [t] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones, tax_rate, tax_label, tax_included)
+    values ('Tax Store', 'USD', 'UTC', 'svc-tax', ${true}, 'United States', ${JSON.stringify([{ name: "Domestic", countries: ["United States"], states: [], cities: [], fee: 200, free_delivery_min: null }])}, 750, 'Sales tax', ${false})`,
+		sql`id`,
+	);
 	const T = t.id as number;
 	const taxShop = () => ShopRepository.find(T).then((x) => x!);
 	await StoreService.updateSettings(T, {
@@ -2240,8 +2280,12 @@ test("languages: the save is checked against the app's languages, stored default
 	).toEqual({ languages: ["de"] }); // a repeat is dropped
 	const v = validate(StoreLanguagesInput, { languages: ["de", "en"] });
 
-	const [l] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Lang Store', 'EUR', 'UTC', 'svc-lang', ${true}) returning id`;
+	const [l] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Lang Store', 'EUR', 'UTC', 'svc-lang', ${true})`,
+		sql`id`,
+	);
 	const L = l.id as number;
 	expect((await ShopRepository.find(L))!.languages).toEqual(["en", "de"]); // the column's default: every language, English first
 	await StoreService.updateLanguages(L, v.data!);
@@ -2253,8 +2297,12 @@ test("coupon holds: parallel checkouts can't all use a one-time code; a pending 
 	const { CouponService: _CouponService } = await import("../Coupon.Service");
 	const CouponService = Container.get(_CouponService);
 	const { CouponInput } = await import("@validators/Coupon.Validator");
-	const [h] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones) values ('Hold Store', 'USD', 'UTC', 'svc-hold', ${true}, 'United States', ${JSON.stringify([{ name: "All", countries: [], states: [], cities: [], fee: 0, free_delivery_min: null }])}) returning id`;
+	const [h] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones) values ('Hold Store', 'USD', 'UTC', 'svc-hold', ${true}, 'United States', ${JSON.stringify([{ name: "All", countries: [], states: [], cities: [], fee: 0, free_delivery_min: null }])})`,
+		sql`id`,
+	);
 	const H = h.id as number;
 	const hShop = () => ShopRepository.find(H).then((x) => x!);
 	await StoreService.updateSettings(H, {
@@ -2324,8 +2372,12 @@ test("coupon holds: parallel checkouts can't all use a one-time code; a pending 
 });
 
 test("a guest checkout never lands in a store account's history", async () => {
-	const [g] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones) values ('Guest Store', 'USD', 'UTC', 'svc-guest', ${true}, 'United States', ${JSON.stringify([{ name: "All", countries: [], states: [], cities: [], fee: 0, free_delivery_min: null }])}) returning id`;
+	const [g] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones) values ('Guest Store', 'USD', 'UTC', 'svc-guest', ${true}, 'United States', ${JSON.stringify([{ name: "All", countries: [], states: [], cities: [], fee: 0, free_delivery_min: null }])})`,
+		sql`id`,
+	);
 	const G = g.id as number;
 	const gShop = () => ShopRepository.find(G).then((x) => x!);
 	await StoreService.updateSettings(G, {
@@ -2346,8 +2398,12 @@ test("a guest checkout never lands in a store account's history", async () => {
 	} as any);
 	const items = [{ product_id: mug.id, variant_id: null, qty: 1 }];
 	// the victim has a store account (a Firebase sign-in); a stranger types their email as a guest
-	const [victim] =
-		await sql`insert into customers (shop_id, name, email, phone, firebase_uid) values (${G}, 'Victim', 'victim@x.io', '555-0199', 'uid-victim') returning id`;
+	const [victim] = await Db.insert(
+		sql,
+		"customers",
+		sql`insert into customers (shop_id, name, email, phone, firebase_uid) values (${G}, 'Victim', 'victim@x.io', '555-0199', 'uid-victim')`,
+		sql`id`,
+	);
 	const r = await StoreService.checkout(
 		await gShop(),
 		{ customer: { ...buyer, email: "victim@x.io" }, items, payment: "cod" },
@@ -2368,8 +2424,12 @@ test("a guest checkout never lands in a store account's history", async () => {
 });
 
 test("a guest who types another person's phone gets a record of their own", async () => {
-	const [g] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones) values ('Phone Store', 'USD', 'UTC', 'svc-phone', ${true}, 'United States', ${JSON.stringify([{ name: "All", countries: [], states: [], cities: [], fee: 0, free_delivery_min: null }])}) returning id`;
+	const [g] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled, country, delivery_zones) values ('Phone Store', 'USD', 'UTC', 'svc-phone', ${true}, 'United States', ${JSON.stringify([{ name: "All", countries: [], states: [], cities: [], fee: 0, free_delivery_min: null }])})`,
+		sql`id`,
+	);
 	const G = g.id as number;
 	const gShop = () => ShopRepository.find(G).then((x) => x!);
 	await StoreService.updateSettings(G, {
@@ -2443,8 +2503,12 @@ test("a guest who types another person's phone gets a record of their own", asyn
 });
 
 test("custom request: a product that asks for one needs the note, lines with different notes stay apart, and the order keeps them", async () => {
-	const [c] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Engrave Store', 'USD', 'UTC', 'svc-engrave', ${true}) returning id`;
+	const [c] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Engrave Store', 'USD', 'UTC', 'svc-engrave', ${true})`,
+		sql`id`,
+	);
 	const C = c.id as number;
 	const cShop = () => ShopRepository.find(C).then((x) => x!);
 	await StoreService.updateSettings(C, {
@@ -2530,8 +2594,12 @@ test("custom request: a product that asks for one needs the note, lines with dif
 });
 
 test("send order: a store with no payment option writes the cart as an unpaid order at once; a store that takes payments refuses it", async () => {
-	const [d] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled, tax_rate, tax_label) values ('Direct Store', 'USD', 'UTC', 'svc-direct', ${true}, 1000, 'VAT') returning id`;
+	const [d] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled, tax_rate, tax_label) values ('Direct Store', 'USD', 'UTC', 'svc-direct', ${true}, 1000, 'VAT')`,
+		sql`id`,
+	);
 	const D = d.id as number;
 	const dShop = () => ShopRepository.find(D).then((x) => x!);
 	const dish = await ProductRepository.create(D, {
@@ -2596,8 +2664,12 @@ test("send order: a store with no payment option writes the cart as an unpaid or
 test("an account may change a store address only a few times a week", async () => {
 	const { SLUG_CHANGES_PER_WEEK } = await import("@constants/Store.Constant");
 	const owner = 990_002;
-	const [row] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled, owner_id) values ('Rename Store', 'USD', 'UTC', 'svc-rename-0', ${true}, ${owner}) returning id`;
+	const [row] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled, owner_id) values ('Rename Store', 'USD', 'UTC', 'svc-rename-0', ${true}, ${owner})`,
+		sql`id`,
+	);
 	const id = row.id as number;
 	/**
 	 * Save the store settings with another address.
@@ -2660,8 +2732,12 @@ test("theme look: only #rrggbb colours and known fonts are saved, per template; 
 		font: "archivo",
 	});
 
-	const [row] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Look Store', 'EUR', 'UTC', 'svc-look', ${true}) returning id`;
+	const [row] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled) values ('Look Store', 'EUR', 'UTC', 'svc-look', ${true})`,
+		sql`id`,
+	);
 	const id = row.id as number;
 	expect((await ShopRepository.find(id))!.theme_config).toEqual({});
 	await StoreService.updateTheme(id, v.data!);

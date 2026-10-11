@@ -4,8 +4,8 @@ import { Container } from "@xcore/di";
 import type { MarketingCustomer } from "@models/Campaign";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`; // before any app import
 process.env.APP_KEY ??= "unit-test-key"; // the unsubscribe links are signed with it
-const { sql } = await import("@xcore/database/Database");
-const registry = await import("@database/migrations");
+const { Db, sql } = await import("@xcore/database/Database");
+const { migrate } = await import("@database/migrate");
 const { MarketingService: _MarketingService } = await import(
 	"../marketing/Marketing.Service"
 );
@@ -30,20 +30,16 @@ const Campaigns = Container.get(_CampaignRepository);
 const Carts = Container.get(_StoreCartRepository);
 const Mail = Container.get(_MailService);
 
-const migrated = await sql`select 1 from users`.then(
-	() => true,
-	() => false,
-);
-if (!migrated)
-	for (const [, up] of Object.entries(registry).sort(([a], [b]) =>
-		a.localeCompare(b),
-	))
-		await up(sql);
+await migrate(true);
 
 const run = `${process.pid}-${Date.now().toString(36)}`;
-const [shop] =
-	await sql`insert into shops (name, currency, timezone, slug, online_enabled, abandoned_cart, abandoned_cart_hours)
-  values ('Mkt Shop', 'USD', 'UTC', ${`mkt-${run}`}, ${true}, ${true}, 1) returning id`;
+const [shop] = await Db.insert(
+	sql,
+	"shops",
+	sql`insert into shops (name, currency, timezone, slug, online_enabled, abandoned_cart, abandoned_cart_hours)
+  values ('Mkt Shop', 'USD', 'UTC', ${`mkt-${run}`}, ${true}, ${true}, 1)`,
+	sql`id`,
+);
 const S = Number(shop.id);
 
 /** Every email "sent" by the stubbed MailService. */
@@ -156,8 +152,12 @@ test("abandoned cart: due once, not too early, skips ordered / unsubscribed / ol
 	await cart(`early-${run}@x.io`, 30); // the shop waits 1 hour
 	const ordered = `ordered-${run}@x.io`;
 	await cart(ordered, 120);
-	const [cust] =
-		await sql`insert into customers (shop_id, name, email) values (${S}, 'O', ${ordered}) returning id`;
+	const [cust] = await Db.insert(
+		sql,
+		"customers",
+		sql`insert into customers (shop_id, name, email) values (${S}, 'O', ${ordered})`,
+		sql`id`,
+	);
 	await sql`insert into orders (shop_id, user_id, customer_id, total, paid) values (${S}, 1, ${cust.id}, 100, 100)`;
 	const gone = `gone-${run}@x.io`;
 	await cart(gone, 120);
@@ -217,12 +217,20 @@ test("campaigns: sent once, unsubscribed skipped, a crash never re-sends", async
 	const email = (n: string) => `${n}-${run}@x.io`;
 	const ids: number[] = [];
 	for (const n of ["c1", "c2", "c3"]) {
-		const [c] =
-			await sql`insert into customers (shop_id, name, email) values (${S}, ${n}, ${email(n)}) returning id`;
+		const [c] = await Db.insert(
+			sql,
+			"customers",
+			sql`insert into customers (shop_id, name, email) values (${S}, ${n}, ${email(n)})`,
+			sql`id`,
+		);
 		ids.push(Number(c.id));
 	}
-	const [noMail] =
-		await sql`insert into customers (shop_id, name) values (${S}, 'nomail') returning id`;
+	const [noMail] = await Db.insert(
+		sql,
+		"customers",
+		sql`insert into customers (shop_id, name) values (${S}, 'nomail')`,
+		sql`id`,
+	);
 	await Marketing.unsubscribe(S, unsubscribeToken(S, email("c2")));
 
 	// the picker marks the unsubscribed one; "select all" leaves it out
@@ -287,8 +295,12 @@ test("campaigns: the email queue is in the database, so a restart loses nothing"
 	const email = (n: string) => `q${n}-${run}@x.io`;
 	const people: MarketingCustomer[] = [];
 	for (const n of ["1", "2", "3"]) {
-		const [c] =
-			await sql`insert into customers (shop_id, name, email) values (${S}, ${`q${n}`}, ${email(n)}) returning id`;
+		const [c] = await Db.insert(
+			sql,
+			"customers",
+			sql`insert into customers (shop_id, name, email) values (${S}, ${`q${n}`}, ${email(n)})`,
+			sql`id`,
+		);
 		people.push({
 			id: Number(c.id),
 			name: `q${n}`,
@@ -339,8 +351,12 @@ test("campaigns: through the platform's email an account sends at most its month
 	const { OwnerRepository } = await import("@repositories/Owner.Repository");
 	const campaigns = Container.get(CampaignService);
 	const owners = Container.get(OwnerRepository);
-	const [owner] =
-		await sql`insert into users (name, email, password_hash, role) values ('Cap', ${`cap-${run}@x.io`}, '', 'admin') returning id`;
+	const [owner] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('Cap', ${`cap-${run}@x.io`}, '', 'admin')`,
+		sql`id`,
+	);
 	const ownerId = Number(owner.id);
 	/**
 	 * Add a shop to the owner.
@@ -348,9 +364,12 @@ test("campaigns: through the platform's email an account sends at most its month
 	 * @returns The shop, as the service needs it.
 	 */
 	async function addShop(slug: string) {
-		const [row] =
-			await sql`insert into shops (name, currency, timezone, slug, online_enabled, owner_id)
-      values ('Cap Shop', 'USD', 'UTC', ${`${slug}-${run}`}, ${true}, ${ownerId}) returning *`;
+		const [row] = await Db.insert(
+			sql,
+			"shops",
+			sql`insert into shops (name, currency, timezone, slug, online_enabled, owner_id)
+      values ('Cap Shop', 'USD', 'UTC', ${`${slug}-${run}`}, ${true}, ${ownerId})`,
+		);
 		return { ...row, id: Number(row.id), languages: [] } as any;
 	}
 	const capShop = await addShop("cap");
@@ -358,8 +377,12 @@ test("campaigns: through the platform's email an account sends at most its month
 	const email = (n: string) => `${n}-cap-${run}@x.io`;
 	const ids: number[] = [];
 	for (const n of ["a", "b"]) {
-		const [c] =
-			await sql`insert into customers (shop_id, name, email) values (${capShop.id}, ${n}, ${email(n)}) returning id`;
+		const [c] = await Db.insert(
+			sql,
+			"customers",
+			sql`insert into customers (shop_id, name, email) values (${capShop.id}, ${n}, ${email(n)})`,
+			sql`id`,
+		);
 		ids.push(Number(c.id));
 	}
 	/**
@@ -424,14 +447,25 @@ test("campaigns: through the platform's email an account sends at most its month
 test("campaigns: one account sends one campaign at a time", async () => {
 	const { CampaignService } = await import("../marketing/Campaign.Service");
 	const campaigns = Container.get(CampaignService);
-	const [owner] =
-		await sql`insert into users (name, email, password_hash, role) values ('Busy', ${`busy-${run}@x.io`}, '', 'admin') returning id`;
-	const [row] =
-		await sql`insert into shops (name, currency, timezone, slug, online_enabled, owner_id)
-    values ('Busy Shop', 'USD', 'UTC', ${`busy-${run}`}, ${true}, ${Number(owner.id)}) returning *`;
+	const [owner] = await Db.insert(
+		sql,
+		"users",
+		sql`insert into users (name, email, password_hash, role) values ('Busy', ${`busy-${run}@x.io`}, '', 'admin')`,
+		sql`id`,
+	);
+	const [row] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone, slug, online_enabled, owner_id)
+    values ('Busy Shop', 'USD', 'UTC', ${`busy-${run}`}, ${true}, ${Number(owner.id)})`,
+	);
 	const busyShop = { ...row, id: Number(row.id), languages: [] } as any;
-	const [cust] =
-		await sql`insert into customers (shop_id, name, email) values (${busyShop.id}, 'b', ${`b-busy-${run}@x.io`}) returning id`;
+	const [cust] = await Db.insert(
+		sql,
+		"customers",
+		sql`insert into customers (shop_id, name, email) values (${busyShop.id}, 'b', ${`b-busy-${run}@x.io`})`,
+		sql`id`,
+	);
 	/**
 	 * A draft campaign to the one customer.
 	 * @param subject Its subject.

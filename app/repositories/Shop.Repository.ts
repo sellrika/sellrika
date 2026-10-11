@@ -261,8 +261,13 @@ export class ShopRepository {
 	async create(d: ShopInput, slug: string, ownerId: number): Promise<Shop> {
 		return this.#row(
 			(
-				await sql`insert into shops (name, currency, logo, timezone, tax_rate, tax_label, tax_included, slug, owner_id)
-      values (${d.name}, ${d.currency}, ${d.logo}, ${d.timezone}, ${d.tax_rate}, ${d.tax_label}, ${d.tax_included}, ${slug}, ${ownerId}) returning ${COLS}`
+				await Db.insert(
+					sql,
+					"shops",
+					sql`insert into shops (name, currency, logo, timezone, tax_rate, tax_label, tax_included, slug, owner_id)
+      values (${d.name}, ${d.currency}, ${d.logo}, ${d.timezone}, ${d.tax_rate}, ${d.tax_label}, ${d.tax_included}, ${slug}, ${ownerId})`,
+					sql`${COLS}`,
+				)
 			)[0],
 		);
 	}
@@ -275,8 +280,14 @@ export class ShopRepository {
 	 */
 	async update(id: number, d: ShopInput): Promise<Shop | null> {
 		return Db.one(
-			sql`update shops set name = ${d.name}, currency = ${d.currency}, logo = ${d.logo}, timezone = ${d.timezone},
-      tax_rate = ${d.tax_rate}, tax_label = ${d.tax_label}, tax_included = ${d.tax_included} where id = ${id} returning ${COLS}`,
+			Db.update(
+				sql,
+				"shops",
+				sql`name = ${d.name}, currency = ${d.currency}, logo = ${d.logo}, timezone = ${d.timezone},
+      tax_rate = ${d.tax_rate}, tax_label = ${d.tax_label}, tax_included = ${d.tax_included}`,
+				sql`id = ${id}`,
+				sql`${COLS}`,
+			),
 			(r) => this.#row(r),
 		);
 	}
@@ -357,8 +368,12 @@ export class ShopRepository {
 	 * @returns True when this call took it.
 	 */
 	async claimReport(id: number, day: string) {
-		const rows =
-			await sql`update shops set report_sent_on = ${day} where id = ${id} and report_enabled = ${true} and report_sent_on <> ${day} returning id`;
+		const rows = await Db.update(
+			sql,
+			"shops",
+			sql`report_sent_on = ${day}`,
+			sql`id = ${id} and report_enabled = ${true} and report_sent_on <> ${day}`,
+		);
 		return rows.length > 0;
 	}
 

@@ -126,7 +126,11 @@ export class UserRepository {
 		const at = verified ? sqlStamp(new Date()) : null;
 		return this.#row(
 			(
-				await sql`insert into users (name, email, password_hash, role, owner_id, email_verified_at) values (${d.name}, ${d.email}, ${passwordHash}, ${d.role}, ${ownerId}, ${at}) returning *`
+				await Db.insert(
+					sql,
+					"users",
+					sql`insert into users (name, email, password_hash, role, owner_id, email_verified_at) values (${d.name}, ${d.email}, ${passwordHash}, ${d.role}, ${ownerId}, ${at})`,
+				)
 			)[0],
 		);
 	}
@@ -153,10 +157,22 @@ export class UserRepository {
 	): Promise<User | null> {
 		const r = passwordHash
 			? (
-					await sql`update users set name = ${d.name}, email = ${d.email}, role = ${d.role}, active = ${d.active}, password_hash = ${passwordHash} where id = ${id} returning *`
+					await Db.update(
+						sql,
+						"users",
+						sql`name = ${d.name}, email = ${d.email}, role = ${d.role}, active = ${d.active}, password_hash = ${passwordHash}`,
+						sql`id = ${id}`,
+						sql`*`,
+					)
 				)[0]
 			: (
-					await sql`update users set name = ${d.name}, email = ${d.email}, role = ${d.role}, active = ${d.active} where id = ${id} returning *`
+					await Db.update(
+						sql,
+						"users",
+						sql`name = ${d.name}, email = ${d.email}, role = ${d.role}, active = ${d.active}`,
+						sql`id = ${id}`,
+						sql`*`,
+					)
 				)[0];
 		return r ? this.#row(r) : null;
 	}
