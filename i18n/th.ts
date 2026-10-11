@@ -829,6 +829,7 @@ export const th = {
 	"online_store.contact_desc":
 		"แสดงที่ส่วนท้ายของร้านเพื่อให้ลูกค้าหาและติดต่อคุณได้ ทุกช่องไม่บังคับ",
 	"online_store.copy_link_aria": "คัดลอกลิงก์ร้านค้า",
+	"online_store.copy_feed_aria": "คัดลอกลิงก์ฟีดสินค้า",
 	"online_store.copy_sitemap_aria": "คัดลอกลิงก์ sitemap",
 	"online_store.countries": "ประเทศ",
 	"online_store.country": "ประเทศ",
@@ -889,6 +890,12 @@ export const th = {
 	"online_store.every_other_country": "ประเทศอื่นทั้งหมด",
 	"online_store.extensions_link": "ส่วนขยาย",
 	"online_store.facebook_hint": "ลิงก์เต็มของเพจคุณ",
+	"online_store.feed": "ฟีดสินค้า",
+	"online_store.feed_copied": "คัดลอกลิงก์ฟีดสินค้าแล้ว",
+	"online_store.feed_desc":
+		"แสดงสินค้าของคุณบน Google Shopping ร้านค้าบน Facebook และ Instagram และ TikTok ใส่ลิงก์นี้เพียงครั้งเดียว ระบบจะอ่านลิงก์ซ้ำเอง ราคาและสต็อกจึงเป็นปัจจุบันเสมอ",
+	"online_store.feed_hint":
+		"เพิ่มลิงก์นี้เป็นฟีดข้อมูลใน Google Merchant Center, Meta Commerce Manager หรือแค็ตตาล็อกของ TikTok สินค้าที่ไม่มีรูปจะไม่ถูกรวม",
 	"online_store.firebase_api_key": "Web API key",
 	"online_store.firebase_app": "Firebase web app",
 	"online_store.firebase_app_id": "App ID",

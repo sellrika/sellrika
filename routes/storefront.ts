@@ -115,4 +115,9 @@ export function storefrontRoutes() {
 	 */
 	router.get("/sitemap.xml", [StoreController, "sitemap"]);
 	router.get("/robots.txt", [StoreController, "robots"]);
+	/**
+	 * The store's products as a product feed, for Google Merchant
+	 * Center, Facebook / Instagram and TikTok. Store hosts only.
+	 */
+	router.get("/feed.xml", [StoreController, "feed"]);
 }

@@ -18,6 +18,7 @@ import {
 	Megaphone,
 	Pencil,
 	Plus,
+	Rss,
 	Trash2,
 	Truck,
 	UserRound,
@@ -627,6 +628,14 @@ const copySitemap = () =>
 	navigator.clipboard
 		.writeText(sitemapUrl.value)
 		.then(() => toast.success(t("online_store.sitemap_copied")));
+// this shop's product feed, the link to give Google Merchant Center, Facebook and TikTok
+const feedUrl = computed(() => `${publicUrl.value}/feed.xml`);
+function copyFeed() {
+	navigator.clipboard.writeText(feedUrl.value).then(feedCopied);
+}
+function feedCopied() {
+	toast.success(t("online_store.feed_copied"));
+}
 
 function save() {
 	form.put("/online-store", {
@@ -848,6 +857,21 @@ async function copyUrl() {
                 </div>
                 <p class="text-xs text-muted-foreground">{{ t("online_store.sitemap_hint") }}</p>
               </div>
+            </CardContent>
+          </Card>
+
+          <!-- Product feed: the link Google Merchant Center, Facebook / Instagram and TikTok read -->
+          <Card v-show="section === 'general'">
+            <CardHeader>
+              <CardTitle class="flex items-center gap-2"><Rss class="size-5" /> {{ t("online_store.feed") }}</CardTitle>
+              <CardDescription>{{ t("online_store.feed_desc") }}</CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-2">
+              <div class="flex items-center gap-2">
+                <a :href="feedUrl" target="_blank" rel="noopener" class="min-w-0 truncate font-mono text-sm hover:underline">{{ feedUrl }}</a>
+                <Button type="button" variant="outline" size="icon" :aria-label="t('online_store.copy_feed_aria')" @click="copyFeed"><Copy /></Button>
+              </div>
+              <p class="text-xs text-muted-foreground">{{ t("online_store.feed_hint") }}</p>
             </CardContent>
           </Card>
 

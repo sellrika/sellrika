@@ -16,6 +16,7 @@ import { STORE_PER_PAGE } from "@constants/Pagination.Constant";
 import { StorePageRepository } from "@repositories/StorePage.Repository";
 import { ExtensionService } from "@services/settings/extensions/Extension.Service";
 import { formatMoney } from "@helpers/currency";
+import { productFeed } from "@helpers/feed";
 import type { HostedPayment } from "@services/settings/extensions/types/Extension.Payments.Types";
 import {
 	StoreAddressQuery,
@@ -180,6 +181,28 @@ export class StoreController {
 		}
 		const origin = Url.originOf(req);
 		return this.#urlset(Hooks.sitePaths.map((path) => origin + path));
+	}
+
+	/**
+	 * GET /feed.xml — the shop's products as a product feed.
+	 * Google Merchant Center, Facebook / Instagram and TikTok read it
+	 * to show the products in their own shopping places.
+	 * Only on a store's host.
+	 * @param req The current request.
+	 * @returns The XML document, or the not-found answer.
+	 */
+	async feed(req: BunRequest<"/feed.xml">) {
+		const s = await this.site.open(req);
+		if (s instanceof Response) return s;
+		const products = [];
+		for (const p of await this.store.catalog(s.shop.id))
+			products.push({ ...p, brand: this.#brandOf(p) });
+		return this.#xml(
+			productFeed(
+				{ name: s.shop.name, url: s.url, currency: s.shop.currency },
+				products,
+			),
+		);
 	}
 
 	/**
