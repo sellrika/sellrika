@@ -32,7 +32,16 @@ const connections = {
 		url:
 			env.DATABASE_URL ??
 			`postgres://${env.DB_USERNAME ?? "postgres"}:${env.DB_PASSWORD ?? ""}@${env.DB_HOST ?? "localhost"}:${env.DB_PORT ?? 5432}/${env.DB_DATABASE ?? "pos"}`,
-		options: pool,
+		options: {
+			...pool,
+			/**
+			 * The app stores and compares every time in UTC.
+			 * Without this, `current_timestamp` follows the server's time zone:
+			 * a new row gets local time, and a link that lives one hour
+			 * is expired at once on a server east of UTC.
+			 */
+			connection: { TimeZone: "UTC" },
+		},
 	},
 	/** MySQL 8 or MariaDB. */
 	mysql: {

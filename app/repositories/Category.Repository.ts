@@ -14,11 +14,14 @@ export class CategoryRepository {
 	 * @param shopId Shop to list.
 	 * @returns Categories with a `product_count`.
 	 */
-	allForShop(
+	async allForShop(
 		shopId: number,
 	): Promise<(Category & { product_count: number })[]> {
-		return sql`select c.*, (select count(*) from product_categories pc where pc.category_id = c.id) as product_count
+		const rows: (Category & { product_count: unknown })[] =
+			await sql`select c.*, (select count(*) from product_categories pc where pc.category_id = c.id) as product_count
         from categories c where c.shop_id = ${shopId} order by c.position, c.name`;
+		// a count is text on Postgres
+		return rows.map((c) => ({ ...c, product_count: Number(c.product_count) }));
 	}
 
 	/**

@@ -973,9 +973,11 @@ test("checkout with a discount code: quoted and re-applied by the same rules, re
 		).errors,
 	).toEqual({ coupon: "That code isn't valid" });
 	expect(
-		(
-			await sql`select count(*) as n from coupon_redemptions where order_id = ${r.order!.id}`
-		)[0].n,
+		Number(
+			(
+				await sql`select count(*) as n from coupon_redemptions where order_id = ${r.order!.id}`
+			)[0].n,
+		),
 	).toBe(1);
 
 	// a void deletes the use → the code works again
@@ -2012,9 +2014,11 @@ test("open orders move to another customer and join into one: lines, totals and 
 	expect(detail.history[0]).toMatchObject({ type: "items_added" });
 	// the stock records follow the lines: voiding the joined order puts all 3 back
 	expect(
-		(
-			await sql`select count(*) as n from stock_movements where order_id = ${a.id}`
-		)[0].n,
+		Number(
+			(
+				await sql`select count(*) as n from stock_movements where order_id = ${a.id}`
+			)[0].n,
+		),
 	).toBe(0);
 
 	// refused: with itself, an order with money on it as the one that goes, a closed order

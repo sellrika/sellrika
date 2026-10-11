@@ -42,3 +42,27 @@ jobs:
         env:
           TEST_DATABASE_URL: mysql://root:root@127.0.0.1:3306/sellrika_test
           DB_ALLOW_PUBLIC_KEY_RETRIEVAL: "1"
+
+  # The same unit tests on Postgres.
+  unit-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sellrika_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/sellrika_test

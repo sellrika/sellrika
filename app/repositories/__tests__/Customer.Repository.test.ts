@@ -39,7 +39,14 @@ test("customers: search, unique phone per shop, stats, delete keeps orders", asy
 		email: "bob@x.io",
 		note: "vip",
 	});
-	await CustomerRepository.create(S + 1000, {
+	// a real second shop: Postgres checks the foreign key
+	const [other] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency) values ('C2', 'USD')`,
+		sql`id`,
+	);
+	await CustomerRepository.create(Number(other.id), {
 		name: "Other shop",
 		phone: "0911",
 		email: null,

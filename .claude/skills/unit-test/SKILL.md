@@ -31,7 +31,7 @@ await migrate(true); // safe to call in every file: it applies only what is miss
 const [shop] = await Db.insert(sql, "shops", sql`insert into shops (name, currency, timezone) values ('T', 'USD', 'UTC')`, sql`id`);
 const S = shop.id as number;
 ```
-- The tests also run on MySQL (`TEST_DATABASE_URL=mysql://…` names an empty database). So test SQL follows the same rules as app SQL: no `returning`, no `on conflict` (use `Db.insert` / `Db.upsert`), and a date or a sum may come back as a `Date` or as text — compare with `String()` / `Number()` / `dbDate()`.
+- The tests also run on MySQL and Postgres (`TEST_DATABASE_URL=mysql://…` or `postgres://…` names an empty database). Postgres checks foreign keys, so a row needs a real shop, never a made-up id. So test SQL follows the same rules as app SQL: no `returning`, no `on conflict` (use `Db.insert` / `Db.upsert`), and a date or a sum may come back as a `Date` or as text — compare with `String()` / `Number()` / `dbDate()`.
 - All test files share one process and one DB → **never `sql.close()`**, never assume the DB is empty: create your own shop/users and scope assertions to them (unique emails like `` `u${S}@x.io` ``).
 - Need payment methods? `PaymentMethodRepository.seedDefaults(S)`. Need products? `ProductRepository.create(S, {...}, userId)` — pull both out of the container the same way (see `Order.Service.test.ts` fixtures).
 - Services return `{ errors }` for user mistakes — assert on the message (`toMatch(/Only 1 × Mug/)`), and assert that nothing was written (count rows before/after).

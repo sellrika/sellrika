@@ -395,15 +395,17 @@ export class CampaignRepository {
 	 * @param id Campaign id.
 	 * @param shopId The shop.
 	 * @returns False when nothing was deleted.
+	 * @throws When the campaign started sending in between. Nothing is deleted then.
 	 */
 	async #drop(tx: SQL, id: number, shopId: number) {
-		const gone = await Db.delete(
-			tx,
-			"campaigns",
-			tx`id = ${id} and shop_id = ${shopId} and status <> 'sending'`,
-		);
-		if (gone) await tx`delete from campaign_sends where campaign_id = ${id}`;
-		return gone;
+		const mine = tx`id = ${id} and shop_id = ${shopId} and status <> 'sending'`;
+		if (!(await Db.exists(tx`select 1 from campaigns where ${mine}`)))
+			return false;
+		// the recipients first: Postgres refuses to delete a campaign that has some
+		await tx`delete from campaign_sends where campaign_id = ${id}`;
+		if (!(await Db.delete(tx, "campaigns", mine)))
+			throw new Error(`campaign ${id} started sending while it was deleted`);
+		return true;
 	}
 
 	/**
