@@ -347,7 +347,7 @@ The open-source app runs with none.
 
 An add-on may change the app only in these places:
 
-- `Hooks` in `app/xcore/hooks/Hooks.ts`: `frontPage`, `docsPage`, `docs`, `plan`, `signedUp`, `signup`, `sitePaths`, `closedHosts`, `ssrPages`, `guides`.
+- `Hooks` in `app/xcore/hooks/Hooks.ts`: `frontPage`, `docsPage`, `docs`, `plan`, `signedUp`, `signup`, `sitePaths`, `closedHosts`, `ssrPages`, `guides`, `migrations`.
 - The DI container. It can put its own class in the place of a service.
 - The router. It can add routes.
 - `JobRegistry.add()`. It can add a background job.
@@ -358,6 +358,12 @@ Rules:
 - Core code never imports from an add-on.
 - The app leaves every hook at its default.
 - Hooks are set before the server starts, never during a request.
+
+An add-on's own tables:
+
+- `Hooks.migrations` is a list: version → its `up`. `migrate()` runs them after the app's own, in version order.
+- A version is recorded in the `migrations` table like any other. So it must not have the name of one of the app's. Give it a prefix.
+- `bun run migrate` loads the add-on first, so it finds them too.
 
 ## Constants (`app/constants/`)
 

@@ -108,3 +108,31 @@ test("Db.upsert / insertOnce: a row that is there is updated or left alone", asy
 	await sql`delete from email_unsubscribes where shop_id = ${row.shop_id}`;
 	await sql`delete from shops where id = ${row.shop_id}`;
 });
+
+test("migrate: an add-on's migrations run once, after the app's own", async () => {
+	const { Hooks } = await import("@xcore/hooks/Hooks");
+	const before = Hooks.migrations;
+	let runs = 0;
+	Hooks.migrations = {
+		...before,
+		addon_test_0001: async function up(db) {
+			runs++;
+			// the app's own tables are there already
+			await db.unsafe(`select 1 from shops`);
+			await db.unsafe(`create table addon_probe (id integer)`);
+		},
+	};
+	try {
+		await migrate(true);
+		// a second run finds it recorded
+		await migrate(true);
+	} finally {
+		Hooks.migrations = before;
+	}
+	expect(runs).toBe(1);
+	expect(
+		await Db.exists(
+			sql`select 1 from migrations where version = ${"addon_test_0001"}`,
+		),
+	).toBe(true);
+});

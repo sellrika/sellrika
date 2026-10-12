@@ -151,7 +151,17 @@ export class Url {
 	 */
 	static developerOrigin() {
 		const host = app.domains.developer;
-		if (!host) return null;
+		return host ? Url.hostOrigin(host) : null;
+	}
+
+	/**
+	 * The address of another host of ours, like the docs host.
+	 * A real domain is always `https` with no port: the proxy serves it on 443.
+	 * Only a `localhost` one (dev) takes the scheme and port of the app.
+	 * @param host The host name, like `developer.sellrika.com`.
+	 * @returns The origin, without a trailing slash.
+	 */
+	static hostOrigin(host: string) {
 		if (host !== "localhost" && !host.endsWith(".localhost"))
 			return `https://${host}`;
 		return Url.#devOrigin(host);
