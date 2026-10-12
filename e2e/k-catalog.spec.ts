@@ -366,6 +366,8 @@ test("featuring a product pins it to the top of the list", async () => {
 	await expect(firstRowLink(P1)).toBeVisible();
 
 	await toggle(P1).click(); // back to plain "most recently edited first"
+	// wait for the save before the reload: a reload right after the click can cut the request off
+	await expect(toggle(P1)).toHaveAttribute("aria-pressed", "false");
 	await page.reload();
 	await expect(toggle(P1)).toHaveAttribute("aria-pressed", "false");
 });
