@@ -586,9 +586,9 @@ test("visitor: every product has its own page — shareable, with product meta, 
 	const site = await (await visitor.request.get("/sitemap.xml")).text();
 	expect(site).toContain("<urlset");
 	expect(site).not.toContain(href);
-	expect(await (await visitor.request.get("/robots.txt")).text()).toContain(
-		"Sitemap: http://",
-	);
+	const robots = await (await visitor.request.get("/robots.txt")).text();
+	expect(robots).toContain("Sitemap: http://");
+	expect(robots).toContain("Disallow: /api/v1");
 });
 
 test("admin: switching the template changes the public page; disabled store 404s", async () => {

@@ -29,6 +29,7 @@ import {
 } from "@validators/Store.Validator";
 import { STORE_SORTS, type StoreSort } from "@constants/Store.Constant";
 import { SEO_CACHE_CONTROL } from "@constants/Http.Constant";
+import { API_PREFIX } from "@constants/Api.Constant";
 import { Hooks } from "@xcore/hooks/Hooks";
 import { COUNTRIES } from "@constants/Country.Constant";
 import {
@@ -228,6 +229,7 @@ export class StoreController {
 					"Disallow: /done",
 					"Disallow: /track",
 					"Disallow: /account",
+					`Disallow: ${API_PREFIX}`,
 					`Sitemap: ${origin}/sitemap.xml`,
 				];
 		return new Response(`${lines.join("\n")}\n`, {
