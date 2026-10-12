@@ -149,7 +149,7 @@ In production, set `APP_URL` (or `TRUST_PROXY=1`). Else the links say `http`.
 `GET /robots.txt`:
 
 - allows everything
-- disallows `/login`, `/checkout`, `/done`, `/track` and `/account`
+- disallows `/login`, `/checkout`, `/done`, `/track`, `/account` and `/api/v1` (the REST API)
 - names the sitemap
 
 A host in `Hooks.closedHosts` is closed to every crawler (`Disallow: /`).
