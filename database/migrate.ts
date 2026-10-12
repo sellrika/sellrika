@@ -3,6 +3,7 @@
 import type { SQL } from "bun";
 import { dialect, sql } from "@xcore/database/Database";
 import { MysqlDdl } from "@xcore/database/MysqlDdl";
+import { Hooks } from "@xcore/hooks/Hooks";
 import * as registry from "./migrations";
 
 /**
@@ -29,12 +30,17 @@ export async function migrate(quiet = false) {
 			(r: { version: string }) => r.version,
 		),
 	);
-	const entries = Object.entries(registry).sort(([a], [b]) =>
+	const own = Object.entries(registry)
+		.sort(([a], [b]) => a.localeCompare(b))
+		// m0001_x → 0001_x
+		.map(([key, up]) => [key.slice(1), up] as const);
+	// an add-on's tables come after the app's own (`Hooks.migrations`)
+	const added = Object.entries(Hooks.migrations).sort(([a], [b]) =>
 		a.localeCompare(b),
 	);
+	const entries = [...own, ...added];
 
-	for (const [key, up] of entries) {
-		const version = key.slice(1); // m0001_x → 0001_x
+	for (const [version, up] of entries) {
 		if (applied.has(version)) continue;
 		await sql.begin(async (tx) => {
 			await up(migrationDb(tx));
@@ -46,6 +52,8 @@ export async function migrate(quiet = false) {
 }
 
 if (import.meta.main) {
+	// an add-on names its own tables when it is loaded
+	await import("@cloud");
 	await migrate();
 	await sql.close();
 }

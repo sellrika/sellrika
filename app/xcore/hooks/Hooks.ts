@@ -1,5 +1,6 @@
 import { DOCS_URL } from "@constants/Api.Constant";
 import type { User } from "@models/User";
+import type { SQL } from "bun";
 
 /**
  * What every app page shows about the account's plan.
@@ -42,7 +43,11 @@ export class Hooks {
 	 */
 	static sitePaths: string[] = [];
 
-	/** Store hosts no search engine may crawl (a demo store). */
+	/**
+	 * Hosts no search engine may crawl: a demo store,
+	 * or a site of an add-on that is not open yet.
+	 * Their `/robots.txt` closes every path.
+	 */
 	static closedHosts: string[] = [];
 
 	/**
@@ -66,6 +71,14 @@ export class Hooks {
 
 	/** The Inertia pages whose HTML is rendered on the server. */
 	static ssrPages: string[] = [];
+
+	/**
+	 * An add-on's own tables: version → its `up`.
+	 * They run after the app's own migrations, in version order.
+	 * A version is recorded in `migrations` like any other,
+	 * so it must not have the name of one of the app's.
+	 */
+	static migrations: Record<string, (db: SQL) => Promise<void>> = {};
 
 	/**
 	 * The plan of a signed-in user's account, for the layout.
