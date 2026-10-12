@@ -160,6 +160,12 @@ export type ExtensionUi = {
 	app: Partial<Record<ExtensionAppSetting, unknown>>;
 	/** The app's sidebar links it hides, by path: `["/customers"]`. */
 	hide_nav: string[];
+	/**
+	 * True when its payment method must be approved by the extension
+	 * before a pay dialog can be confirmed (manifest
+	 * `payment_method.confirm`).
+	 */
+	payment_confirm: boolean;
 };
 
 /**

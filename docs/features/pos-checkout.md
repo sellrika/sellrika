@@ -87,7 +87,8 @@ A package is a product with `kind = 'bundle'`. See [products.md](products.md).
 1. Pick a payment method. The first one is preselected.
 2. A `tendered` method shows a cash input. It has quick-amount buttons (exact, next 5 / 10 / 20 / 50) and shows the change.
 3. Other methods pay exactly the total.
-4. Confirm sends `POST /pos/checkout`.
+4. A method its extension must approve first (a card reader) keeps Confirm off. When the extension approves, the dialog confirms by itself.
+5. Confirm sends `POST /pos/checkout`.
 
 On success:
 
@@ -262,11 +263,13 @@ Other details:
 
 ### The extension slot `pos.display`
 
-- Context: `{ sale(), onChange(fn), payment(), onPayment(fn) }`. Read only.
+- Context: `{ sale(), onChange(fn), payment(), onPayment(fn), place, approve(ref) }`. The cart is read only.
+- `place` is `"screen"` on the customer's screen and `"dialog"` next to a pay dialog. Both may run at the same moment.
+- `approve(ref)` is for a method that must be approved first. It does nothing on the customer's screen. See [extensions.md](extensions.md) › Payment methods by extension.
 - Types in `extensions/types.ts`: `DisplaySale`, and `DisplayPayment` = `{ method, extension, amount }`.
 - `payment()` is null while no pay dialog is open.
 
-Tests: `e2e/z-pos-display.spec.ts`.
+Tests: `e2e/z-pos-display.spec.ts`, `e2e/y-stripe-terminal.spec.ts`.
 
 ## Pay later
 
@@ -321,6 +324,7 @@ The body is `CheckoutInput`:
 
 - `coupon` is optional. It is a discount code. When given, it replaces the manual discount. See [coupons.md](coupons.md) › At the POS.
 - `choices` only means something on a package line: `{ "<bundle_item id>": <chosen variant id> }`. Everywhere else it is `{}`.
+- `payment_ref` is optional, at most 200 characters. It is the text an extension gave when it approved the payment (a card reader's charge). It is not stored. It rides on `order.created` and `order.paid`. See [extensions.md](extensions.md) › Payment methods by extension.
 
 ### Server steps
 

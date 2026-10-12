@@ -3,11 +3,15 @@
 // order page, and extensions through `api.paymentPicker()` (the Restaurant's Pay). One place to change.
 // While it is on screen it also tells the customer's screen which method is picked and for how much,
 // and draws what that screen shows for the method (a QR code to pay) itself: PaymentShow.vue.
+// It also holds the one rule for a method its extension must approve first (a card reader, manifest
+// `payment_method.confirm`): `blocked` is true until the extension calls `approve(ref)`, and the
+// approval goes away when the method or the amount changes. Every dialog binds both models.
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useElementBounding } from "@vueuse/core";
 import { usePage } from "@inertiajs/vue3";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { usePaymentApproval } from "@/lib/approval";
 import { showPayment } from "@/lib/display";
 import { t } from "@/lib/i18n";
 import { paymentIcon } from "@/lib/paymentIcons";
@@ -22,6 +26,10 @@ const props = defineProps<{
 }>();
 /** The picked method, or null for none. */
 const model = defineModel<PickerMethod | null>({ required: true });
+/** True while the picked method waits for its extension's approval: the dialog keeps its confirm button off. */
+const blocked = defineModel<boolean>("blocked", { default: false });
+/** The approval's reference, or null. The dialog confirms by itself when it comes and sends it as `payment_ref`. */
+const reference = defineModel<string | null>("reference", { default: null });
 
 const page = usePage<SharedProps>();
 const shopId = page.props.shop?.id ?? 0;
@@ -50,6 +58,25 @@ function findHost() {
 }
 onMounted(function lookAfterPaint() {
 	requestAnimationFrame(findHost);
+});
+
+// The rule itself is lib/approval.ts. Here it is handed to the dialog through the two models.
+const approval = usePaymentApproval(
+	() => model.value,
+	() => props.amount,
+	() => page.props.extension_ui ?? [],
+);
+watch(
+	approval.blocked,
+	function tellBlocked(on) {
+		blocked.value = on;
+	},
+	{ immediate: true },
+);
+// a dialog that opens again starts with nothing approved
+reference.value = null;
+watch(approval.reference, function tellReference(ref) {
+	reference.value = ref;
 });
 
 /**
@@ -86,7 +113,7 @@ onUnmounted(function forget() {
       <p v-if="!methods.length" class="col-span-3 text-sm text-destructive">{{ t("pos.no_payment_methods") }}</p>
     </div>
     <Teleport :to="host ?? 'body'" :disabled="!beside">
-      <PaymentShow v-show="shows" :method="model" :amount="amount"
+      <PaymentShow v-show="shows" :method="model" :amount="amount" @approve="approval.approve"
         :class="beside ? 'absolute top-1/2 right-full mr-4 max-h-[calc(100dvh-2rem)] -translate-y-1/2 overflow-y-auto rounded-xl bg-popover text-popover-foreground shadow-lg ring-1 ring-foreground/10' : 'rounded-lg bg-muted'"
         :style="beside ? { width: `${Math.min(SIDE_MAX, left - 32)}px` } : undefined" />
     </Teleport>

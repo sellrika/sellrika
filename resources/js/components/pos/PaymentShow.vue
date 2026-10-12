@@ -38,6 +38,10 @@ const props = defineProps<{
 	/** The cents the customer is asked for now. */
 	amount: number;
 }>();
+const emit = defineEmits<{
+	/** The picked method's extension says the money is taken, with its reference. */
+	(e: "approve", ref: string): void;
+}>();
 
 const shop = usePage<SharedProps>().props.shop;
 const currency = shop?.currency ?? "USD";
@@ -72,7 +76,14 @@ function slotPayment() {
 		m && { method: m.name, extension: m.extension ?? null, amount: props.amount }
 	);
 }
-const context = displayContext(() => sale, slotPayment);
+const context = displayContext(
+	() => sale,
+	slotPayment,
+	"dialog",
+	function approve(ref) {
+		emit("approve", ref);
+	},
+);
 
 // Only the extension that added the picked method draws here.
 // Another one (advertisements for the customer's screen) has no place in a pay dialog.

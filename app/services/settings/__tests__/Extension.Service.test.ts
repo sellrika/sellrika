@@ -2592,7 +2592,42 @@ test("the pos.display slot: a manifest may name it and ui() hands the staff app 
 	expect(ui.slots["pos.display"]).toMatch(
 		/^\/ext\/second-screen\/assets\/display\.js\?v=/,
 	);
+	// no payment method of its own: nothing for a pay dialog to wait for
+	expect(ui.payment_confirm).toBe(false);
 	await uninstall("second-screen");
+});
+
+test("stripe-terminal example: it adds the Card reader method, which a pay dialog must wait for, and its two slots", async () => {
+	const methods = Container.get(_PaymentMethodService);
+	expect(await install(await example("stripe-terminal"))).toEqual({
+		key: "stripe-terminal",
+	});
+	// the key must look like a Stripe secret key
+	expect(
+		await ExtensionService.save(S, "stripe-terminal", {
+			enabled: true,
+			config: { secret_key: "pk_test_1" },
+		}),
+	).toMatchObject({ errors: { "config.secret_key": expect.any(String) } });
+	expect(
+		await ExtensionService.save(S, "stripe-terminal", {
+			enabled: true,
+			config: { secret_key: "sk_test_1" },
+		}),
+	).toEqual({});
+	expect(
+		(await methods.list(S)).filter((m) => m.extension === "stripe-terminal"),
+	).toMatchObject([
+		{ name: "Card reader", icon: "Nfc", enabled: true, tendered: false },
+	]);
+	const ui = (await ExtensionService.ui(S, "cashier")).find(
+		(one) => one.key === "stripe-terminal",
+	)!;
+	// manifest `payment_method.confirm`: every pay dialog keeps its button off until the extension approves
+	expect(ui.payment_confirm).toBe(true);
+	expect(Object.keys(ui.slots).sort()).toEqual(["order.show", "pos.display"]);
+	await sql`delete from payment_methods where extension = 'stripe-terminal'`;
+	await uninstall("stripe-terminal");
 });
 
 test("ctx.data: a collection keeps rows per shop, extension and list, pages them newest first and finds them by ref; lock runs one job at a time", async () => {

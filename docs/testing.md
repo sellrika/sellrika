@@ -121,10 +121,10 @@ Frontend and extensions:
 
 | File | Covers |
 |---|---|
-| `resources/js/lib/__tests__/*.test.ts` | Client helpers. `rawbt`: receipt lines, ESC/POS image bytes. `bundles`: slot options, availability, cart key, chosen names. `share`: the product's store link, utm tags, network links. Also `curve` and `search`. |
+| `resources/js/lib/__tests__/*.test.ts` | Client helpers. `rawbt`: receipt lines, ESC/POS image bytes. `bundles`: slot options, availability, cart key, chosen names. `share`: the product's store link, utm tags, network links. Also `curve`, `search` and `approval` (a payment method its extension must approve first). |
 | `resources/js/lib/password.test.ts` | The password helper |
 | `resources/js/store/__tests__/*.test.ts` | `window.Store`. The cart: stock caps, events, storage, 24 h expiry, re-sync, another tab. The option picker: guided, editing a line, plain list, package slots. Money with a display currency. URLs. |
-| `extensions/<key>/**/*.test.ts` | The extensions' own tests: `stripe`, `paypal`, `omise`, `2c2p`, `promptpay`, `labels` (Code 128), `loyalty`, `tax-invoice` |
+| `extensions/<key>/**/*.test.ts` | The extensions' own tests: `stripe`, `paypal`, `omise`, `2c2p`, `promptpay`, `stripe-terminal`, `labels` (Code 128), `loyalty`, `tax-invoice` |
 
 ## End-to-end tests
 
@@ -212,6 +212,7 @@ In `r-signup.spec.ts` the fixture server stands in for Resend: `RESEND_API_URL`,
 | `m-csv.spec.ts` | Product CSV export and import round-trip. Skipped rows are reported. |
 | `n-packages.spec.ts` | Build a package: contents editor, allowed variants, savings summary. The "Package" badge and contents line on `/products`. Sell it on the POS with a colour choice (the option that can't fill the slot is disabled). Component stock and movement. The order line "Pen — 1 dozen (Red)". The same picker on the storefront. The delete and variant-removal guards. |
 | `x-send-order.spec.ts` | A store with no payment option. The cart's button is **Send order**. The order is written at once and shown on the thank-you page. Bad input is refused. Staff find it unpaid ("Pay later"), add items to it from the Sell screen (`/pos?order=`), take one off with a line's delete button (a draft: Undo, then Save changes), see the History card (before and after), can't remove the last unit, then record the money. After that the order is closed for both. **Pay later** on the Sell screen. With a payment option on, the button is Checkout again and `/checkout/send` answers 422. |
+| `y-stripe-terminal.spec.ts` | The Stripe Terminal extension against a stand-in. The confirm button stays off while Card reader is picked. A declined card shows the reason. An approved card completes the sale by itself and the hold is captured. The customer screen only says what to do. A refund goes back to the card. |
 | `z-pos-display.spec.ts` | The customer screen follows the Sell screen. An extension fills the `pos.display` slot. A payment method's picture shows while that method is picked. The PromptPay extension adds a payment method and shows a QR code for the amount. |
 
 **The online store**
@@ -282,6 +283,7 @@ The app servers never reach the real sites during `bun run test:e2e`. They reach
 | Exchange rates | `EXCHANGE_RATES_URL` → `/rates`. The table is USD 1, EUR 0.5, GBP 0.8, THB 35. |
 | Resend | `RESEND_API_URL` → `/resend/emails` |
 | Firebase sign-in | `FIREBASE_LOOKUP_URL` → `/firebase/lookup` |
+| Stripe Terminal | `STRIPE_TERMINAL_API_URL` → `/terminal`. A charge is approved the moment it reaches the reader. An amount that ends in 01 is declined. `GET /terminal/last` hands a spec the card payments. |
 
 ### GeoNames
 

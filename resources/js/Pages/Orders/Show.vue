@@ -326,6 +326,9 @@ const payMethod = ref<PaymentMethod | null>(null); // null = the order keeps the
 const paySeller = ref("none"); // the sales person: their id as text, "none" = nobody
 const paying = ref(false);
 const payError = ref("");
+// a method its extension must approve first (a card reader): both are kept by PaymentMethodPicker
+const payBlocked = ref(false);
+const payRef = ref<string | null>(null);
 /** The shop's methods that are switched on: the ones the dialog offers. */
 const payMethods = computed(function enabledMethods() {
 	return props.payment_methods.filter((m) => m.enabled);
@@ -390,6 +393,7 @@ async function submitPayment() {
 				amount: payApplied.value,
 				payment_method: payMethod.value?.name,
 				tendered: payMethod.value?.tendered ? payCents.value : undefined,
+				payment_ref: payRef.value || undefined,
 				// sent only when changed, so a sales person switched off since stays on the order
 				sales_staff_id:
 					paySeller.value === sellerNow()
@@ -418,6 +422,10 @@ async function submitPayment() {
 		paying.value = false;
 	}
 }
+// the extension approved the payment: it is recorded by itself
+watch(payRef, function recordApproved(ref) {
+	if (ref && payOpen.value && !paying.value) void submitPayment();
+});
 
 // Delivery (online orders walk the shop's own steps, in its order) -------------
 const steps = computed(() => page.props.shop?.fulfillment_steps ?? []);
@@ -741,7 +749,7 @@ const submitVoid = () =>
         <DialogDescription>{{ t("orders.record_payment_desc", { amount: money(due, currency), method: order.payment_method }) }}</DialogDescription>
       </DialogHeader>
       <!-- the money asked for: what is due, or the part typed for a method that takes no cash -->
-      <PaymentMethodPicker v-if="payMethods.length" v-model="payMethod" :methods="payMethods" :amount="payMethod?.tendered ? due : payApplied" />
+      <PaymentMethodPicker v-if="payMethods.length" v-model="payMethod" v-model:blocked="payBlocked" v-model:reference="payRef" :methods="payMethods" :amount="payMethod?.tendered ? due : payApplied" />
       <div class="space-y-2">
         <Label for="pay-amount">{{ t("orders.amount_received") }}</Label>
         <Input id="pay-amount" v-model="payAmount" inputmode="decimal" class="h-11 text-lg tabular-nums" :aria-invalid="!!payError || payTooMuch" />
@@ -771,7 +779,7 @@ const submitVoid = () =>
       </div>
       <DialogFooter>
         <Button variant="outline" @click="payOpen = false">{{ t("common.cancel") }}</Button>
-        <Button :disabled="paying || payCents <= 0 || payTooMuch" @click="submitPayment">
+        <Button :disabled="paying || payCents <= 0 || payTooMuch || payBlocked" @click="submitPayment">
           <LoaderCircle v-if="paying" class="animate-spin" /><CircleCheckBig v-else />
           {{ payCents > 0 ? t("orders.record_amount", { amount: money(payApplied, currency) }) : t("orders.record") }}
         </Button>

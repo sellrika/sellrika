@@ -267,10 +267,18 @@ test("order events: POS sale → created + paid + stock (with the customer on th
 		customer_id: ann.id,
 		discount_type: null,
 		discount_value: 0,
+		// what an extension approved in the pay dialog (a card reader's charge)
+		payment_ref: "pi_sale",
 	} as any);
 	expect(r.errors).toBeUndefined();
 	let list = await events(3);
 	expect(names(list)).toEqual(["order.created", "order.paid", "stock.updated"]);
+	// the reference rides on both events and is stored nowhere
+	expect([list[0]![2].payment_ref, list[1]![2].payment_ref]).toEqual([
+		"pi_sale",
+		"pi_sale",
+	]);
+	expect(JSON.stringify(list[0]![2].order)).not.toContain("pi_sale");
 	expect(list[0]![2].order.customer).toMatchObject({ id: ann.id, name: "Ann" }); // the re-read order, not the bare inserted row
 	expect(list[0]![2].order.cashier).toBe("Ev Cashier");
 	expect(list[2]![2].movement).toMatchObject({
@@ -315,7 +323,8 @@ test("order events: POS sale → created + paid + stock (with the customer on th
 		discount_type: null,
 		discount_value: 0,
 	} as any);
-	await events(3);
+	// a sale with no reference carries none
+	expect((await events(3))[0]![2].payment_ref).toBeUndefined();
 	reset();
 	expect(
 		await OrderService.void(r2.order!.id, S, U, { reason: "mistake" }),
@@ -385,11 +394,17 @@ test("order events: POS sale → created + paid + stock (with the customer on th
 	});
 	reset();
 	expect(
-		(await OrderService.recordPayment(online.id, S, { amount: 400 }))
-			.payment_status,
+		(
+			await OrderService.recordPayment(online.id, S, {
+				amount: 400,
+				payment_ref: "pi_part",
+			})
+		).payment_status,
 	).toBe("partial");
 	list = await events(2);
 	expect(names(list)).toEqual(["order.status_changed", "order.updated"]);
+	// a part payment has no order.paid: its reference is on order.updated
+	expect(list[1]![2].payment_ref).toBe("pi_part");
 	expect(list[0]![2]).toMatchObject({
 		field: "payment_status",
 		from: "unpaid",
@@ -397,14 +412,22 @@ test("order events: POS sale → created + paid + stock (with the customer on th
 	});
 	reset();
 	expect(
-		(await OrderService.recordPayment(online.id, S, { amount: 600 }))
-			.payment_status,
+		(
+			await OrderService.recordPayment(online.id, S, {
+				amount: 600,
+				payment_ref: "pi_last",
+			})
+		).payment_status,
 	).toBe("paid");
 	list = await events(3);
 	expect(names(list)).toEqual([
 		"order.paid",
 		"order.status_changed",
 		"order.updated",
+	]);
+	expect([list[0]![2].payment_ref, list[2]![2].payment_ref]).toEqual([
+		"pi_last",
+		"pi_last",
 	]);
 	expect(list[1]![2]).toMatchObject({
 		field: "payment_status",

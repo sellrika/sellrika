@@ -103,14 +103,19 @@ export type Config = Record<
 export type Events = {
 	/**
 	 * A sale rang up at the POS, or an online checkout turned into an order.
+	 * `payment_ref` is the text your `pos.display` script gave `approve(ref)`
+	 * when the sale was paid with your payment method. The app does not
+	 * store it: keep the link to the order yourself. It is also on
+	 * `order.updated` (a payment recorded later) and on `order.paid`.
+	 * It comes from the browser: look it up in your own records first.
 	 */
-	"order.created": { order: OrderFull };
+	"order.created": { order: OrderFull; payment_ref?: string };
 	/**
 	 * Something changed on an existing order.
 	 * That is the delivery stage or tracking, a payment recorded,
 	 * a refund, or a void.
 	 */
-	"order.updated": { order: OrderFull };
+	"order.updated": { order: OrderFull; payment_ref?: string };
 	/**
 	 * One of the order's statuses moved.
 	 * `status` goes completed → partially_refunded / refunded / voided.
@@ -129,7 +134,7 @@ export type Events = {
 	 * That is at once for a POS sale or a gateway checkout, or when the
 	 * last manual payment (cash on delivery, bank transfer) is recorded.
 	 */
-	"order.paid": { order: OrderFull };
+	"order.paid": { order: OrderFull; payment_ref?: string };
 	/**
 	 * Money went back to the customer, part or all of it.
 	 * The refund may also have put stock back.
@@ -1020,17 +1025,28 @@ export type Api = {
 	 * @param opts.value The one picked first. Default the first of the list.
 	 * @param opts.amount The cents the customer is asked for.
 	 * @param opts.onChange Called with the method when one is picked.
-	 * @returns The element and its controls.
+	 * @param opts.onApproval Called when the picked method's extension
+	 * approved the payment (with its reference), and with null when the
+	 * method starts or stops waiting for an approval. Set your confirm
+	 * button from `blocked()` there. On a reference, confirm your dialog
+	 * and send the reference as `payment_ref` to `orders.pay` /
+	 * `orders.create`.
+	 * @returns The element and its controls. `blocked()` is true while the
+	 * picked method still waits for its extension's approval: keep your
+	 * confirm button off then. `ref()` is the approval's reference, or null.
 	 */
 	paymentPicker: <M extends PickerMethod>(opts: {
 		methods: M[];
 		value?: M | null;
 		amount: number;
 		onChange?: (method: M) => void;
+		onApproval?: (ref: string | null) => void;
 	}) => {
 		el: HTMLElement;
 		value: () => M | null;
 		setAmount: (cents: number) => void;
+		blocked: () => boolean;
+		ref: () => string | null;
 		destroy: () => void;
 	};
 };
@@ -1316,12 +1332,27 @@ export type SlotContexts = {
 	 * method is the one your extension added. Fill the screen with
 	 * `min-height: var(--display-height, calc(100dvh - 3rem))`.
 	 * Read only: the screen can't change the cart.
+	 * `place` says where this copy of the script runs: `"dialog"` next to
+	 * a pay dialog (the cashier's side), `"screen"` on the customer's
+	 * screen. Both may run at the same moment, so do work that must happen
+	 * once (charge a card reader) only in the dialog.
+	 * `approve(ref)` is for a payment method with `confirm: true` in the
+	 * manifest's `payment_method`: every pay dialog keeps its confirm
+	 * button off while that method is picked, until you call it. Call it
+	 * when the money is taken. `ref` is a short text of your own (at most
+	 * 200 characters, a charge id): the dialog then confirms by itself
+	 * and sends it as `payment_ref`, which comes back on the events
+	 * `order.created`, `order.updated` and `order.paid`. A change of the
+	 * amount or the method takes the approval away. It does nothing on the
+	 * customer's screen.
 	 */
 	"pos.display": {
 		sale: () => DisplaySale;
 		onChange: (fn: (sale: DisplaySale) => void) => () => void;
 		payment: () => DisplayPayment | null;
 		onPayment: (fn: (payment: DisplayPayment | null) => void) => () => void;
+		place: "dialog" | "screen";
+		approve: (ref: string) => void;
 	};
 };
 

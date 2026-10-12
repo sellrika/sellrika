@@ -553,6 +553,7 @@ export const routes: Routes = {
 			method?: string;
 			received?: unknown;
 			sales_staff_id?: number | null;
+			ref?: string;
 		} | null;
 		const name = ctx.params.name ?? "";
 		if (!(await tablesOf(ctx.data)).includes(name))
@@ -567,6 +568,8 @@ export const routes: Routes = {
 				tendered: received,
 				payment_method: body?.method,
 				sales_staff_id: body?.sales_staff_id ?? null,
+				// what the method's extension approved (a card reader's charge)
+				payment_ref: typeof body?.ref === "string" ? body.ref : undefined,
 			});
 		} catch (error) {
 			return refused(error instanceof Error ? error.message : String(error));

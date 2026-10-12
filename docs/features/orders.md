@@ -290,6 +290,7 @@ It works like the Sell screen's checkout, without a discount.
 - Payment method buttons: the shop's enabled ones. An online order keeps its own name until one is picked.
 - **Amount received**, with the Exact and next-note buttons for a cash method. More than what is due = change, sent as `tendered`.
 - The sales person, from the `sales_staff` prop. It is sent only when changed.
+- A method its extension must approve first (a card reader) keeps the button off. When the extension approves, the payment is recorded by itself, with its `payment_ref`.
 
 ### Other parts
 
@@ -475,6 +476,7 @@ Optional fields of `PaymentInput`:
 | `payment_method` | The name of one of the shop's enabled methods. The order then shows it. Left out = the order keeps its name, like "Cash on delivery" or "Bank transfer". |
 | `tendered` | The cents the buyer handed over when `amount` pays the order off. What is over is kept as the order's change. Ignored on a part payment. |
 | `sales_staff_id` | The sales person to name on the order. null takes the name off. Left out = unchanged. |
+| `payment_ref` | The text an extension gave when it approved this payment (a card reader's charge). At most 200 characters. Not stored: it rides on `order.updated` and `order.paid`. |
 
 Rules (`OrderService.recordPayment`):
 

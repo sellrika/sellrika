@@ -73,6 +73,9 @@ const seller = ref("none"); // the sales person named on the sale: their id as t
 const loading = ref(false);
 const error = ref<string | null>(null);
 const order = ref<Order | null>(null);
+// a method its extension must approve first (a card reader): both are kept by PaymentMethodPicker
+const blocked = ref(false);
+const payRef = ref<string | null>(null);
 
 const paid = computed(() =>
 	method.value?.tendered ? toCents(tendered.value) : total.value,
@@ -129,6 +132,7 @@ async function confirm(later = false) {
 				paid: paid.value,
 				payment_method: method.value?.name,
 				customer_id: props.customer?.id ?? null,
+				payment_ref: (!later && payRef.value) || undefined,
 				sales_staff_id: seller.value === "none" ? null : Number(seller.value),
 				discount_type:
 					props.discount?.type === "coupon"
@@ -166,6 +170,11 @@ async function confirm(later = false) {
 		loading.value = false;
 	}
 }
+
+// the extension approved the payment: the sale is completed by itself
+watch(payRef, function confirmApproved(ref) {
+	if (ref && !loading.value && !order.value) void confirm();
+});
 
 const page = usePage<SharedProps>();
 const shopName = computed(() => page.props.shop?.name ?? "");
@@ -238,7 +247,7 @@ const saleLines = computed(function lines() {
           <DialogDescription>{{ saleLines }}</DialogDescription>
         </DialogHeader>
 
-        <PaymentMethodPicker v-model="method" :methods="methods" :amount="total" />
+        <PaymentMethodPicker v-model="method" v-model:blocked="blocked" v-model:reference="payRef" :methods="methods" :amount="total" />
 
         <div v-if="method?.tendered" class="space-y-2">
           <Label for="tendered">{{ t("pos.amount_tendered") }}</Label>
@@ -282,7 +291,7 @@ const saleLines = computed(function lines() {
         <!-- `sm:flex-1`, not `flex-1`: on a phone the footer is a column, where `flex-1` squeezes the button's height -->
         <DialogFooter class="gap-2 sm:flex-row">
           <Button :variant="payLaterFirst ? 'default' : 'outline'" class="h-11 text-base" :class="payLaterFirst && 'sm:flex-1'" :data-primary="payLaterFirst || undefined" :disabled="loading || !lines.length" @click="confirm(true)"><Clock /> {{ t("pos.pay_later") }}</Button>
-          <Button :variant="payLaterFirst ? 'outline' : 'default'" class="h-11 text-base" :class="payLaterFirst ? 'order-first' : 'sm:flex-1'" :data-primary="!payLaterFirst || undefined" :disabled="loading || change < 0 || !lines.length || !method" @click="confirm()">
+          <Button :variant="payLaterFirst ? 'outline' : 'default'" class="h-11 text-base" :class="payLaterFirst ? 'order-first' : 'sm:flex-1'" :data-primary="!payLaterFirst || undefined" :disabled="loading || change < 0 || !lines.length || !method || blocked" @click="confirm()">
             <LoaderCircle v-if="loading" class="animate-spin" />
             {{ loading ? t("pos.charging") : t("pos.confirm_amount", { amount: money(total, currency) }) }}
           </Button>

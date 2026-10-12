@@ -240,11 +240,32 @@ function paymentPicker<M extends PickerMethod>(opts: {
 	value?: M | null;
 	amount: number;
 	onChange?: (method: M) => void;
+	onApproval?: (ref: string | null) => void;
 }) {
 	const state = reactive({
 		value: (opts.value ?? opts.methods[0] ?? null) as PickerMethod | null,
 		amount: opts.amount,
+		blocked: false,
+		reference: null as string | null,
 	});
+	// the picker reports its first state while it mounts: the extension hears only what comes after
+	let mounted = false;
+	/**
+	 * The method's extension approved the payment, or the approval went away.
+	 * @param ref Its reference, or null.
+	 */
+	function approval(ref: string | null) {
+		state.reference = ref;
+		if (mounted) opts.onApproval?.(ref);
+	}
+	/**
+	 * The picked method starts or stops waiting for its extension's approval.
+	 * @param on True while it waits.
+	 */
+	function block(on: boolean) {
+		state.blocked = on;
+		if (mounted) opts.onApproval?.(state.reference);
+	}
 	/**
 	 * A button was pressed: keep the method and tell the extension.
 	 * @param method The picked method.
@@ -260,16 +281,23 @@ function paymentPicker<M extends PickerMethod>(opts: {
 				amount: state.amount,
 				modelValue: state.value,
 				"onUpdate:modelValue": pick,
+				blocked: state.blocked,
+				"onUpdate:blocked": block,
+				reference: state.reference,
+				"onUpdate:reference": approval,
 			}),
 	});
 	const el = document.createElement("div");
 	app.mount(el);
+	mounted = true;
 	return {
 		el,
 		value: () => state.value as M | null,
 		setAmount(cents: number) {
 			state.amount = cents;
 		},
+		blocked: () => state.blocked,
+		ref: () => state.reference,
 		// unmounting twice is harmless: Vue only warns
 		destroy: () => app.unmount(),
 	};

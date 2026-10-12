@@ -1,0 +1,38 @@
+{
+	"key": "stripe-terminal",
+	"name": "name",
+	"version": "1.0.0",
+	"description": "description",
+	"help_url": "https://dashboard.stripe.com/terminal",
+	"icon": "assets/icon.svg",
+	"main": "index.ts",
+	"fields": [
+		{
+			"name": "secret_key",
+			"label": "field.secret_key",
+			"secret": true,
+			"required": true,
+			"placeholder": "field.secret_key_placeholder",
+			"hint": "field.secret_key_hint",
+			"starts_with": "sk_"
+		}
+	],
+	"payment_method": {
+		"name": "method.name",
+		"icon": "Nfc",
+		"color": "#635bff",
+		"confirm": true
+	},
+	"slots": [
+		{
+			"name": "pos.display",
+			"script": "assets/display.tsx"
+		},
+		{
+			"name": "order.show",
+			"script": "assets/order.tsx"
+		}
+	],
+	"pages": [],
+	"guide": "guide.md"
+}

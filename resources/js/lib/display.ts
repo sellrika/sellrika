@@ -163,11 +163,15 @@ export type SlotPayment = {
  * Call it while a component is set up: it watches both values.
  * @param sale Gives the sale as it is now.
  * @param payment Gives the picked method, or null while no pay dialog is open.
+ * @param place Where the slot is drawn: next to a pay dialog, or on the customer's screen.
+ * @param approve What the dialog does when the extension says the money is taken. The customer's screen has none.
  * @returns The slot's context.
  */
 export function displayContext(
 	sale: () => DisplaySale,
 	payment: () => SlotPayment | null,
+	place: "dialog" | "screen" = "screen",
+	approve: (ref: string) => void = () => {},
 ) {
 	const listeners = new Set<(sale: DisplaySale) => void>();
 	const paymentListeners = new Set<(payment: SlotPayment | null) => void>();
@@ -188,5 +192,7 @@ export function displayContext(
 			paymentListeners.add(fn);
 			return () => void paymentListeners.delete(fn);
 		},
+		place,
+		approve,
 	};
 }
