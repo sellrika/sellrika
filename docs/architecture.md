@@ -365,6 +365,8 @@ An add-on's own tables:
 - A version is recorded in the `migrations` table like any other. So it must not have the name of one of the app's. Give it a prefix.
 - `bun run migrate` loads the add-on first, so it finds them too.
 
+How to write an add-on, with every hook: [guides/hooks.md](guides/hooks.md).
+
 ## Constants (`app/constants/`)
 
 One file per area: `<Area>.Constant.ts`.

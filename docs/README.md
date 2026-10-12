@@ -60,6 +60,7 @@ Start here, then open the page for the area you are working on.
 | [guides/custom-domain.md](guides/custom-domain.md) | Let a shop use its own domain: the server setup, what the shop owner does, how to fix a domain that stays pending |
 | [guides/firebase-setup.md](guides/firebase-setup.md) | Turn on customer sign-in for a store: the Firebase project, step by step |
 | [guides/kiosk-mode.md](guides/kiosk-mode.md) | Start Chrome in kiosk mode for a till or a kitchen screen |
+| [guides/hooks.md](guides/hooks.md) | Change the app with your own add-on: make one, every hook, your own tables |
 
 ## The app in one minute
 

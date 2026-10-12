@@ -199,7 +199,7 @@ One line each. The doc has the routes, the columns and the edge cases.
 | Search | The ⌘K palette | `docs/features/search.md` |
 | Languages | English, German, Thai. A shop picks its store's languages. | `docs/features/i18n.md` |
 
-Guides: `docs/guides/custom-domain.md`, `docs/guides/firebase-setup.md`, `docs/guides/kiosk-mode.md`.
+Guides: `docs/guides/custom-domain.md`, `docs/guides/firebase-setup.md`, `docs/guides/kiosk-mode.md`, `docs/guides/hooks.md`.
 
 ## Things that are easy to get wrong
 
@@ -224,7 +224,7 @@ An add-on is extra code outside this app that changes it. The app runs fine with
 
 - An add-on may change the app only through `Hooks` (`app/xcore/hooks/Hooks.ts`), the DI container, the router, `JobRegistry.add()` and `extend()` of `@i18n`.
 - Core code never imports from an add-on.
-- More: `docs/architecture.md` › Add-ons.
+- More: `docs/architecture.md` › Add-ons. How to write one: `docs/guides/hooks.md`.
 
 ## Skills
 
