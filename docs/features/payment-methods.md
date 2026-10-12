@@ -93,11 +93,16 @@ The method buttons of every pay dialog are `components/pos/PaymentMethodPicker.v
 
 The picker also tells the customer screen what is picked. See [pos-checkout.md](pos-checkout.md) › Customer screen.
 
+The picker also holds the rule for a method its extension must approve first (a card reader):
+the dialog's confirm button stays off until the extension says the money is taken, and the dialog then confirms by itself.
+See [extensions.md](extensions.md) › Payment methods by extension.
+
 Change the buttons there, nowhere else.
 
 ### Methods added by an extension
 
-An extension's manifest may have a `payment_method` block: `{ name, icon, color }`.
+An extension's manifest may have a `payment_method` block: `{ name, icon, color, confirm }`.
+`confirm: true` = the extension must approve a payment with this method before a pay dialog can be confirmed. It is read from the manifest, not stored on the row.
 It gives the shop a method while the extension is switched on.
 
 When the extension's settings are saved, `PaymentMethodRepository.syncExtension` runs (called from `Extension.Settings.ts`):

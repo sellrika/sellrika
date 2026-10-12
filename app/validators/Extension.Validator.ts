@@ -347,6 +347,12 @@ export const ExtensionManifest = z.object({
 				.regex(/^#[0-9a-fA-F]{6}$/)
 				.nullable()
 				.default(null),
+			/**
+			 * True = the extension must approve the payment before a pay
+			 * dialog can be confirmed (a card reader: the card was taken).
+			 * Its `pos.display` script calls `approve(ref)`.
+			 */
+			confirm: z.boolean().default(false),
 		})
 		.optional(),
 	/**

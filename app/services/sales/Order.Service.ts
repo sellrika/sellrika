@@ -546,7 +546,8 @@ export class OrderService {
 		});
 		// another payment got there first
 		if (!r) return { errors: { amount: t("server.order_already_paid") } };
-		this.#paidNow(await this.#changed(order, shopId), shopId);
+		const ref = input.payment_ref || undefined;
+		this.#paidNow(await this.#changed(order, shopId, ref), shopId, ref);
 		return r;
 	}
 
@@ -761,8 +762,11 @@ export class OrderService {
 			// Re-read first, so listeners get the customer and the cashier,
 			// not the bare inserted row.
 			const full = (await this.orders.find(order.id, shopId)) ?? order;
-			void this.extensions.emit("order.created", shop, { order: full });
-			void this.extensions.emit("order.paid", shop, { order: full });
+			// the reference of an approved payment (a card reader's charge)
+			// rides along, so its extension can tie the charge to the order
+			const paid = { order: full, payment_ref: input.payment_ref || undefined };
+			void this.extensions.emit("order.created", shop, paid);
+			void this.extensions.emit("order.paid", shop, paid);
 			void this.extensions.stockMoved(shopId, stockMark, { orderId: order.id });
 			return { order };
 		} catch (e) {
@@ -1203,12 +1207,17 @@ export class OrderService {
 	 * back.
 	 * @param before The order as it was before the write.
 	 * @param shopId Owning shop.
+	 * @param paymentRef The reference of the payment that was recorded,
+	 *   when an extension approved it.
 	 * @returns The re-read order, or null when it is gone.
 	 */
-	async #changed(before: Order, shopId: number) {
+	async #changed(before: Order, shopId: number, paymentRef?: string) {
 		const after = await this.orders.find(before.id, shopId);
 		if (!after) return null;
-		void this.extensions.emit("order.updated", shopId, { order: after });
+		void this.extensions.emit("order.updated", shopId, {
+			order: after,
+			payment_ref: paymentRef,
+		});
 		for (const field of ["status", "fulfillment", "payment_status"] as const)
 			if (after[field] !== before[field])
 				void this.extensions.emit("order.status_changed", shopId, {
@@ -1225,10 +1234,15 @@ export class OrderService {
 	 * Does nothing while money is still due, or when the order is gone.
 	 * @param after The order as re-read after the write, or null.
 	 * @param shopId Owning shop.
+	 * @param paymentRef The reference of the last payment, when an
+	 *   extension approved it.
 	 */
-	#paidNow(after: OrderFull | null, shopId: number) {
+	#paidNow(after: OrderFull | null, shopId: number, paymentRef?: string) {
 		if (after?.payment_status === "paid")
-			void this.extensions.emit("order.paid", shopId, { order: after });
+			void this.extensions.emit("order.paid", shopId, {
+				order: after,
+				payment_ref: paymentRef,
+			});
 	}
 
 	/**

@@ -109,3 +109,9 @@ export const ORDER_FILTERS_CACHE_MS = 5 * 60_000;
  * A new order, a payment or a void clears them at once.
  */
 export const ORDER_TOTALS_CACHE_MS = 60_000;
+
+/**
+ * The longest payment reference a pay dialog may send (`payment_ref`):
+ * the short text an extension gave when it approved the payment.
+ */
+export const PAYMENT_REF_MAX = 200;

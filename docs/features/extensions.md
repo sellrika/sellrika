@@ -111,7 +111,7 @@ It holds the built-in extensions and the developer workspace.
 | `stripe/`, `omise/`, `2c2p/`, `paypal/` | The online store's payment providers. See [online-store.md](online-store.md) › Payments. |
 | `webhook/` | Rows of URL + events. Signed POSTs. |
 | `chat-alerts/` | Alerts to chat. See below. |
-| `restaurant/`, `labels/`, `loyalty/`, `tax-invoice/`, `promptpay/` | See The built-in extensions below |
+| `restaurant/`, `labels/`, `loyalty/`, `tax-invoice/`, `promptpay/`, `stripe-terminal/` | See The built-in extensions below |
 | `aurora/` | An example storefront theme |
 
 What `build.ts` does:
@@ -487,6 +487,12 @@ Where events are fired:
 
 The full list is `EXTENSION_EVENTS`.
 
+**The payment reference.** A pay dialog may send `payment_ref`: the short text an extension gave when it approved the payment (see Payment methods by extension).
+
+- It rides on the events of that write: `order.created` and `order.paid` for a sale, `order.updated` and `order.paid` for a recorded payment.
+- The app stores nothing of it. The extension keeps the link to the order in its own data.
+- It comes from the browser. So an extension must look it up in its own records before it trusts it.
+
 ### Routes
 
 | Route | Who | Goes to |
@@ -551,7 +557,7 @@ The button switches `maximized` (`lib/fullscreen.ts`, kept in `sessionStorage` f
 | Slot | Where | Context |
 |---|---|---|
 | `order.show` | The order page's button row, before Print | `{ order() }` = the order as the page shows it now. Read only. |
-| `pos.display` | The customer's screen `/pos/display` | `{ sale(), onChange(fn), payment(), onPayment(fn) }`. Read only. |
+| `pos.display` | The customer's screen `/pos/display`, and next to every pay dialog | `{ sale(), onChange(fn), payment(), onPayment(fn), place, approve(ref) }`. The cart is read only. |
 | `product.side` | The product form's side column, under Featured | `{ id }`. null while the product is new. |
 | `product.form` | The product form | `{ values(), set(patch) }`. `set` only touches fields the form has. |
 | `order.receipt` | Inside `ReceiptSlip.vue`, hidden | `{ order(), add(lines) }` |
@@ -562,6 +568,8 @@ The button switches `maximized` (`lib/fullscreen.ts`, kept in `sessionStorage` f
 Notes per slot:
 
 - **`pos.display`.** An extension that leaves its element empty lets the shop's logo show. See [pos-checkout.md](pos-checkout.md) › Customer screen.
+  The script can run in two places at the same moment. `place` tells them apart: `"dialog"` next to a pay dialog, `"screen"` on the customer's screen. Work that must happen once (charge a card reader) belongs in the dialog only.
+  `approve(ref)` is described under Payment methods by extension. On the customer's screen it does nothing.
 - **`order.receipt`.** A script adds text lines. They are kept per order in `receiptExtras` (`lib/rawbt.ts`, at most 12 lines of 200 characters).
   They are printed over "Thank you" by both the browser slip and `receiptLines` (RawBT).
   The slot is keyed by the order's status and money. So the scripts run again after a payment or a refund, from no lines.
@@ -705,11 +713,22 @@ Manifest `hide_nav`, like `["/customers"]`.
 
 ### Payment methods by extension
 
-- Manifest `payment_method: { name, icon, color }` adds a method to the shop while the extension is switched on.
+- Manifest `payment_method: { name, icon, color, confirm }` adds a method to the shop while the extension is switched on.
 - `name` may be a key of its dictionary. `icon` is one of `PAYMENT_ICON_NAMES`.
 - It is a real `payment_methods` row with `extension = <key>`. It is made and switched when the extension is saved. See [payment-methods.md](payment-methods.md) › Rules.
-- `api.paymentPicker({ methods, value?, amount, onChange? })` → `{ el, value(), setAmount(cents), destroy() }` (`lib/extensions.ts`).
+- `api.paymentPicker({ methods, value?, amount, onChange?, onApproval? })` → `{ el, value(), setAmount(cents), blocked(), ref(), destroy() }` (`lib/extensions.ts`).
   It mounts the app's own `PaymentMethodPicker.vue` for an extension's pay dialog. The rows of `orders.payOptions()` fit it.
+
+**A method that must be approved first** (`confirm: true`, a card reader for example):
+
+1. While such a method is picked, every pay dialog keeps its confirm button off. The rule is `usePaymentApproval()` in `lib/approval.ts`, used by `PaymentMethodPicker.vue`. So it holds for the Sell screen's checkout, Record payment, and an extension's own dialog.
+2. The extension's `pos.display` script, drawn next to the dialog, calls `api.context.approve(ref)` when the money is taken. `ref` is a short text of its own, at most `PAYMENT_REF_MAX` = 200 characters.
+3. The dialog then confirms by itself. The cashier does not tap again.
+4. The dialog sends `ref` as `payment_ref` with `POST /pos/checkout` or `POST /orders/:id/payments`. It comes back on the events (see Events).
+5. Another method or another amount takes the approval away.
+
+The shared prop `extension_ui[].payment_confirm` tells the picker which extensions ask for it.
+An extension's own dialog reads `blocked()` for its button, gets `onApproval(ref)` when the state changes, and sends `ref()` along. The Restaurant's Pay dialog does this.
 
 ### For AI assistants
 
@@ -1146,3 +1165,111 @@ The card looks like a bank's Thai QR Payment sheet (`components/PayCode.tsx`):
 
 Tests: `assets/promptpay.test.ts`, `Extension.Service.test.ts`, `e2e/z-pos-display.spec.ts`.
 Its guide topic is `promptpay`.
+
+### Stripe Terminal
+
+`extensions/stripe-terminal/`. Card payments at the till with a Stripe card reader.
+
+**Not yet tested on real hardware.** Nobody on the project has a reader. It was built and tested with Stripe's simulated reader only.
+
+It is its own extension, not a part of `extensions/stripe`:
+
+- Only one online payment extension can be on per shop. A shop that uses PayPal online could never use the reader.
+- A shop with a reader and no online store does not have to switch on online payments.
+
+It imports nothing from `extensions/stripe`. `stripe.ts` is its own copy of the Stripe `call()` and of the amount rule `stripeAmount()` (zero-decimal and three-decimal currencies).
+
+**Settings**
+
+| Setting | Rule |
+|---|---|
+| **Secret key** | Required. Secret. Starts with `sk_`. |
+
+It also has its `payment_method` "Card reader" (Nfc icon) with `confirm: true`.
+The readers are not a setting. They come from Stripe (`GET /v1/terminal/readers`). The shop registers a reader in its Stripe Dashboard.
+
+**For the cashier**
+
+1. Pick **Card reader** in a pay dialog. A box for the reader shows next to the dialog.
+2. With more than one reader, pick the reader. The browser remembers it (`localStorage` key `stripe-terminal:reader:<shop id>`). An offline reader can't be picked.
+3. Press **Send to reader**. The reader shows the amount.
+4. The customer taps, inserts or swipes the card.
+5. The box shows **Approved** and the sale is completed by itself.
+
+A declined card shows the reason and **Try again**. **Cancel** clears the reader.
+
+**The flow is driven by the server.** No Stripe JS SDK and no webhooks.
+
+| Route (`/ext/stripe-terminal/…`) | What it does |
+|---|---|
+| `GET /readers` | The shop's readers and whether each is online |
+| `POST /charge` `{ reader, amount }` | Makes a PaymentIntent (`card_present`, `capture_method: manual`) and sends it to the reader (`process_payment_intent`). Answers `{ pi }`. |
+| `GET /status?pi=` | Asks Stripe about the PaymentIntent, and about the reader when no card came yet. `waiting`, `approved`, `declined` (with the reason) or `cancelled`. The dialog asks every 2 seconds. |
+| `POST /cancel` `{ pi }` | Clears the reader (`cancel_action`) and cancels the PaymentIntent |
+| `GET /orders/:id` | The order's card payments, for the order page |
+| `POST /orders/:id/retry` | Takes money that was not captured and sends refunds that failed |
+
+**The two places of the script** (`assets/display.tsx`, slot `pos.display`):
+
+- `place: "dialog"`: it drives the reader and calls `approve(<PaymentIntent ID>)`.
+- `place: "screen"`: it only shows "Tap your card on the reader" and the amount. It never touches the reader. So the card is not charged twice.
+
+**No money without an order**
+
+- The reader only holds the money (`capture_method: manual`).
+- The dialog saves the order with the PaymentIntent ID as `payment_ref`.
+- The listeners of `order.created`, `order.updated` and `order.paid` get the reference. The first one ties the charge to the order and captures it. The others find nothing left to do.
+- A reference counts only when it is a charge this shop's extension made, with no order yet.
+- A hold with no order is cancelled when the dialog closes. After a browser crash the hold ends by itself at Stripe.
+- The dialog also closes right after a sale. So `POST /cancel` waits 5 seconds (`timing.grace`) for an approved hold. An order that was just saved claims its charge in that time.
+- A capture can fail. The charge is then `uncaptured`.
+
+**Refunds to the card**
+
+- The `order.refunded` listener refunds the same amount at Stripe. The `order.voided` listener refunds all that is left.
+- An order paid in several card payments is refunded newest charge first.
+- A void also lets go of a hold that was never captured.
+- An order with no linked charge is left alone.
+- A refused refund is kept on the charge as `failed` cents, with Stripe's reason.
+
+**On the order page** (`assets/order.tsx`, slot `order.show`)
+
+- An order with a card payment gets a **Card payment** button. Its dialog lists each card payment and what went back to it.
+- The button turns red and says **Card payment not captured** or **Card refund failed** when something needs the staff's eye.
+- **Try again** in the dialog calls `POST /orders/:id/retry`.
+- The script looks at the page's order every 3 seconds and reads the card payments again after a change.
+
+**What it keeps**
+
+One row per charge in the `ctx.data` collection `charges`:
+
+| Field | Meaning |
+|---|---|
+| `pi` | The PaymentIntent ID |
+| `amount`, `currency` | The cents asked for, as the app stores money |
+| `reader` | The reader it was sent to |
+| `state` | `waiting`, `declined`, `held`, `cancelled`, `captured` or `uncaptured` |
+| `order` | The order, once known |
+| `refunded`, `failed`, `error` | Cents given back, cents whose refund failed, and the last reason |
+
+The row's lookup key is the PaymentIntent ID until the order is known, then `order:<id>`.
+
+Locks (`ctx.data.lock`): `reader:<id>` = one charge at a time per reader, `pi:<id>` = status, cancel and capture of one charge, `order:<id>` = refunds and retries of one order.
+
+**Limits**
+
+- Stripe's internet readers only: BBPOS WisePOS E and Stripe Reader S700. The Bluetooth readers (M2) need a mobile app and are not supported.
+- Stripe Terminal is not sold in every country. The shop's Stripe account must be in a country that has it, and the shop's currency must be one the reader takes.
+- Some cards need the card present for a refund (Interac in Canada). Those refunds fail and are shown as failed on the order page.
+- The amount of a charge comes from the pay dialog. The order page's dialog shows it, so a wrong one can be seen.
+
+**Testing without a reader**
+
+- In Stripe's test mode, make a simulated reader (`simulated-wisepos-e`).
+- `POST /v1/test_helpers/terminal/readers/:id/present_payment_method` plays the customer's tap.
+- Stripe's test amounts give declined cards.
+- `STRIPE_TERMINAL_API_URL` points the extension at a stand-in. It is for tests only.
+
+Texts: `i18n/en.ts`.
+Tests: `terminal.test.ts` (a stubbed `fetch`), `resources/js/lib/__tests__/approval.test.ts` (the picker's rule), `Extension.Service.test.ts`, `ExtensionEvents.test.ts` (`payment_ref`), `e2e/y-stripe-terminal.spec.ts`.
+Its guide topic is `stripe-terminal`.

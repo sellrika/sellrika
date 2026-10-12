@@ -172,7 +172,7 @@ function slotPayment() {
 	const p = payment.value;
 	return p && { method: p.name, extension: p.extension, amount: p.amount };
 }
-const displaySlot = displayContext(() => sale.value, slotPayment);
+const displaySlot = displayContext(() => sale.value, slotPayment, "screen");
 const hasSlot = computed(() =>
 	(page.props.extension_ui ?? []).some((e) => e.slots["pos.display"]),
 );

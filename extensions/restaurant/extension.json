@@ -1,7 +1,7 @@
 {
 	"key": "restaurant",
 	"name": "name",
-	"version": "1.15.0",
+	"version": "1.15.1",
 	"description": "description",
 	"icon": "assets/icon.svg",
 	"main": "index.ts",

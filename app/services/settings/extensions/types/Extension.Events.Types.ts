@@ -29,12 +29,12 @@ export type ExtensionEvents = {
 	/**
 	 * A POS sale was rung up, or an online checkout turned into an order.
 	 */
-	"order.created": { order: OrderFull };
+	"order.created": { order: OrderFull; payment_ref?: string };
 	/**
 	 * Anything changed on an order after it was made.
 	 * A delivery stage, a tracking number, a payment, a refund, a void.
 	 */
-	"order.updated": { order: OrderFull };
+	"order.updated": { order: OrderFull; payment_ref?: string };
 	/**
 	 * One of the three statuses moved.
 	 */
@@ -48,7 +48,7 @@ export type ExtensionEvents = {
 	 * The order is fully paid.
 	 * At once for a POS sale or a gateway, else when the last payment came in.
 	 */
-	"order.paid": { order: OrderFull };
+	"order.paid": { order: OrderFull; payment_ref?: string };
 	/**
 	 * Money was given back, in part or in whole.
 	 */

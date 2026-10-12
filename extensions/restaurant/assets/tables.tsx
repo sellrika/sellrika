@@ -531,7 +531,8 @@ function pay(s: State, table: TableRow) {
 			got < order.due
 				? api.t("pay.record", { amount: money(s, got) })
 				: api.t("pay.confirm", { amount: money(s, order.due) });
-		record.disabled = got <= 0 || !method;
+		// a method its extension must approve first (a card reader) keeps the button off
+		record.disabled = got <= 0 || !method || picker.blocked();
 	};
 	input.oninput = update;
 	const d = api.dialog({
@@ -546,6 +547,11 @@ function pay(s: State, table: TableRow) {
 		onChange(m) {
 			method = m;
 			draw(false);
+		},
+		// the card was taken: the payment is recorded by itself
+		onApproval(ref) {
+			update();
+			if (ref) record.click();
 		},
 	});
 	void d.closed.then(picker.destroy);
@@ -605,6 +611,7 @@ function pay(s: State, table: TableRow) {
 				body: JSON.stringify({
 					method: method?.name,
 					received: got,
+					ref: picker.ref() ?? undefined,
 					sales_staff_id:
 						waiter && waiter.value !== "none" ? Number(waiter.value) : null,
 				}),

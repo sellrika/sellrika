@@ -4,6 +4,7 @@ import {
 	FULFILLMENT_LOCKED,
 	FULFILLMENT_STATUSES,
 	FULFILLMENT_STEPS_MAX,
+	PAYMENT_REF_MAX,
 } from "@constants/Order.Constant";
 import {
 	MAX_CART_ITEMS,
@@ -115,6 +116,14 @@ export const RemoveItemsInput = z.object({
 /** A checked `RemoveItemsInput`. */
 export type RemoveItemsInput = z.infer<typeof RemoveItemsInput>;
 
+/**
+ * The reference of a payment an extension approved in the pay dialog
+ * (a card reader's charge, say).
+ * The app stores nothing of it: it only rides on the events that follow,
+ * so the extension can tie its own record to the order.
+ */
+const paymentRef = z.string().trim().max(PAYMENT_REF_MAX).optional();
+
 /** The fields of a sale, before the rules that span several of them. */
 const CheckoutFields = z.object({
 	/** The cart lines: 1 to 100. */
@@ -138,6 +147,11 @@ const CheckoutFields = z.object({
 	 * null = no customer.
 	 */
 	customer_id: z.number().int().nullable().default(null),
+	/**
+	 * The reference an extension gave when it approved the payment.
+	 * Not stored: it rides on `order.created` and `order.paid`.
+	 */
+	payment_ref: paymentRef,
 	/**
 	 * The sales person to name on the sale.
 	 * Optional. Checked against the shop in OrderService.
@@ -457,6 +471,11 @@ export const PaymentInput = z.object({
 	 * null takes the name off. Left out = unchanged.
 	 */
 	sales_staff_id: z.number().int().nullable().optional(),
+	/**
+	 * The reference an extension gave when it approved this payment.
+	 * Not stored: it rides on `order.updated` and `order.paid`.
+	 */
+	payment_ref: paymentRef,
 });
 /** A checked `PaymentInput`. */
 export type PaymentInput = z.infer<typeof PaymentInput>;

@@ -176,6 +176,7 @@ While an order is not paid in full:
 - `payment_method`: the name of one of the shop's methods. It is kept on the order.
 - `tendered`: the cash handed over when `amount` pays the order off. The rest is the order's change.
 - `sales_staff_id`
+- `payment_ref`: the text an extension gave when it approved the payment. Not stored. It rides on the order's events. `POST /orders` takes it too.
 
 `PUT /orders/:id/discount` (`OrderDiscountInput`) sets the discount of a till order that is not paid in full.
 

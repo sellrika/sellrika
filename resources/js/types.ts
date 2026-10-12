@@ -787,6 +787,8 @@ export type ExtensionUi = {
 	app: { "pos.primary"?: unknown; "orders.delivery"?: unknown };
 	/** the app's sidebar links it hides, by path (the pages stay reachable) */
 	hide_nav: string[];
+	/** its payment method must be approved by the extension before a pay dialog can be confirmed (manifest `payment_method.confirm`) */
+	payment_confirm: boolean;
 };
 
 /** A custom store page (GrapesJS-built; body/css only travel to the editor and the public page). */

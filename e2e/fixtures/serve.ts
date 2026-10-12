@@ -7,6 +7,7 @@
 // And for the exchange rates (EXCHANGE_RATES_URL): one fixed table, so the currency spec's prices are known.
 // And for Resend (RESEND_API_URL): it keeps the last email per address, and `GET /resend/last?to=` hands it to a spec.
 // And for Stripe's subscriptions (STRIPE_API_URL): the app's own paid plan in u-billing.spec.ts.
+// And for Stripe Terminal (STRIPE_TERMINAL_API_URL): the card reader of y-stripe-terminal.spec.ts.
 const mails = new Map<string, unknown>();
 
 /** A checkout the app opened on the Stripe stand-in. */
@@ -111,6 +112,80 @@ async function stripe(req: Request, path: string): Promise<Response> {
 	}
 	return new Response("Not found", { status: 404 });
 }
+/** A card payment the app made on the Stripe Terminal stand-in. */
+type Intent = { id: string; status: string; amount: number; refunded: number };
+const intents = new Map<string, Intent>();
+/** What the stand-in's readers are doing: the reader's action, by reader ID. */
+const actions = new Map<string, Record<string, unknown> | null>();
+/** The stand-in's readers: one at the till, one switched off. */
+const READERS = [
+	{ id: "tmr_e2e_front", label: "Front till", status: "online" },
+	{ id: "tmr_e2e_back", label: "Back room", status: "offline" },
+];
+
+/**
+ * The Stripe Terminal stand-in, below `/terminal`.
+ * A charge is approved the moment it reaches the reader, like a customer
+ * who taps at once. An amount that ends in 01 is declined, like Stripe's
+ * own test amounts.
+ * `/terminal/last` hands a spec every card payment the app made.
+ * @param req The request.
+ * @param path Its path, starting with `/terminal/`.
+ * @returns The answer Stripe would give.
+ */
+async function terminal(req: Request, path: string): Promise<Response> {
+	const [, , a, b, c, d] = path.split("/");
+	const form = new URLSearchParams(await req.text());
+	if (a === "last") return Response.json([...intents.values()]);
+	if (a === "terminal" && !c) return Response.json({ data: READERS });
+	if (a === "terminal") {
+		const reader = READERS.find((r) => r.id === c);
+		if (!reader)
+			return Response.json(
+				{ error: { message: "No such reader" } },
+				{ status: 404 },
+			);
+		if (d === "cancel_action") actions.set(reader.id, null);
+		if (d === "process_payment_intent") {
+			const intent = intents.get(form.get("payment_intent") ?? "")!;
+			const declined = intent.amount % 100 === 1;
+			if (!declined) intent.status = "requires_capture";
+			actions.set(reader.id, {
+				status: declined ? "failed" : "succeeded",
+				failure_message: declined ? "Your card was declined." : null,
+				process_payment_intent: { payment_intent: intent.id },
+			});
+		}
+		return Response.json({ ...reader, action: actions.get(reader.id) ?? null });
+	}
+	if (a === "payment_intents" && !b) {
+		const id = `pi_e2e_${intents.size + 1}`;
+		intents.set(id, {
+			id,
+			status: "requires_payment_method",
+			amount: Number(form.get("amount")),
+			refunded: 0,
+		});
+		return Response.json(intents.get(id));
+	}
+	if (a === "payment_intents") {
+		const intent = intents.get(b ?? "");
+		if (!intent)
+			return Response.json(
+				{ error: { message: "No such payment_intent" } },
+				{ status: 404 },
+			);
+		if (c === "capture") intent.status = "succeeded";
+		if (c === "cancel") intent.status = "canceled";
+		return Response.json(intent);
+	}
+	if (a === "refunds") {
+		const intent = intents.get(form.get("payment_intent") ?? "");
+		if (intent) intent.refunded += Number(form.get("amount"));
+		return Response.json({ id: "re_e2e" });
+	}
+	return new Response("Not found", { status: 404 });
+}
 const root = `${import.meta.dirname}/geonames`;
 Bun.serve({
 	port: Number(process.env.PORT),
@@ -118,6 +193,7 @@ Bun.serve({
 		const path = new URL(req.url).pathname;
 		if (path === "/health") return new Response("ok");
 		if (path.startsWith("/stripe/")) return stripe(req, path);
+		if (path.startsWith("/terminal/")) return terminal(req, path);
 		if (path === "/resend/emails") {
 			const mail = (await req.json()) as { to: string[] };
 			for (const to of mail.to) mails.set(to, mail);

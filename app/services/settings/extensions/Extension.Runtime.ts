@@ -345,6 +345,7 @@ export class ExtensionRuntime {
 				strings,
 				app,
 				hide_nav: ext.hide_nav,
+				payment_confirm: !!ext.payment_method?.confirm,
 			});
 		}
 		return mounted;
