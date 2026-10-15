@@ -168,7 +168,7 @@ It is a core feature. But the **Chat alerts** extension does the posting and hol
 The gear button next to the page title opens the dialog. It has:
 
 - a switch
-- a time, `HH:MM` on the shop's clock. It is 22:00 until changed (`REPORT_DEFAULT_TIME`).
+- a time, `HH:MM` on the shop's clock. It is 22:00 until changed (the column default in migration `0084_shop_daily_report.ts`).
 - the channels
 
 `PUT /reports/schedule` saves it.

@@ -184,6 +184,7 @@ test("import: bad rows are skipped with row numbers, good rows still land; barco
 		",1.00,", // no name
 		"Bad Price,abc,",
 		"Clash,3.00,00123", // used by the imported Cola
+		"No Price,,", // a blank price is not $0
 	].join("\n");
 	const r = await ProductCsvService.import(B, "USD", csv, 1);
 	expect(r.created).toBe(1);
@@ -191,6 +192,7 @@ test("import: bad rows are skipped with row numbers, good rows still land; barco
 		"Row 3: Name is required",
 		'Row 4: price "abc" is not a valid amount',
 		"Row 5 (Clash): Barcode already used by “Cola”",
+		'Row 6: price "" is not a valid amount',
 	]);
 });
 

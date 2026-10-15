@@ -4,6 +4,7 @@ import { edge } from "@xcore/view/Edge";
 import type { Shop } from "@models/Shop";
 import { unsubscribeToken } from "@helpers/crypto";
 import { stripTags } from "@helpers/html";
+import { formatMoney } from "@helpers/currency";
 import type { EmailContent } from "./types";
 // embedded at compile time, so it works inside the single binary too
 import marketingTemplate from "@resources/views/emails/marketing.edge" with {
@@ -79,11 +80,7 @@ export function unsubscribeUrl(
  * @returns For example "$18" or "$18.23".
  */
 export function mailMoney(cents: number, currency: string) {
-	return new Intl.NumberFormat(I18n.current(), {
-		style: "currency",
-		currency,
-		trailingZeroDisplay: "stripIfInteger",
-	}).format(cents / 100);
+	return formatMoney(cents, currency, I18n.current());
 }
 
 /**

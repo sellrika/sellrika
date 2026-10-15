@@ -97,6 +97,7 @@ The cards are hidden while the shop has no codes.
 - A click on the **Used** header sorts it by times used, most first (`?sort=used`). Click again for newest first.
 - Each row shows the discount in words, the conditions, the validity, and **used / limit** with the money it took off in total.
 - Each row has a status: Active / Scheduled / Expired / Used up / Off.
+- The status uses today on the shop's clock (`shops.timezone`), the same as the checkout. Not the browser's clock.
 
 ### The history
 
