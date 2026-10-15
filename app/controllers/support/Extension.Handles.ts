@@ -1,5 +1,5 @@
 import { t } from "@xcore/i18n/I18n";
-import { Service } from "@xcore/di";
+import { Container, Service } from "@xcore/di";
 import { ProductRepository } from "@repositories/Product.Repository";
 import type {
 	ExtensionCustomers,
@@ -11,12 +11,15 @@ import { PaymentMethodService } from "@services/settings/PaymentMethod.Service";
 import { SalesStaffService } from "@services/settings/SalesStaff.Service";
 import { CustomerInput } from "@validators/Customer.Validator";
 import { validate, type Errors } from "@validators/validate";
+import { UploadCleaner } from "@services/Upload.Service";
+import { sanitizeHtml } from "@helpers/html";
+import { EXTENSION_DROP_MAX } from "@constants/Extension.Constant";
 
 /**
  * The few functions an extension gets that are not API routes.
  * They join the API's own functions under the same area names
  * (`ExtensionService.handle`): `products.idBySku`, `orders.openFor`,
- * `orders.payOptions`, and `customers`.
+ * `orders.payOptions`, `customers`, `html.clean` and `uploads.drop`.
  * Everything else an extension can do is an API route
  * (`ApiCall.functions`), never written here.
  */
@@ -51,7 +54,27 @@ export class ExtensionHandles {
 				}),
 			},
 			customers: this.customersOf(shopId),
+			html: { clean: (html) => sanitizeHtml(String(html ?? "")) },
+			uploads: { drop: (urls) => this.#drop(shopId, urls) },
 		};
+	}
+
+	/**
+	 * Delete the pictures of the shop that nothing uses any more.
+	 * A path outside the shop's own upload folder is ignored.
+	 * @param shopId The shop of the request.
+	 * @param urls The `/uploads/…` paths the extension stopped using.
+	 */
+	async #drop(shopId: number, urls: unknown) {
+		const own: string[] = [];
+		for (const url of Array.isArray(urls) ? urls : [])
+			if (typeof url === "string" && url.startsWith(`/uploads/${shopId}/`))
+				own.push(url);
+		// asked for here, not in the constructor: tests build this class by hand
+		await Container.get(UploadCleaner).dropUnused(
+			own.slice(0, EXTENSION_DROP_MAX),
+			"extensions",
+		);
 	}
 
 	/**

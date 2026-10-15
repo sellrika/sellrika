@@ -301,6 +301,12 @@ export const ExtensionManifest = z.object({
 				 * The title stays, the script scrolls its own lists.
 				 */
 				fill: z.boolean().default(false),
+				/**
+				 * The page has the width, padding and title size of the app's
+				 * own list pages (Orders, Coupons), centred.
+				 * Default: the whole width, for a page with wide columns.
+				 */
+				centered: z.boolean().default(false),
 			}),
 		)
 		.max(20)
@@ -379,6 +385,25 @@ export const ExtensionManifest = z.object({
 		)
 		.max(20)
 		.default([]),
+	/**
+	 * Pages of its own on the shop's online store.
+	 * `path` is the first part of their address: with `blog`, the
+	 * extension's `publicRoutes` answer `/blog` and everything below it
+	 * on the store's host. A page the app has itself always wins.
+	 * The module may also export `storefront`: menu links and sitemap
+	 * entries (the extension guide › Store pages).
+	 */
+	storefront: z
+		.object({
+			/** Lower-case letters, digits and dashes, 2 to 30. */
+			path: z
+				.string()
+				.regex(
+					/^[a-z0-9][a-z0-9-]{1,29}$/,
+					"storefront path: lower-case letters, digits and dashes",
+				),
+		})
+		.optional(),
 	/**
 	 * A storefront theme.
 	 * The shop picks it on /online-store › Template

@@ -17,6 +17,8 @@ extensions/*/dist
 social-media
 # the hosted edition's private add-on: its own git repository (app/cloud.ts)
 /cloud
+# our own extensions, developed here: their own git repository
+/custom-extensions
 
 # one skill of the add-on, linked in; and each person's own settings
 /.claude/skills/social-media-post

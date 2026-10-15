@@ -25,6 +25,8 @@ export type ExtensionModule = {
 	routes: ExtensionRouteTable;
 	publicRoutes: ExtensionRouteTable;
 	payment: unknown;
+	/** `export const storefront`: the store's menu links and sitemap entries. */
+	storefront: Record<string, unknown>;
 };
 
 /**
@@ -225,6 +227,10 @@ export class ExtensionLoader {
 				`${main}: publicRoutes`,
 			),
 			payment: m.payment ?? null,
+			storefront: ExtensionLoader.#objectOr(
+				m.storefront,
+				`${main}: storefront`,
+			),
 		};
 	}
 }

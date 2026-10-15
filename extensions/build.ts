@@ -127,10 +127,15 @@ if (import.meta.main) {
 	 * A folder counts as one when it holds a manifest.
 	 */
 	/**
-	 * The folders that hold extensions: this one, and an add-on's own
-	 * (`cloud/extensions`, see `app/cloud.ts`) when it is there.
+	 * The folders that hold extensions: this one, an add-on's own
+	 * (`cloud/extensions`, see `app/cloud.ts`) and `custom-extensions`,
+	 * when they are there.
 	 */
-	const roots = [here, `${here}../cloud/extensions/`];
+	const roots = [
+		here,
+		`${here}../cloud/extensions/`,
+		`${here}../custom-extensions/`,
+	];
 	const dirs: string[] = [];
 	for (const root of roots) {
 		if (arg) {

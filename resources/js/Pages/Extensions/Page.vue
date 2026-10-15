@@ -19,6 +19,8 @@ const props = defineProps<{
 		fullscreen: boolean;
 		breadcrumb: boolean;
 		fill: boolean;
+		/** The width, padding and title size of the app's own list pages. */
+		centered: boolean;
 	};
 	script: string;
 	strings: Record<string, string>;
@@ -45,10 +47,10 @@ onBeforeUnmount(() => cleanup());
   <Head :title="page.title" />
   <!-- `fill`: as tall as the screen from md up, so the title stays and the script's own lists scroll -->
   <div class="flex min-h-full flex-col lg:flex-row" :class="page.fill && 'md:h-full'">
-    <div class="min-w-0 flex-1 space-y-7 p-4 md:px-10 md:py-8" :class="page.fill && 'md:flex md:min-h-0 md:flex-col'">
+    <div class="min-w-0 flex-1 p-4" :class="[page.centered ? 'mx-auto w-full max-w-6xl space-y-6 md:p-6' : 'space-y-7 md:px-10 md:py-8', page.fill && 'md:flex md:min-h-0 md:flex-col']">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 class="flex items-center gap-2 text-2xl font-semibold tracking-tight"><img v-if="page.icon" :src="page.icon" alt="" class="size-7 rounded-md object-contain" /> {{ page.title }}</h1>
+          <h1 class="flex items-center gap-2 font-semibold tracking-tight" :class="page.centered ? 'text-xl' : 'text-2xl'"><img v-if="page.icon" :src="page.icon" alt="" class="size-7 rounded-md object-contain" /> {{ page.title }}</h1>
           <p class="text-sm text-muted-foreground">{{ extension.name }} <span class="text-xs">v{{ extension.version }}</span></p>
         </div>
         <div class="flex flex-wrap items-center gap-2">

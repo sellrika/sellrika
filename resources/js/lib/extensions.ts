@@ -1,10 +1,12 @@
 // Mounting an extension's browser code (the extension guide): a page or slot script is an ES module whose default
 // export builds its UI inside an element we give it, with a small `api` for talking to its own routes.
+import { uploadImage } from "@/lib/upload";
 import type { Params } from "@i18n";
 import { extensionT, locale } from "@/lib/i18n";
 import { router, usePage } from "@inertiajs/vue3";
 import { createApp, h, reactive } from "vue";
 import PaymentMethodPicker from "@/components/pos/PaymentMethodPicker.vue";
+import RichText from "@/components/RichText.vue";
 import ReceiptSlip from "@/components/ReceiptSlip.vue";
 import { toast } from "vue-sonner";
 import { cn } from "@/lib/utils";
@@ -303,6 +305,50 @@ function paymentPicker<M extends PickerMethod>(opts: {
 	};
 }
 
+/**
+ * The app's own text editor (`RichText.vue`), lent to an extension: bold, lists, headings,
+ * tables and pictures. A picture is uploaded to the shop's storage; the HTML holds its path.
+ * @param opts.value The HTML to start with.
+ * @param opts.label The editor's accessible name.
+ * @param opts.onChange Called with the HTML after every change.
+ * @returns The element to put on the page, the HTML now, a setter and `destroy()`.
+ */
+function richText(opts: {
+	value?: string;
+	label?: string;
+	onChange?: (html: string) => void;
+}) {
+	const state = reactive({ value: opts.value ?? "" });
+	/**
+	 * The editor changed: keep the HTML and tell the extension.
+	 * @param html The editor's HTML.
+	 */
+	function changed(html: string) {
+		state.value = html;
+		opts.onChange?.(html);
+	}
+	const app = createApp({
+		render: () =>
+			h(RichText, {
+				modelValue: state.value,
+				"onUpdate:modelValue": changed,
+				label: opts.label,
+				images: "extensions",
+			}),
+	});
+	const el = document.createElement("div");
+	app.mount(el);
+	return {
+		el,
+		value: () => state.value,
+		set(html: string) {
+			state.value = html;
+		},
+		// unmounting twice is harmless: Vue only warns
+		destroy: () => app.unmount(),
+	};
+}
+
 export type ExtensionApi = {
 	key: string;
 	/** The extension's own dictionary (`i18n/<locale>.ts`) in the page's language, and that language. */
@@ -313,6 +359,8 @@ export type ExtensionApi = {
 	base: string;
 	fetch: (path: string, init?: RequestInit) => Promise<Response>;
 	toast: (message: string, kind?: "success" | "error" | "info") => void;
+	/** Upload one picture to the shop's storage (`/uploads/<shop id>/extensions/`): its path, or why not. */
+	upload: (file: File) => Promise<{ url: string } | { error: string }>;
 	ui: ExtensionUiKit;
 	dialog: typeof dialog;
 	/** The ⌘K palette, lent to the extension while its picker is open (lib/search.ts › borrowSearch). */
@@ -327,6 +375,8 @@ export type ExtensionApi = {
 	qr: (text: string) => string;
 	/** The app's payment method buttons, for a pay dialog of the extension's own. */
 	paymentPicker: typeof paymentPicker;
+	/** The app's own text editor, with its picture tool. */
+	richText: typeof richText;
 	/** Pages only: the right side of the page's heading, for the page's own buttons. */
 	actions?: HTMLElement;
 	/** Pages only: a full-height column on the right of the page, for a details panel (hidden while empty). */
@@ -366,6 +416,7 @@ export function extensionApi(
 		fetch: (path, init) =>
 			fetch(base + path, { credentials: "same-origin", ...init }),
 		toast: (message, kind = "success") => toast[kind](message),
+		upload: (file) => uploadImage(file, "extensions"),
 		ui,
 		dialog,
 		search: borrowSearch,
@@ -379,6 +430,7 @@ export function extensionApi(
 		visit: (url) => router.visit(url),
 		qr: (text) => qrSvg(text),
 		paymentPicker,
+		richText,
 		context,
 	};
 }

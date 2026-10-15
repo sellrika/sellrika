@@ -1,9 +1,9 @@
 {{-- A custom page the shop built in /online-store (sanitised HTML + its own CSS). --}}
 @component(theme.layout, { search: true })
   <div class="n-wrap n-column n-top">
-    <a class="n-back" href="{{ url.home }}">
+    <a class="n-back" href="{{ back ? back.url : url.home }}">
       @!component('themes/noir/icon', { name: 'arrow-left' })
-      {{ t('store.back_to_shop') }}
+      {{ back ? back.title : t('store.back_to_shop') }}
     </a>
     <h1 class="n-title">{{ title }}</h1>
     <div class="n-panel">

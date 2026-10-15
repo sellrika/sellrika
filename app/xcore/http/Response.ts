@@ -34,7 +34,11 @@ export class HttpResponse {
 	 * @returns The response.
 	 */
 	static notFoundText() {
-		return new Response(t("server.not_found"), { status: 404 });
+		// the type is named: without one a browser offers the answer as a download
+		return new Response(t("server.not_found"), {
+			status: 404,
+			headers: { "Content-Type": "text/plain; charset=utf-8" },
+		});
 	}
 }
 

@@ -222,6 +222,18 @@ export type ExtensionOwnHandles = {
 		join?: (fromId: number, intoId: number) => Promise<OrderFull>;
 	};
 	customers: ExtensionCustomers;
+	/** The cleaner of HTML a person wrote (`sanitizeHtml`). */
+	html: { clean: (html: string) => Promise<string> };
+	/**
+	 * Pictures the extension no longer uses: each leaves storage when
+	 * nothing else of the app uses it either. Only the shop's own files.
+	 */
+	uploads: { drop: (urls: string[]) => Promise<void> };
+	/**
+	 * Store pages only (manifest `storefront`): draw a page of the
+	 * extension inside the shop's theme.
+	 */
+	storefront?: { page: (page: unknown) => Promise<Response> };
 };
 
 /**

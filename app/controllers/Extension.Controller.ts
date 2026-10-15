@@ -1,4 +1,5 @@
 import { Hooks } from "@xcore/hooks/Hooks";
+import { Url } from "@xcore/http/Url";
 import { Auth } from "@xcore/auth/Auth";
 import { ctx } from "@xcore/http/Context";
 import { HttpRequest, Query } from "@xcore/http/Request";
@@ -19,6 +20,18 @@ import {
 import { validate, type Errors } from "@validators/validate";
 import { ExtensionHandles } from "@controllers/support/Extension.Handles";
 import type { User } from "@models/User";
+import { StorefrontSupport } from "@controllers/support/Storefront.Support";
+import {
+	StoreViewService,
+	type Storefront,
+} from "@services/sales/StoreView.Service";
+import { Storage } from "@xcore/storage/Storage";
+import { sanitizeHtml } from "@helpers/html";
+import {
+	EXTENSION_STORE_DESC_MAX,
+	EXTENSION_STORE_LINK_TITLE_MAX,
+	EXTENSION_STORE_TITLE_MAX,
+} from "@constants/Extension.Constant";
 
 /**
  * Admin › Global Extensions.
@@ -40,6 +53,8 @@ export class ExtensionController {
 		private shops: ShopRepository,
 		private store: StoreService,
 		private handles: ExtensionHandles,
+		private site: StorefrontSupport,
+		private view: StoreViewService,
 	) {}
 
 	/**
@@ -234,6 +249,116 @@ export class ExtensionController {
 				customer: await this.#storeCustomer(req, shop),
 			},
 		);
+	}
+
+	/**
+	 * GET /* on a store's host — a page an extension brings to the store
+	 * (manifest `storefront.path`, like `/blog` and `/blog/my-post`).
+	 * Every route of the app wins over it: this is the last one tried.
+	 * The extension's `publicRoutes` answer, with `ctx.storefront.page()`
+	 * to draw the page inside the shop's theme.
+	 * @param req The current request.
+	 * @returns The extension's page. 404 as plain text when no store or
+	 *   no extension owns the address, the theme's not-found page when
+	 *   the extension has no such page.
+	 */
+	async storePage(req: BunRequest) {
+		const s = await this.site.find(req);
+		if (!s) return HttpResponse.notFoundText();
+		const { pathname } = new URL(req.url);
+		const key = await this.extensions.storeOwner(
+			s.shop,
+			pathname.split("/")[1] ?? "",
+		);
+		if (!key) return HttpResponse.notFoundText();
+		const { shop, customer } = s;
+		const res = await this.extensions.handle(
+			"publicRoutes",
+			shop,
+			key,
+			req,
+			pathname,
+			{
+				actor: () => this.#storeActor(shop),
+				handles: {
+					...this.handles.for(shop.id),
+					storefront: { page: (page) => this.#themed(s, pathname, page) },
+				},
+				customer: customer && {
+					id: customer.id,
+					name: customer.name,
+					email: customer.email,
+				},
+			},
+		);
+		return res.status === 404 ? this.view.notFound(req, s) : res;
+	}
+
+	/**
+	 * Draw an extension's page inside the shop's theme: the theme's
+	 * `page` template, the one the shop's own pages use, or with
+	 * `frame: "full"` the shared `store/extension` template, where the
+	 * extension draws everything between the header and the footer.
+	 * The body is cleaned here, whatever the extension did before:
+	 * a store page never runs a script somebody typed.
+	 * Its pictures load from the app's own host, like a product's.
+	 * @param s The resolved storefront.
+	 * @param pathname The path of the request.
+	 * @param page What the extension gave `ctx.storefront.page()`.
+	 * @returns The HTML response.
+	 */
+	async #themed(s: Storefront, pathname: string, page: unknown) {
+		const p = (page ?? {}) as Record<string, unknown>;
+		const title = String(p.title ?? "").slice(0, EXTENSION_STORE_TITLE_MAX);
+		const body = Url.uploadsIn(await sanitizeHtml(String(p.body ?? "")));
+		const canonical =
+			typeof p.canonical === "string" && /^\/[^\s<>"]*$/.test(p.canonical)
+				? p.canonical
+				: pathname;
+		const image =
+			typeof p.image === "string" && Storage.isUploadUrl(p.image)
+				? Url.upload(p.image)
+				: null;
+		return this.view.render(
+			s,
+			// `frame: "full"`: only the theme's header and footer around it
+			p.frame === "full" ? "extension" : "page",
+			{
+				title,
+				body,
+				// printed inside <style>: a "</style" in it must not end the tag
+				css: String(p.css ?? "").replace(/<\/style/gi, "<\\/style"),
+				back: this.#backLink(s, p.back),
+			},
+			StoreViewService.storeSeo(s.shop, {
+				url: s.url + canonical,
+				title: `${title} · ${s.shop.name}`,
+				desc:
+					String(p.description ?? "").slice(0, EXTENSION_STORE_DESC_MAX) ||
+					StorefrontSupport.summary(body) ||
+					`${title} — ${s.shop.name}`,
+				image,
+				noindex: p.noindex === true,
+			}),
+			p.status === 404 ? 404 : 200,
+		);
+	}
+
+	/**
+	 * The page's own back link ("Back to blog"), in place of the theme's
+	 * "Back to shop".
+	 * @param s The resolved storefront.
+	 * @param back What the extension gave: `{ title, path }`.
+	 * @returns `{ title, url }`, or null: the theme then leads back to the shop.
+	 */
+	#backLink(s: Storefront, back: unknown) {
+		const { title, path } = (back ?? {}) as Record<string, unknown>;
+		if (typeof title !== "string" || !title.trim()) return null;
+		if (typeof path !== "string" || !/^\/[^\s<>"]*$/.test(path)) return null;
+		return {
+			title: title.trim().slice(0, EXTENSION_STORE_LINK_TITLE_MAX),
+			url: s.base + path,
+		};
 	}
 
 	/**

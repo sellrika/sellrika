@@ -9,6 +9,7 @@ import type {
 } from "@validators/Extension.Validator";
 import type { ExtensionEvent } from "@constants/Extension.Constant";
 import { ExtensionCatalog, type Installed } from "./Extension.Catalog";
+import { ExtensionStorefront, type StoreLink } from "./Extension.Storefront";
 import { ExtensionEvents } from "./Extension.Events";
 import {
 	localizedManifest,
@@ -64,6 +65,7 @@ export class ExtensionService {
 		private runtime: ExtensionRuntime,
 		private routes: ExtensionRoutes,
 		private events: ExtensionEvents,
+		private storefront: ExtensionStorefront,
 	) {}
 
 	// ── The platform catalog ──
@@ -414,6 +416,38 @@ export class ExtensionService {
 		extra: ExtensionRouteExtra = {},
 	): Promise<Response> {
 		return this.routes.handle(kind, shop, key, req, subpath, extra);
+	}
+
+	// ── Store pages ──
+
+	/**
+	 * The running extension that owns an address of the shop's store
+	 * (manifest `storefront.path`).
+	 * @param shop The shop of the store.
+	 * @param segment The first part of the path (`blog` for `/blog/a`).
+	 * @returns The extension's key, or null when none owns it.
+	 */
+	storeOwner(shop: Shop, segment: string): Promise<string | null> {
+		return this.storefront.owner(shop, segment);
+	}
+
+	/**
+	 * The links the shop's extensions add to the store's menu.
+	 * @param shop The shop of the store.
+	 * @param running The shop's running extensions, when already loaded.
+	 * @returns The links: `slug` is the path, like `/blog`.
+	 */
+	storeLinks(shop: Shop, running?: RunningExtension[]): Promise<StoreLink[]> {
+		return this.storefront.links(shop, running);
+	}
+
+	/**
+	 * The addresses the shop's extensions add to the store's sitemap.
+	 * @param shop The shop of the store.
+	 * @returns The paths, like `/blog/my-post`.
+	 */
+	storePaths(shop: Shop): Promise<string[]> {
+		return this.storefront.paths(shop);
 	}
 
 	// ── Events ──
