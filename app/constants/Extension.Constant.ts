@@ -33,13 +33,15 @@ export const EXTENSION_BUILTIN_DIR =
 /**
  * Every folder the built-in extensions are read from.
  * Local development also reads an add-on's own extensions
- * (`cloud/extensions`, see `app/cloud.ts`): the folder may be missing.
- * Production has one folder: `bun run build` bundles both into it.
+ * (`cloud/extensions`, see `app/cloud.ts`) and the folder
+ * `custom-extensions`, a git repository of its own with one folder
+ * per extension. Either folder may be missing.
+ * Production has one folder: `bun run build` bundles all into it.
  */
 export const EXTENSION_BUILTIN_DIRS =
 	process.env.EXTENSION_BUILTIN_DIR || process.env.NODE_ENV
 		? [EXTENSION_BUILTIN_DIR]
-		: [EXTENSION_BUILTIN_DIR, "cloud/extensions"];
+		: [EXTENSION_BUILTIN_DIR, "cloud/extensions", "custom-extensions"];
 
 /**
  * When the built-in folder is read again.
@@ -212,3 +214,27 @@ export const EXTENSION_APP_SETTINGS = [
 
 /** One of `EXTENSION_APP_SETTINGS`. */
 export type ExtensionAppSetting = (typeof EXTENSION_APP_SETTINGS)[number];
+
+/**
+ * How many menu links one extension may add to a shop's online store
+ * (`export const storefront` › `links`). The rest are left out.
+ */
+export const EXTENSION_STORE_LINKS_MAX = 5;
+
+/**
+ * How many sitemap entries one extension may add to a shop's
+ * online store (`storefront` › `sitemap`). The rest are left out.
+ */
+export const EXTENSION_STORE_PATHS_MAX = 5000;
+
+/** The longest title of a menu link an extension adds. */
+export const EXTENSION_STORE_LINK_TITLE_MAX = 60;
+
+/** How many pictures one `ctx.uploads.drop()` call looks at. */
+export const EXTENSION_DROP_MAX = 200;
+
+/** The longest title of a store page an extension draws (`ctx.storefront.page`). */
+export const EXTENSION_STORE_TITLE_MAX = 200;
+
+/** The longest description of such a page, for its head tags. */
+export const EXTENSION_STORE_DESC_MAX = 300;

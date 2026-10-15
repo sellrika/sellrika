@@ -96,3 +96,14 @@ test("upload: a stored picture is loaded from APP_URL, other links stay as they 
 		"/uploads/3/products/a.webp",
 	);
 });
+
+test("uploadsIn: every picture of ours in rich text is loaded from APP_URL, the text and other links stay", () => {
+	const html =
+		'<p>See /uploads/3/a.webp</p><img alt="a" src="/uploads/3/extensions/a.webp"><img src=\'/uploads/3/b.png\'><img src="https://cdn.example.com/c.png"><a href="/uploads/3/a.webp">file</a>';
+	app.url = "https://sellrika.com/";
+	expect(Url.uploadsIn(html)).toBe(
+		'<p>See /uploads/3/a.webp</p><img alt="a" src="https://sellrika.com/uploads/3/extensions/a.webp"><img src=\'https://sellrika.com/uploads/3/b.png\'><img src="https://cdn.example.com/c.png"><a href="/uploads/3/a.webp">file</a>',
+	);
+	app.url = null; // no APP_URL: the paths stay relative
+	expect(Url.uploadsIn(html)).toBe(html);
+});

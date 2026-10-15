@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
 import {
+	AlignCenter,
+	AlignLeft,
+	AlignRight,
+	ArrowDown,
+	ArrowUp,
 	Bold,
+	ImagePlus,
 	IndentDecrease,
 	IndentIncrease,
 	Italic,
@@ -13,7 +19,10 @@ import {
 	Underline,
 } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { t } from "@/lib/i18n";
+import { toast } from "vue-sonner";
+import { uploadImage, type UploadFolder } from "@/lib/upload";
 
 /**
  * Small rich-text editor for product descriptions.
@@ -25,12 +34,17 @@ import { t } from "@/lib/i18n";
  * Tables are the exception: execCommand has no table commands, so the row/column operations
  * below are plain DOM edits on the cell the caret sits in.
  * Add a real editor (tiptap) only if merged cells or collaborative editing show up.
+ * Pictures (prop `images`): a picked, pasted or dropped file is uploaded first and the text
+ * keeps only its `/uploads/…` path. A picture pasted as base64 is taken out again: the text
+ * never holds picture data, only a path of ours or an https link.
  */
 const props = defineProps<{
 	modelValue: string;
 	invalid?: boolean;
 	/** The editor's accessible name; "Description" when not given. */
 	label?: string;
+	/** The upload folder for pictures. Left out = the editor has no picture tool (an email body). */
+	images?: UploadFolder;
 }>();
 const emit = defineEmits<{ "update:modelValue": [string] }>();
 
@@ -40,6 +54,20 @@ const active = ref<Record<string, boolean>>({});
 const inTable = ref(false);
 const inSection = ref(false);
 const sectionOpen = ref(false);
+/** The picture the person clicked, for the picture tools. */
+const picked = ref<HTMLImageElement | null>(null);
+const pickedAlt = ref("");
+const pickedCaption = ref(false);
+/** The picked picture's width, in percent of the text's width. */
+const pickedWidth = ref(100);
+const pickedAlign = ref("");
+
+const aligns = [
+	{ value: "left", icon: AlignLeft, label: "shared.image_align_left" },
+	{ value: "center", icon: AlignCenter, label: "shared.image_align_center" },
+	{ value: "right", icon: AlignRight, label: "shared.image_align_right" },
+] as const;
+const uploading = ref(false);
 
 const marks = [
 	{ cmd: "bold", icon: Bold, label: "shared.bold" },
@@ -73,6 +101,13 @@ function exec(cmd: string, value?: string, css = false) {
 }
 
 function sync() {
+	// picture data never stays in the text: a pasted base64 or blob picture goes
+	for (const img of Array.from(el.value?.querySelectorAll("img") ?? []))
+		if (/^(data|blob):/i.test(img.getAttribute("src") ?? ""))
+			(img.closest("figure") ?? img).remove();
+	// a picture dragged to another place leaves its empty frame behind
+	for (const figure of Array.from(el.value?.querySelectorAll("figure") ?? []))
+		if (!figure.querySelector("img")) figure.remove();
 	emit("update:modelValue", el.value?.innerHTML ?? "");
 	refresh();
 }
@@ -88,6 +123,269 @@ function refresh() {
 	const d = section();
 	inSection.value = !!d;
 	sectionOpen.value = !!d?.open;
+	if (picked.value && !el.value?.contains(picked.value)) picked.value = null;
+}
+
+/** A click on a picture picks it for the picture tools; a click elsewhere lets it go. */
+function pick(e: MouseEvent) {
+	const img = e.target instanceof HTMLImageElement ? e.target : null;
+	picked.value = img;
+	if (!img) return;
+	pickedAlt.value = img.alt;
+	pickedCaption.value = !!img.closest("figure")?.querySelector("figcaption");
+	pickedWidth.value = Number.parseInt(img.style.width, 10) || 100;
+	pickedAlign.value = img.closest("figure")?.style.textAlign ?? "";
+	const r = document.createRange();
+	r.selectNode(img);
+	const sel = window.getSelection();
+	sel?.removeAllRanges();
+	sel?.addRange(r);
+}
+
+/** The place of the caret, when it is inside the editor. */
+function caretRange() {
+	const sel = window.getSelection();
+	if (!sel?.rangeCount || !el.value?.contains(sel.anchorNode)) return null;
+	return sel.getRangeAt(0).cloneRange();
+}
+
+/** The place in the text under a point of the screen: where a dropped file lands. */
+function rangeAt(x: number, y: number) {
+	const d = document as Document & {
+		caretPositionFromPoint?: (
+			x: number,
+			y: number,
+		) => { offsetNode: Node; offset: number } | null;
+	};
+	if (d.caretRangeFromPoint) return d.caretRangeFromPoint(x, y);
+	const at = d.caretPositionFromPoint?.(x, y);
+	if (!at) return null;
+	const r = document.createRange();
+	r.setStart(at.offsetNode, at.offset);
+	return r;
+}
+
+/** Does a piece of the text hold anything a reader sees? */
+function hasContent(n: Element | DocumentFragment) {
+	return !!n.textContent?.trim() || !!n.querySelector("img, table, details");
+}
+
+/** Mark the place a picture goes: right at the caret. A picture is a block of its own, so a paragraph
+ *  (or heading) is split in two there; inside a list, a table or a section it goes after that whole block.
+ *  The mark is taken out again once the pictures are in. */
+function markPlace(at: Range | null) {
+	const root = el.value!;
+	const mark = document.createElement("span");
+	if (!at || !root.contains(at.startContainer)) {
+		root.append(mark);
+		return mark;
+	}
+	if (at.startContainer === root) {
+		root.insertBefore(mark, root.childNodes[at.startOffset] ?? null);
+		return mark;
+	}
+	let block = (
+		at.startContainer instanceof Element
+			? at.startContainer
+			: at.startContainer.parentElement
+	) as Element;
+	while (block.parentElement !== root) block = block.parentElement!;
+	if (!/^(P|DIV|H[1-6]|BLOCKQUOTE)$/.test(block.tagName)) {
+		block.after(mark);
+		return mark;
+	}
+	const tail = document.createRange();
+	tail.setStart(at.startContainer, at.startOffset);
+	tail.setEnd(block, block.childNodes.length);
+	const rest = tail.extractContents();
+	block.after(mark);
+	if (hasContent(rest)) {
+		const next = block.cloneNode(false) as Element;
+		next.append(rest);
+		mark.after(next);
+	}
+	if (!hasContent(block)) block.remove();
+	return mark;
+}
+
+/** Upload picture files and put each in the text as a figure, at the caret (or where `at` says). */
+async function addImages(files: File[], at: Range | null = caretRange()) {
+	const root = el.value;
+	if (!root || !props.images || !files.length) return;
+	const mark = markPlace(at);
+	let last: Element | null = null;
+	uploading.value = true;
+	for (const one of files) {
+		const r = await uploadImage(one, props.images);
+		if ("error" in r) {
+			toast.error(r.error);
+			continue;
+		}
+		const figure = document.createElement("figure");
+		const img = document.createElement("img");
+		img.src = r.url;
+		img.alt = "";
+		figure.append(img);
+		mark.before(figure);
+		last = figure;
+	}
+	uploading.value = false;
+	mark.remove();
+	// the way out, as with tables: a picture at the end leaves nowhere to type
+	if (last && !last.nextElementSibling)
+		last.insertAdjacentHTML("afterend", "<p><br></p>");
+	caretTo(last?.nextElementSibling);
+	sync();
+}
+
+/** Open the file picker. The input is made on demand: a form never finds one more file input in the editor.
+ *  The caret's place is kept from before the picker opens. */
+function pickFiles() {
+	const at = caretRange();
+	const input = document.createElement("input");
+	input.type = "file";
+	input.accept = "image/*";
+	input.multiple = true;
+	input.onchange = () => addImages(Array.from(input.files ?? []), at);
+	input.click();
+}
+
+/** The picture files of a paste or a drop. */
+function imageFiles(list: FileList | undefined | null) {
+	return Array.from(list ?? []).filter((f) => f.type.startsWith("image/"));
+}
+
+/** Text copied from another page brings that page's look with it: its colours, fonts, sizes and class names
+ *  (pale text from a dark page is unreadable on a light store). Only what this editor itself writes stays:
+ *  an indent, a picture's width and a picture's side. Picture data goes too. */
+function plainLook(html: string) {
+	const tpl = document.createElement("template");
+	tpl.innerHTML = html;
+	for (const e of Array.from(tpl.content.querySelectorAll<HTMLElement>("*"))) {
+		if (/^(STYLE|SCRIPT|META|LINK|TITLE)$/.test(e.tagName)) {
+			e.remove();
+			continue;
+		}
+		const keep = {
+			marginLeft: e.style.marginLeft,
+			textAlign: e.tagName === "FIGURE" ? e.style.textAlign : "",
+			width: e.tagName === "IMG" ? e.style.width : "",
+		};
+		for (const { name } of Array.from(e.attributes))
+			if (!/^(href|src|alt|colspan|rowspan|open)$/.test(name))
+				e.removeAttribute(name);
+		for (const [prop, value] of Object.entries(keep))
+			if (value) e.style[prop as keyof typeof keep] = value;
+		if (
+			e.tagName === "IMG" &&
+			/^(data|blob):/i.test(e.getAttribute("src") ?? "")
+		)
+			e.remove();
+	}
+	return tpl.innerHTML;
+}
+
+/** A pasted picture file is uploaded, never kept as data in the text. Pasted text keeps its structure
+ *  (headings, lists, links) and loses the look of the page it came from. */
+function onPaste(e: ClipboardEvent) {
+	const files = imageFiles(e.clipboardData?.files);
+	if (props.images && files.length) {
+		e.preventDefault();
+		addImages(files);
+		return;
+	}
+	const html = e.clipboardData?.getData("text/html");
+	if (!html) return;
+	e.preventDefault();
+	exec("insertHTML", plainLook(html));
+}
+
+/** A dropped file lands where it was dropped, not where the caret was. */
+function onDrop(e: DragEvent) {
+	const files = imageFiles(e.dataTransfer?.files);
+	if (!files.length) return;
+	e.preventDefault();
+	if (props.images) addImages(files, rangeAt(e.clientX, e.clientY));
+}
+
+/** The picked picture's frame; a picture with none gets one. */
+function frameOf(img: HTMLImageElement) {
+	let figure = img.closest("figure");
+	if (!figure) {
+		figure = document.createElement("figure");
+		img.replaceWith(figure);
+		figure.append(img);
+	}
+	return figure;
+}
+
+/** Make the picked picture narrower or wider: a share of the text's width. */
+function setWidth() {
+	if (!picked.value) return;
+	picked.value.style.width =
+		pickedWidth.value >= 100 ? "" : `${pickedWidth.value}%`;
+	if (!picked.value.getAttribute("style"))
+		picked.value.removeAttribute("style");
+	sync();
+}
+
+/** Put the picked picture at the left, the middle or the right. */
+function setAlign(value: string) {
+	if (!picked.value) return;
+	frameOf(picked.value).style.textAlign = value;
+	pickedAlign.value = value;
+	sync();
+}
+
+/** Move the picked picture over the block before it, or under the block after it. */
+function moveImage(by: -1 | 1) {
+	const root = el.value;
+	let block: Element | null = picked.value;
+	while (block && block.parentElement !== root) block = block.parentElement;
+	// the first line of a text may be bare text with no paragraph around it: it counts as a block too
+	let other = by < 0 ? block?.previousSibling : block?.nextSibling;
+	while (
+		other &&
+		other.nodeType === Node.TEXT_NODE &&
+		!other.textContent?.trim()
+	)
+		other = by < 0 ? other.previousSibling : other.nextSibling;
+	if (!block || !other) return;
+	if (by < 0) other.before(block);
+	else other.after(block);
+	picked.value?.scrollIntoView({ block: "nearest" });
+	sync();
+}
+
+function setAlt() {
+	if (!picked.value) return;
+	picked.value.alt = pickedAlt.value;
+	sync();
+}
+
+/** A line of text under the picture, or none. */
+function toggleCaption() {
+	const img = picked.value;
+	if (!img) return;
+	const figure = frameOf(img);
+	const caption = figure.querySelector("figcaption");
+	if (caption) caption.remove();
+	else {
+		const c = document.createElement("figcaption");
+		c.textContent = t("shared.image_caption");
+		figure.append(c);
+		selectAll(c);
+	}
+	pickedCaption.value = !caption;
+	sync();
+}
+
+function delImage() {
+	const img = picked.value;
+	if (!img) return;
+	(img.closest("figure") ?? img).remove();
+	picked.value = null;
+	sync();
 }
 
 /** The table cell the caret is in, if it is in one of ours. */
@@ -303,6 +601,25 @@ watch(() => props.modelValue, fill);
       <span class="mx-0.5 h-5 w-px bg-border" />
       <Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_table')" :title="t('shared.insert_table')" @mousedown.prevent @click="insertTable"><Table /></Button>
       <Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_section')" :title="t('shared.insert_section_title')" @mousedown.prevent @click="insertSection"><ListCollapse /></Button>
+      <template v-if="images">
+        <Button type="button" variant="ghost" size="icon" class="size-8" :disabled="uploading" :aria-label="t('shared.insert_image')" :title="t('shared.insert_image')" @mousedown.prevent @click="pickFiles"><ImagePlus /></Button>
+      </template>
+    </div>
+
+    <!-- Picture tools: only while a picture is picked. -->
+    <div v-if="picked" class="flex flex-wrap items-center gap-1 border-b bg-muted/20 px-1 py-1 text-xs">
+      <span class="px-1.5 text-muted-foreground">{{ t("shared.image") }}</span>
+      <Input v-model="pickedAlt" class="h-7 w-56 text-xs" :placeholder="t('shared.image_alt')" :aria-label="t('shared.image_alt')" @input="setAlt" />
+      <label class="flex items-center gap-1.5 px-1.5 text-muted-foreground">
+        {{ t("shared.image_width") }}
+        <input v-model.number="pickedWidth" type="range" min="10" max="100" step="5" class="w-24 accent-primary" :aria-label="t('shared.image_width')" @input="setWidth">
+        <span class="w-8 tabular-nums">{{ pickedWidth }}%</span>
+      </label>
+      <Button v-for="a in aligns" :key="a.value" type="button" variant="ghost" size="icon" class="size-7" :class="pickedAlign === a.value && 'bg-accent text-accent-foreground'" :aria-label="t(a.label)" :aria-pressed="pickedAlign === a.value" :title="t(a.label)" @mousedown.prevent @click="setAlign(a.value)"><component :is="a.icon" /></Button>
+      <Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('shared.image_move_up')" :title="t('shared.image_move_up')" @mousedown.prevent @click="moveImage(-1)"><ArrowUp /></Button>
+      <Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('shared.image_move_down')" :title="t('shared.image_move_down')" @mousedown.prevent @click="moveImage(1)"><ArrowDown /></Button>
+      <Button type="button" variant="ghost" size="sm" class="h-7 px-2 text-xs" @mousedown.prevent @click="toggleCaption">{{ pickedCaption ? t("shared.image_caption_remove") : t("shared.image_caption_add") }}</Button>
+      <Button type="button" variant="ghost" size="sm" class="h-7 px-2 text-xs text-destructive" @mousedown.prevent @click="delImage">{{ t("shared.delete_image") }}</Button>
     </div>
 
     <!-- Section tools: only while the caret is in a collapsible section. -->
@@ -334,6 +651,9 @@ watch(() => props.modelValue, fill);
       @keyup="refresh"
       @mouseup="refresh"
       @focus="refresh"
+      @click="pick"
+      @paste="onPaste"
+      @drop="onDrop"
     />
   </div>
 </template>

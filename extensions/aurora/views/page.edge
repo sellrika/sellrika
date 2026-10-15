@@ -1,7 +1,7 @@
 {{-- A custom page the shop built in /online-store (sanitised HTML + its own CSS). --}}
 @component(theme.layout, { search: true })
   <main class="aurora-page is-narrow">
-    <a class="aurora-back" href="{{ url.home }}">← {{ t('store.back_to_shop') }}</a>
+    <a class="aurora-back" href="{{ back ? back.url : url.home }}">← {{ back ? back.title : t('store.back_to_shop') }}</a>
     <article class="aurora-sheet">
       <h1 class="aurora-sheet-title">{{ title }}</h1>
       @if(css)

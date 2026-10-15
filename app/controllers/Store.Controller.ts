@@ -120,6 +120,8 @@ export class StoreController {
 				body: page.body,
 				// printed inside <style>: a "</style" in it must not end the tag
 				css: page.css.replace(/<\/style/gi, "<\\/style"),
+				// the shop's own page leads back to the shop
+				back: null,
 			},
 			StoreViewService.storeSeo(s.shop, {
 				url,
@@ -159,8 +161,8 @@ export class StoreController {
 
 	/**
 	 * GET /sitemap.xml — the pages search engines should read.
-	 * On a store's host: its store, catalog pages, product pages
-	 * and custom pages.
+	 * On a store's host: its store, catalog pages, product pages,
+	 * custom pages and the pages its extensions bring.
 	 * On the main host: the app's own public pages (front page,
 	 * pricing, legal pages) and no shops.
 	 * Each shop submits its own file in Search Console.
@@ -178,6 +180,9 @@ export class StoreController {
 			for (const p of products) urls.push(this.#productUrl(s.url, p));
 			for (const p of await this.pages.links(s.shop.id))
 				urls.push(`${s.url}/pages/${p.slug}`);
+			// the pages its extensions bring (a blog's posts)
+			for (const path of await this.extensions.storePaths(s.shop))
+				urls.push(s.url + path);
 			return this.#urlset(urls);
 		}
 		const origin = Url.originOf(req);

@@ -10,6 +10,7 @@ export class UploadRepository {
 	 * JSON lists match the quoted path.
 	 * So `/uploads/a.jpg` never matches `/uploads/a.jpg2`.
 	 * Rich text and CSS match the bare path.
+	 * So does what an extension keeps (`ctx.data`): any JSON.
 	 * A false match only keeps a file, it never deletes one.
 	 * An order picture always counts as used, without a query:
 	 * an order keeps its picture for good.
@@ -32,6 +33,8 @@ export class UploadRepository {
 			union all select 1 from store_pages where body like ${bare} or css like ${bare}
 			union all select 1 from campaigns where body like ${bare}
 			union all select 1 from shop_extensions where config like ${quoted}
+			union all select 1 from extension_rows where value like ${bare}
+			union all select 1 from extension_data where value like ${bare}
 			union all select 1 from settings where value like ${quoted}
 			union all select 1 from payment_methods where image = ${url}
 			union all select 1 from categories where image = ${url}

@@ -178,6 +178,17 @@ export const RATE_LIMITS = {
 		message: "server.rate_requests",
 	},
 	/**
+	 * The pages an extension brings to a store (`GET /*`, the last route),
+	 * like a blog's posts. Also every address nothing answers.
+	 * Its own budget: a reader, or a search engine reading post after
+	 * post, never uses up the one of the extensions' own routes.
+	 */
+	storePage: {
+		limit: 300,
+		windowMs: 60_000,
+		message: "server.rate_requests",
+	},
+	/**
 	 * Customer sign-ins on the store.
 	 * Each one asks Firebase to verify the token.
 	 * A real buyer signs in once.

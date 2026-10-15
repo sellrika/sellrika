@@ -114,6 +114,17 @@ It holds the built-in extensions and the developer workspace.
 | `restaurant/`, `labels/`, `loyalty/`, `tax-invoice/`, `promptpay/`, `stripe-terminal/` | See The built-in extensions below |
 | `aurora/` | An example storefront theme |
 
+### The `custom-extensions/` folder
+
+Our own extensions that are not part of the app. It is a git repository of its own, and git ignores it here.
+
+- One folder per extension, at its root: `custom-extensions/<key>/`.
+- Development loads them like the built-in ones (`EXTENSION_BUILTIN_DIRS`). `bun run build` bundles them into `build/extensions` when the folder is there.
+- `bun run make:extension <key> --custom` scaffolds one there. `bun run build:extension <key>` finds it by key.
+- Import the types with the alias: `import type { Routes } from "@extensions/types"`.
+- Unit tests: `bun test --path-ignore-patterns='**/e2e/**' ./custom-extensions`. Browser tests: `custom-extensions/e2e/*.spec.ts`, picked up by `e2e/tmp.ts` like the app's own.
+- The app runs fine without the folder.
+
 What `build.ts` does:
 
 - `Bun.build` bundles `main` for bun, and every page and slot script for the browser.
@@ -169,6 +180,7 @@ About `ExtensionLoader.asset`:
 - `Extension.Runtime.ts`
 - `Extension.Routes.ts`
 - `Extension.Events.ts`
+- `Extension.Storefront.ts`
 
 Its methods:
 
@@ -188,6 +200,7 @@ Its methods:
 | `running`, `emit` | Events |
 | `payments`, `onlinePayment` | The payment gateways running for a shop |
 | `themes`, `storeTheme` | The storefront themes |
+| `storeOwner`, `storeLinks`, `storePaths` | The pages an extension brings to the store. See Store pages below. |
 
 `fromUrl` is the **Add extension › From URL** dialog: `POST /admin/extensions` with `url`.
 It takes https only, with `MAX_EXTENSION_ZIP_BYTES` and `EXTENSION_FETCH_TIMEOUT_MS`. Then it calls `upload`. Refusals come back under `errors.url`.
@@ -216,7 +229,7 @@ Other files in the folder:
 Routes:
 
 - `routes/settings.ts`: `/admin/extensions*` (platform), `/extensions` and `PUT /extensions/:key` (admin), `/extensions/:key/:page` and `/ext/:key/*` (auth).
-- `routes/storefront.ts`: `/store/:slug/ext/:key/*`, in the `storeExtension` bucket.
+- `routes/storefront.ts`: `/store/:slug/ext/:key/*`, in the `storeExtension` bucket. And `GET /*`, the store pages of an extension, in the `storePage` bucket.
 
 ### Frontend
 
@@ -241,6 +254,7 @@ Routes:
 | `app/services/sales/__tests__/fakeGateway.ts` | Fake hosted and tokenize gateways for the store tests |
 | `extensions/<key>/<key>.test.ts` | Each provider against a stubbed `fetch` |
 | `app/services/settings/__tests__/ExtensionEvents.test.ts` | A recorder extension and the real services, one step per event. `ExtensionService.idle()` waits for the `void` emits. |
+| `app/services/settings/__tests__/ExtensionStorefront.test.ts` | Store pages of an extension: the themed and cleaned page, one shop never sees another's, menu links, sitemap paths, pictures kept by `ctx.data` |
 | `e2e/o-extensions.spec.ts` | The pages in a browser |
 
 About the e2e spec:
@@ -499,6 +513,7 @@ The full list is `EXTENSION_EVENTS`.
 |---|---|---|
 | `ANY /ext/:key/*` | Signed in, every role, the session's active shop. The handler gets `user`. | The module's `routes` |
 | `ANY /store/:slug/ext/:key/*` | No login. The store must be on. | The module's `publicRoutes` |
+| `GET /<storefront.path>` and below, on a store's host | No login. | The module's `publicRoutes`, with `ctx.storefront`. See Store pages. |
 
 - The public path is the same on every host. It is the only store path that keeps the `/store/<slug>` prefix.
 - Both answer 404 unless the extension runs (installed + enabled + ready).
@@ -532,6 +547,7 @@ In `Extensions/Page.vue`:
 
 - `pages[].fullscreen: true` (Restaurant's Kitchen page): `Extensions/Page.vue` adds a **Full screen** button to the title row.
 - `pages[].breadcrumb: false` (Kitchen and Tables) is its own option: `AppLayout` shows no breadcrumb bar on that page.
+- `pages[].centered: true` gives the page the width, padding and title size of the app's own list pages (`max-w-6xl`, like Orders). The default is the whole width.
 - `pages[].fill: true` (Kitchen) makes the page as tall as the screen from `md` up. The title row stays. The script's root gets the rest of the height.
   So the Kitchen's three columns each scroll their own list under a heading that stays.
 
@@ -621,6 +637,39 @@ How a function runs:
 
 A new API route needs only its `fn` name, plus a line in `ApiFunctions` (`extensions/types.ts`) for the author's autocomplete.
 
+### Store pages
+
+An extension may bring pages of its own to the shop's online store, like a blog.
+
+**The manifest** names the first part of their address: `"storefront": { "path": "blog" }` (2 to 30 lower-case letters, digits and dashes).
+
+**The route.** `GET /*` (`ExtensionController.storePage`) is the last route of the app. So every page of the app itself wins.
+
+1. It finds the store by host. No store: 404 as plain text, as before.
+2. It asks `storeOwner(shop, segment)` which running extension has that path. None: 404 as plain text.
+3. It hands the request to the extension's `publicRoutes`, with the whole path: `"GET /blog"`, `"GET /blog/:slug"`.
+4. A 404 from the extension becomes the theme's not-found page.
+
+**The page.** The handler returns `ctx.storefront.page({ title, body, css, description, image, canonical, back, noindex, status })`.
+
+- It is drawn with the theme's `page` template, the one the shop's own pages use. So it has the theme's header, footer, colours and font.
+- The body is cleaned with `sanitizeHtml`, always. The CSS can't close its `<style>` tag.
+- `frame: "full"` draws the shared `store/extension` template instead: only the theme's header and footer. The extension's body is the whole page between them, with its own heading and back link. It styles itself with the theme's CSS variables (`--store-fg`, `--store-bg`, `--store-muted`, `--store-line`, `--store-accent`, …).
+- `back: { title, path }` replaces the theme's "Back to shop" link over the page ("Back to blog"). The `page` template gets it as `back { title, url }`, null for the shop's own pages.
+- Head tags come from `StoreViewService.storeSeo`: the title, the description, the share picture.
+- `image` must be an upload path. Every `/uploads/…` picture in the body and the share picture is loaded from the app's own host (`Url.uploadsIn`, `Url.upload`), never the store's host. The CDN cache works that way.
+
+**The module** may export `storefront` with two functions. Each gets `{ shop, config, t, locale, data }`.
+
+| Function | Gives | Limit |
+|---|---|---|
+| `links` | Links for the store's menu and footer: `{ title, path }` | `EXTENSION_STORE_LINKS_MAX` (5) |
+| `sitemap` | Paths for the store's `sitemap.xml` | `EXTENSION_STORE_PATHS_MAX` (5000) |
+
+- A path that is not the extension's own path or below it is left out.
+- A function that throws is logged and counts as an empty list. A store page never breaks because of an extension.
+- The links join `store.pages` with the path as `slug` (`/blog`). `url.page()` knows both forms, so no theme changes.
+
 ### The functions with no API route
 
 `ExtensionHandles.for()` in `app/controllers/support/Extension.Handles.ts`. Routes only.
@@ -629,6 +678,9 @@ A new API route needs only its `fn` name, plus a line in `ApiFunctions` (`extens
 - `orders.openFor`
 - `orders.move` and `orders.join` (staff routes: `OrderService.moveTo` / `join`)
 - `customers` (`customersOf()`): `create` with the customer form's rules, `get`, `search`
+- `html.clean(html)`: the app's HTML cleaner (`sanitizeHtml`), for text a person typed
+- `uploads.drop(urls)`: pictures the extension stopped using. Each leaves storage when nothing else uses it (`UploadCleaner.dropUnused`). Only paths of the shop's own folder are looked at, `EXTENSION_DROP_MAX` per call.
+- `storefront.page(page)`: store page requests only. See Store pages above.
 
 `handle` joins them with the API's functions under the same area names.
 
@@ -638,6 +690,16 @@ Every route also gets:
 - `sign(value)` (`extensionSignature` in `app/helpers/crypto.ts`: HMAC-SHA256 with `APP_KEY` over the extension key, the shop id and the value)
 
 Staff routes also get `user`.
+
+### Pictures and the text editor
+
+The browser api lends two things of the app (`resources/js/lib/extensions.ts`):
+
+- `api.upload(file)`: `POST /uploads` into `/uploads/<shop id>/extensions/`. Managers and admins, with the upload limit. It answers `{ url }` or `{ error }`.
+- `api.richText({ value, label, onChange })`: the app's own editor, `RichText.vue`, with its picture tool on. It answers `{ el, value(), set(html), destroy() }`.
+
+A picture is kept as long as the extension's data names its path: `UploadRepository.inUse` also searches `extension_rows` and `extension_data`.
+The extension tells the app when it stops using one (`ctx.uploads.drop`).
 
 ### `ctx.data`
 

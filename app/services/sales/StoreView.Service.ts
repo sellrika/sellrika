@@ -51,7 +51,8 @@ export type StorePageName =
 	| "unsubscribe"
 	| "not-found"
 	| "checkout"
-	| "done";
+	| "done"
+	| "extension";
 
 /**
  * The look a storefront renders with.
@@ -386,9 +387,10 @@ export class StoreViewService {
 	 * @returns The `store` variable of every template.
 	 */
 	async storeInfo(s: Storefront, running?: RunningExtension[]) {
-		const [label, pages, payments, addresses, free] = await Promise.all([
+		const [label, own, links, payments, addresses, free] = await Promise.all([
 			this.store.paymentLabel(s.shop, running),
 			this.pages.links(s.shop.id),
+			this.extensions.storeLinks(s.shop, running),
 			this.store.paymentOptions(s.shop, running),
 			s.customer ? this.auth.addresses(s.customer) : [],
 			this.limits.isFree(s.shop.owner_id),
@@ -405,7 +407,11 @@ export class StoreViewService {
 			 */
 			currencies: s.currencies,
 			display: s.display,
-			pages,
+			/**
+			 * The shop's own pages, then the links its extensions add.
+			 * A link's `slug` is a path (`/blog`): `url.page()` knows both.
+			 */
+			pages: [...own, ...links],
 			payments,
 			/**
 			 * How customers may sign in (null = accounts off), and who is signed in.
@@ -487,6 +493,8 @@ export class StoreViewService {
 					return `${base}/p/${typeof p === "string" ? p : p.slug}`;
 				},
 				page: function page(slug: string) {
+					// a link an extension added is a path of the store itself
+					if (slug.startsWith("/")) return `${base}${slug}`;
 					return `${base}/pages/${slug}`;
 				},
 				checkout: `${base}/checkout`,
@@ -516,7 +524,8 @@ export class StoreViewService {
 	 * When an extension theme throws, the page is logged
 	 * and drawn again with Classic.
 	 * @param s The resolved storefront.
-	 * @param page Which page: a theme page, or the shared `checkout` / `done`.
+	 * @param page Which page: a theme page, or the shared `checkout` / `done` /
+	 *   `extension` (a page an extension draws by itself).
 	 * @param props The page's own variables.
 	 * @param seo The head.
 	 * @param status The HTTP status.
@@ -793,7 +802,8 @@ export class StoreViewService {
 		const { css, script, strings, views, look } = s.theme;
 		// the running extensions' own scripts for the store pages (slot `store.page`)
 		const extensions = await this.extensions.storeScripts(s.shop, running);
-		const shared = page === "checkout" || page === "done";
+		const shared =
+			page === "checkout" || page === "done" || page === "extension";
 		return StoreView.render(
 			shared ? `store/${page}` : `${views}/${page}`,
 			context,

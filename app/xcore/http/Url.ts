@@ -143,6 +143,23 @@ export class Url {
 	}
 
 	/**
+	 * Rich text for a store page: every picture of ours in it is loaded
+	 * from the app's own host, like `upload()` does for one picture.
+	 * The stored text keeps the plain `/uploads/…` path.
+	 * @param html Cleaned HTML (a post's body, a product's description).
+	 * @returns The HTML with the app's host in front of each `/uploads/…`
+	 *   picture. The HTML as it is when APP_URL is not set.
+	 */
+	static uploadsIn(html: string) {
+		return app.url
+			? html.replace(
+					/(<img\b[^>]*?\ssrc\s*=\s*["']?)(?=\/uploads\/)/gi,
+					`$1${Url.appOrigin()}`,
+				)
+			: html;
+	}
+
+	/**
 	 * The address of the API docs host (`DEVELOPER_DOMAIN`).
 	 * A real domain is always `https` with no port: the proxy serves it on 443.
 	 * Only a `localhost` one (dev) takes the scheme and port of the app.

@@ -20,8 +20,24 @@ function specsIn(dir: string) {
 		.filter((f) => f.endsWith(".spec.ts"))
 		.map((f) => f.slice(0, -".spec.ts".length));
 }
-/** The add-on's spec files. A name is used once over both folders. */
+/**
+ * The spec files of our own extensions (`custom-extensions/e2e`, a git
+ * repository of its own). The folder may be missing.
+ */
+export const CUSTOM_DIR = `${import.meta.dirname}/../custom-extensions/e2e`;
+/** The add-on's spec files. A name is used once over all folders. */
 export const CLOUD_SPECS = specsIn(CLOUD_DIR);
+/** The spec files of our own extensions. */
+export const CUSTOM_SPECS = specsIn(CUSTOM_DIR);
+/**
+ * The folder of a spec file that is not in `e2e/`.
+ * @param spec The spec file's name.
+ * @returns Its folder, or null for a spec of the app itself.
+ */
+export function outsideDir(spec: string) {
+	if (CLOUD_SPECS.includes(spec)) return CLOUD_DIR;
+	return CUSTOM_SPECS.includes(spec) ? CUSTOM_DIR : null;
+}
 /**
  * Extra environment for the app servers, from the add-on's `e2e/env` file:
  * one line of `NAME=value` pairs. `{fixtures}` is the fixture server's port.
@@ -35,7 +51,11 @@ export function cloudEnv(fixturesPort: number) {
 		.trim()
 		.replaceAll("{fixtures}", String(fixturesPort));
 }
-const ALL = [...specsIn(import.meta.dirname), ...CLOUD_SPECS].sort();
+const ALL = [
+	...specsIn(import.meta.dirname),
+	...CLOUD_SPECS,
+	...CUSTOM_SPECS,
+].sort();
 // E2E_SHARD=<i>/<n> (CI runs six shards side by side, .github/workflows/e2e.yml) keeps every n-th file, round-robin, so each job boots and
 // runs only its share; unset = every file. Ports stay indexed by the full list, so shards never collide.
 const [shard, shards] = (process.env.E2E_SHARD ?? "1/1")

@@ -5,13 +5,17 @@
  * `bun run build:extension my-thing` then packs it into
  * extensions/my-thing/dist/<key>-<version>.zip, for
  * /extensions › Upload zip.
+ * `bun run make:extension my-thing --custom` writes it into
+ * custom-extensions/my-thing/ instead, the folder of our own extensions.
  */
+const custom = process.argv.includes("--custom");
+const folder = custom ? "custom-extensions" : "extensions";
 const key = process.argv[2];
 if (!key || !/^[a-z0-9][a-z0-9-]{1,49}$/.test(key))
 	throw new Error(
-		"usage: bun run make:extension <key>  (2–50 lower-case letters, digits, dashes)",
+		"usage: bun run make:extension <key> [--custom]  (2–50 lower-case letters, digits, dashes)",
 	);
-const dir = new URL(`./${key}/`, import.meta.url).pathname;
+const dir = new URL(`../${folder}/${key}/`, import.meta.url).pathname;
 if (await Bun.file(`${dir}extension.json`).exists())
 	throw new Error(`${dir} already exists`);
 const name = key.replace(/-+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -86,7 +90,7 @@ await Bun.write(
  * See the extension guide (developer.sellrika.com) for events, routes, pages and slots.
  * extensions/webhook and extensions/chat-alerts are working examples.
  */
-import type { Listeners, Routes } from "../types";
+import type { Listeners, Routes } from "${custom ? "@extensions/types" : "../types"}";
 
 /**
  * Staff routes.
@@ -111,5 +115,5 @@ export default {
 `,
 );
 console.log(
-	`created extensions/${key}/ — build it with: bun run build:extension ${key}`,
+	`created ${folder}/${key}/ — build it with: bun run build:extension ${key}`,
 );

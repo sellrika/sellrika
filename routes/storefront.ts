@@ -120,4 +120,11 @@ export function storefrontRoutes() {
 	 * Center, Facebook / Instagram and TikTok. Store hosts only.
 	 */
 	router.get("/feed.xml", [StoreController, "feed"]);
+
+	/**
+	 * The pages an extension brings to a store (manifest `storefront`),
+	 * like a blog at `/blog`. The last route tried: every other one wins.
+	 * On any other address it answers "not found", as before.
+	 */
+	router.get("/*", [ExtensionController, "storePage"], limit("storePage"));
 }
