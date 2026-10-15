@@ -177,10 +177,16 @@ const TYPES = computed<{ value: CouponType; label: string; hint: string }[]>(
 		},
 	],
 );
-const today = () => {
-	const d = new Date();
-	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+/**
+ * Today on the shop's clock, as `YYYY-MM-DD`.
+ * The server checks a code's dates the same way.
+ * @returns The day.
+ */
+function today() {
+	return new Intl.DateTimeFormat("en-CA", {
+		timeZone: page.props.shop?.timezone ?? "UTC",
+	}).format(new Date());
+}
 const discountLabel = (c: CouponWithStats) => couponLabel(c, currency.value);
 /** The conditions attached, in words ("" = none). */
 function conditions(c: CouponWithStats) {

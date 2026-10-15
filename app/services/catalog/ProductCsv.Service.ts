@@ -379,9 +379,10 @@ export class ProductCsvService {
 	/**
 	 * A decimal amount from a cell as cents.
 	 * @param s The cell's text.
-	 * @returns The cents, or null when it is not a number of 0 or more.
+	 * @returns The cents, or null when it is blank or not a number of 0 or more.
 	 */
 	#toCents(s: string) {
+		if (s.trim() === "") return null;
 		const v = Number(s);
 		return Number.isFinite(v) && v >= 0 ? Math.round(v * 100) : null;
 	}

@@ -32,9 +32,6 @@ export const WEEK_BUCKET_DAYS = 31;
 /** When the daily report job looks for shops that are due: every minute. */
 export const REPORT_CRON = "* * * * *";
 
-/** The time a shop's daily report goes out until it picks another. */
-export const REPORT_DEFAULT_TIME = "22:00";
-
 /** A report time must look like this: 24-hour `HH:MM`. */
 export const REPORT_TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
