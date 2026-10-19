@@ -11,6 +11,7 @@ import {
 	DialogPortal,
 	useForwardPropsEmits,
 } from "reka-ui";
+import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 defineOptions({
@@ -54,7 +55,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
           class="absolute -top-3 -right-3 grid size-8 place-items-center rounded-full bg-secondary text-secondary-foreground shadow-md ring-1 ring-foreground/10 transition-colors hover:bg-secondary/80"
         >
           <XIcon class="w-4 h-4" />
-          <span class="sr-only">Close</span>
+          <span class="sr-only">{{ t("common.close") }}</span>
         </DialogClose>
       </DialogContent>
     </DialogOverlay>
