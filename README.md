@@ -36,6 +36,11 @@ The hosted version is at [sellrika.com](https://sellrika.com). It runs this same
 |---|---|
 | <img src=".github/images/store.webp" alt="The online store"> | <img src=".github/images/reports.webp" alt="The sales report"> |
 
+## Try it first
+
+- **Try it free at [sellrika.com](https://sellrika.com/register).** Sign up, and you get your own shop with free days. No install.
+- **Watch the [demo video](https://sellrika.com/demo.mp4).** See the app at work before you sign up.
+
 ## Run it
 
 You need [Bun](https://bun.sh).
