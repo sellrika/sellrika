@@ -96,6 +96,20 @@ test("validate(CheckoutInput / RefundInput / StockAdjustInput / CustomerInput / 
 	expect(validate(CheckoutInput, { ...base, items: [] }).errors?.items).toBe(
 		"Cart is empty",
 	);
+	const choices = (n: number) =>
+		Object.fromEntries([...Array(n)].map((_, i) => [`${i}`, 1]));
+	expect(
+		validate(CheckoutInput, {
+			...base,
+			items: [{ product_id: 1, qty: 1, choices: choices(100) }],
+		}).errors,
+	).toBeUndefined();
+	expect(
+		validate(CheckoutInput, {
+			...base,
+			items: [{ product_id: 1, qty: 1, choices: choices(101) }],
+		}).errors?.["items.0.choices"],
+	).toBeDefined();
 	expect(validate(RefundInput, { amount: 0 }).errors?.amount).toMatch(
 		/more than zero/,
 	);
