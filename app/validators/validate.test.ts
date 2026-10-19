@@ -59,7 +59,7 @@ test("validate(ProductInput)", () => {
 		"variants.0.attributes.Size": "Value is too long",
 	});
 	expect(
-		variant(Object.fromEntries([...Array(21)].map((_, i) => [`k${i}`, "v"]))),
+		variant(Object.fromEntries([...Array(101)].map((_, i) => [`k${i}`, "v"]))),
 	).toEqual({ "variants.0.attributes": "Too many" });
 });
 
