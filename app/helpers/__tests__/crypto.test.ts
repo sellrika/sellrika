@@ -34,6 +34,8 @@ test("slugify", () => {
 	expect(slugify("Corner Coffee!")).toBe("corner-coffee");
 	expect(slugify("Café Zürich")).toBe("cafe-zurich");
 	expect(slugify("店")).toBe(""); // caller must fall back
+	// the 50-character cut must not leave a "-" at the end
+	expect(slugify(`${"a".repeat(49)} b`)).toBe("a".repeat(49));
 });
 
 test("order codes: 12 random symbols without look-alikes, normalised from whatever the buyer types; older 16-symbol codes still normalise", () => {
