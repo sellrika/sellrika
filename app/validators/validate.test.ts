@@ -48,6 +48,19 @@ test("validate(ProductInput)", () => {
 		"variants.0.price": "Variant price must be ≥ 0",
 		"variants.0.images.0": "Invalid image",
 	});
+	const variant = (attributes: Record<string, string>) =>
+		validate(ProductInput, {
+			name: "x",
+			price: 1,
+			variants: [{ name: "S", price: 1, attributes }],
+		}).errors;
+	expect(variant({ Size: "S" })).toBeUndefined();
+	expect(variant({ Size: "x".repeat(201) })).toEqual({
+		"variants.0.attributes.Size": "Value is too long",
+	});
+	expect(
+		variant(Object.fromEntries([...Array(21)].map((_, i) => [`k${i}`, "v"]))),
+	).toEqual({ "variants.0.attributes": "Too many" });
 });
 
 test("validate(CheckoutInput / RefundInput / StockAdjustInput / CustomerInput / user inputs)", async () => {
