@@ -20,6 +20,11 @@ export function money(
 /** Parse a user-typed amount ("12.50") into integer cents. */
 export const toCents = (v: string | number) =>
 	Math.round(Number(String(v).replace(/[^0-9.-]/g, "")) * 100) || 0;
+/**
+ * Integer cents as a plain amount for an input: 1250 → "12.50".
+ * @param c The amount in cents.
+ * @returns The amount with two decimals, no symbol.
+ */
 export const fromCents = (c: number) => (c / 100).toFixed(2);
 
 /** DB timestamps arrive as "YYYY-MM-DD HH:MM:SS" (UTC) or ISO; render in the page's language. */
@@ -32,6 +37,13 @@ export function fmtDate(
 ) {
 	return toDate(s).toLocaleString(locale(), opts);
 }
+
+/**
+ * A database timestamp as a Date.
+ * "YYYY-MM-DD HH:MM:SS" is read as UTC. An ISO string is read as is.
+ * @param s The timestamp.
+ * @returns The Date.
+ */
 export function toDate(s: string) {
 	const iso = /^\d{4}-\d{2}-\d{2} /.test(s) ? `${s.replace(" ", "T")}Z` : s;
 	return new Date(iso);
