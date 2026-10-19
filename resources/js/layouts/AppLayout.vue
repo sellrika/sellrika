@@ -37,6 +37,7 @@ import {
 	ChevronRight,
 	ChevronsUpDown,
 	LogOut,
+	Star,
 	Check,
 	Settings,
 	PanelLeft,
@@ -534,6 +535,7 @@ const initials = computed(() =>
                 </DropdownMenuRadioGroup>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+            <DropdownMenuItem as-child><a href="https://github.com/sellrika/sellrika" target="_blank" rel="noopener"><Star class="size-4" /> {{ t("nav.star_us") }}</a></DropdownMenuItem>
             <DropdownMenuItem @select="router.post('/logout')"><LogOut class="size-4" /> {{ t("nav.logout") }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -600,6 +602,7 @@ const initials = computed(() =>
                 </DropdownMenuRadioGroup>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+            <DropdownMenuItem as-child><a href="https://github.com/sellrika/sellrika" target="_blank" rel="noopener"><Star class="size-4" /> {{ t("nav.star_us") }}</a></DropdownMenuItem>
             <DropdownMenuItem @select="router.post('/logout')"><LogOut class="size-4" /> {{ t("nav.logout") }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

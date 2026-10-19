@@ -763,6 +763,7 @@ export const de = {
 	"nav.login_signup": "Konto erstellen",
 	"nav.logout": "Abmelden",
 	"nav.logout_desc": "Aktion · diese Sitzung beenden",
+	"nav.star_us": "Gib uns einen Stern auf GitHub",
 	"nav.manage_shops": "Shops verwalten…",
 	"nav.more_pages": "Weitere Seiten",
 	"nav.new_product": "Neues Produkt",
