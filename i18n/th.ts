@@ -696,6 +696,7 @@ export const th = {
 	"nav.login_signup": "สร้างบัญชี",
 	"nav.logout": "ออกจากระบบ",
 	"nav.logout_desc": "การทำงาน · จบเซสชันนี้",
+	"nav.star_us": "กดดาวให้เราบน GitHub",
 	"nav.manage_shops": "จัดการร้านค้า…",
 	"nav.more_pages": "หน้าอื่น ๆ",
 	"nav.new_product": "สินค้าใหม่",
