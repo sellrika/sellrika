@@ -23,8 +23,8 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "edge.js": "^6.5.1",
-        "flydrive": "~2.1.0",
-        "flydrive-azure": "^1.0.0",
+        "flydrive": "~2.2.0",
+        "flydrive-azure": "^2.1.0",
         "grapesjs": "0.23.5",
         "reflect-metadata": "^0.2.2",
         "reka-ui": "^2.11.0",
@@ -1011,9 +1011,9 @@
 
     "flattie": ["flattie@1.1.1", "", {}, "sha512-9UbaD6XdAL97+k/n+N7JwX46K/M6Zc6KcFYskrYL8wbBV/Uyk0CTAMY0VT+qiK5PM7AIc9aTWYtq65U7T+aCNQ=="],
 
-    "flydrive": ["flydrive@2.1.0", "", { "dependencies": { "@humanwhocodes/retry": "^0.4.3", "@poppinss/utils": "^7.0.0-next.6", "etag": "^1.8.1", "mime-types": "^3.0.2" }, "peerDependencies": { "@aws-sdk/client-s3": "^3.577.0", "@aws-sdk/s3-request-presigner": "^3.577.0", "@google-cloud/storage": "^7.10.2" }, "optionalPeers": ["@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner", "@google-cloud/storage"] }, "sha512-464Y3vfAZKI3h+LodtjjFMnMxiItyHTKVGzfb2RBYzPfFl1gG7/RstlXH7bhUgB34h44lO9Cm4ZDW8UEk6Jd5g=="],
+    "flydrive": ["flydrive@2.2.0", "", { "dependencies": { "@humanwhocodes/retry": "^0.4.3", "@poppinss/utils": "^7.1.1", "etag": "^1.8.1", "mime-types": "^3.0.2" }, "peerDependencies": { "@aws-sdk/client-s3": "^3.577.0 || ^3.1147.0", "@aws-sdk/s3-request-presigner": "^3.577.0 || ^3.1147.0", "@google-cloud/storage": "^7.10.2 || ^8.2.0" }, "optionalPeers": ["@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner", "@google-cloud/storage"] }, "sha512-e4xYe+I1J0O0jufOS38jKPxdxzxcRzX+1GM4IP0xRcJtvwBizbJ3r5z1uGghfx1+FQLbQxD0LxHLQU6UbpegMg=="],
 
-    "flydrive-azure": ["flydrive-azure@1.0.0", "", { "dependencies": { "@azure/identity": "^4.7.0", "@azure/storage-blob": "^12.26.0" } }, "sha512-tdPnW0nb3uFwz6w8aEMBzLjw3ZxHGIUivS3u9oRtAKlRUmNq7bLuI7OdPhqXtEUiK0X7xAn76UU+QoEni1wVTw=="],
+    "flydrive-azure": ["flydrive-azure@2.1.0", "", { "dependencies": { "@azure/identity": "^4.7.0", "@azure/storage-blob": "^12.26.0" }, "peerDependencies": { "flydrive": "^2.2.0" } }, "sha512-GJ80m+V8JG/smBnNDun7OPAcewEWIwPTx2Uo2HgD8OLN+QbVqLQWTHgb8LnyCas5BDgAGopED1w7oimymSoP5g=="],
 
     "focus-trap": ["focus-trap@7.8.0", "", { "dependencies": { "tabbable": "^6.4.0" } }, "sha512-/yNdlIkpWbM0ptxno3ONTuf+2g318kh2ez3KSeZN5dZ8YC6AAmgeWz+GasYYiBJPFaYcSAPeu4GfhUaChzIJXA=="],
 
