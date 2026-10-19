@@ -81,7 +81,7 @@ export const BUNDLE_ITEMS_MAX = 100;
 export const PRODUCT_VARIANTS_MAX = 500;
 
 /** The most options one variant may have, like Color and Size. */
-export const VARIANT_ATTRIBUTES_MAX = 20;
+export const VARIANT_ATTRIBUTES_MAX = 100;
 
 /** The longest option name of a variant ("Color"), in characters. */
 export const VARIANT_ATTRIBUTE_NAME_MAX = 100;
