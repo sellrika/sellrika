@@ -1805,6 +1805,12 @@ export const de = {
 	"products.unit_hint": "Wie es gezählt wird (pcs, kg, m…).",
 	"products.unit_search": "Suchen oder hinzufügen…",
 	"products.updated": "Produkt aktualisiert",
+	"products.upload_failed": "Hochladen fehlgeschlagen",
+	"products.upload_offline":
+		"Hochladen fehlgeschlagen — prüfen Sie Ihre Verbindung.",
+	"products.upload_load_failed": "Das Bild konnte nicht geladen werden",
+	"products.upload_load_offline":
+		"Das Bild konnte nicht geladen werden — prüfen Sie Ihre Verbindung.",
 	"products.uploading": "Wird hochgeladen…",
 	"products.use_custom": "„{value}“ verwenden",
 	"products.values_placeholder": "Rot, Blau, Grün",
