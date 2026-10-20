@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
 	AlignCenter,
 	AlignLeft,
@@ -50,6 +50,8 @@ const props = defineProps<{
 const emit = defineEmits<{ "update:modelValue": [string] }>();
 
 const el = ref<HTMLDivElement>();
+/** The box around the text: the picked picture's frame and handles are drawn in it. */
+const wrap = ref<HTMLDivElement>();
 const block = ref("p");
 const active = ref<Record<string, boolean>>({});
 const inTable = ref(false);
@@ -62,6 +64,23 @@ const pickedCaption = ref(false);
 /** The picked picture's width, in percent of the text's width. */
 const pickedWidth = ref(100);
 const pickedAlign = ref("");
+/** Where the picked picture is drawn, in pixels from the top-left of `wrap`. */
+const box = ref<{
+	left: number;
+	top: number;
+	width: number;
+	height: number;
+} | null>(null);
+/** The drag of a resize handle, while the mouse button is down. */
+let drag: { x: number; width: number; side: number; full: number } | null =
+	null;
+
+const handles = [
+	{ side: -1, class: "-top-1.5 -left-1.5 cursor-nwse-resize" },
+	{ side: 1, class: "-top-1.5 -right-1.5 cursor-nesw-resize" },
+	{ side: -1, class: "-bottom-1.5 -left-1.5 cursor-nesw-resize" },
+	{ side: 1, class: "-bottom-1.5 -right-1.5 cursor-nwse-resize" },
+] as const;
 
 const aligns = [
 	{ value: "left", icon: AlignLeft, label: "shared.image_align_left" },
@@ -125,6 +144,64 @@ function refresh() {
 	inSection.value = !!d;
 	sectionOpen.value = !!d?.open;
 	if (picked.value && !el.value?.contains(picked.value)) picked.value = null;
+	place();
+}
+
+/**
+ * Draw the frame and the handles over the picked picture.
+ * Called after every change that can move the picture, and on scroll.
+ */
+function place() {
+	const img = picked.value;
+	if (!img || !wrap.value) {
+		box.value = null;
+		return;
+	}
+	const r = img.getBoundingClientRect();
+	const w = wrap.value.getBoundingClientRect();
+	box.value = {
+		left: r.left - w.left,
+		top: r.top - w.top,
+		width: r.width,
+		height: r.height,
+	};
+}
+
+/**
+ * Start to resize the picked picture with a corner handle.
+ * @param e The pointer event on the handle.
+ * @param side -1 for a left handle, 1 for a right handle.
+ */
+function startResize(e: PointerEvent, side: number) {
+	const img = picked.value;
+	if (!img?.parentElement) return;
+	(e.target as Element).setPointerCapture(e.pointerId);
+	drag = {
+		x: e.clientX,
+		width: img.getBoundingClientRect().width,
+		side,
+		full: img.parentElement.clientWidth,
+	};
+}
+
+/**
+ * Follow the mouse while a handle is dragged.
+ * A picture in the middle grows on both sides, so it moves twice as fast.
+ * @param e The pointer event.
+ */
+function resizing(e: PointerEvent) {
+	if (!drag) return;
+	const speed = pickedAlign.value === "center" ? 2 : 1;
+	const px = drag.width + (e.clientX - drag.x) * drag.side * speed;
+	pickedWidth.value = Math.round(
+		Math.min(100, Math.max(10, (px / drag.full) * 100)),
+	);
+	setWidth();
+}
+
+/** Let the handle go. */
+function stopResize() {
+	drag = null;
 }
 
 /** A click on a picture picks it for the picture tools; a click elsewhere lets it go. */
@@ -136,6 +213,7 @@ function pick(e: MouseEvent) {
 	pickedCaption.value = !!img.closest("figure")?.querySelector("figcaption");
 	pickedWidth.value = Number.parseInt(img.style.width, 10) || 100;
 	pickedAlign.value = img.closest("figure")?.style.textAlign ?? "";
+	nextTick(place);
 	const r = document.createRange();
 	r.selectNode(img);
 	const sel = window.getSelection();
@@ -271,6 +349,8 @@ function plainLook(html: string) {
 			marginLeft: e.style.marginLeft,
 			textAlign: e.tagName === "FIGURE" ? e.style.textAlign : "",
 			width: e.tagName === "IMG" ? e.style.width : "",
+			display: e.tagName === "IMG" ? e.style.display : "",
+			marginRight: e.tagName === "IMG" ? e.style.marginRight : "",
 		};
 		for (const { name } of Array.from(e.attributes))
 			if (!/^(href|src|alt|colspan|rowspan|open)$/.test(name))
@@ -330,10 +410,20 @@ function setWidth() {
 	sync();
 }
 
-/** Put the picked picture at the left, the middle or the right. */
+/**
+ * Put the picked picture at the left, the middle or the right.
+ * The picture is a block (Tailwind and the store themes say so), and a block
+ * does not follow `text-align`. So the picture is moved with its margins.
+ * The frame keeps `text-align` too: the caption follows it.
+ * @param value "left", "center" or "right".
+ */
 function setAlign(value: string) {
-	if (!picked.value) return;
-	frameOf(picked.value).style.textAlign = value;
+	const img = picked.value;
+	if (!img) return;
+	frameOf(img).style.textAlign = value;
+	img.style.display = "block";
+	img.style.marginLeft = value === "left" ? "" : "auto";
+	img.style.marginRight = value === "center" ? "auto" : "";
 	pickedAlign.value = value;
 	sync();
 }
@@ -563,6 +653,33 @@ const fill = () => {
 };
 onMounted(fill);
 watch(() => props.modelValue, fill);
+
+/** A picture that changes size (a drag, a slow load) moves its frame too. */
+const sizes = new ResizeObserver(place);
+watch(picked, watchPicked);
+
+/**
+ * Watch the size of the newly picked picture.
+ * @param img The picked picture, or null.
+ */
+function watchPicked(img: HTMLImageElement | null) {
+	sizes.disconnect();
+	if (img) sizes.observe(img);
+	place();
+}
+onMounted(addResizeListener);
+onBeforeUnmount(removeListeners);
+
+/** Keep the frame on the picture when the window changes size. */
+function addResizeListener() {
+	window.addEventListener("resize", place);
+}
+
+/** Stop all listeners of the picture frame. */
+function removeListeners() {
+	sizes.disconnect();
+	window.removeEventListener("resize", place);
+}
 </script>
 
 <template>
@@ -610,11 +727,6 @@ watch(() => props.modelValue, fill);
     <div v-if="picked" class="flex flex-wrap items-center gap-1 border-b bg-muted/20 px-1 py-1 text-xs">
       <span class="px-1.5 text-muted-foreground">{{ t("shared.image") }}</span>
       <Input v-model="pickedAlt" class="h-7 w-56 text-xs" :placeholder="t('shared.image_alt')" :aria-label="t('shared.image_alt')" @input="setAlt" />
-      <label class="flex items-center gap-1.5 px-1.5 text-muted-foreground">
-        {{ t("shared.image_width") }}
-        <input v-model.number="pickedWidth" type="range" min="10" max="100" step="5" class="w-24 accent-primary" :aria-label="t('shared.image_width')" @input="setWidth">
-        <span class="w-8 tabular-nums">{{ pickedWidth }}%</span>
-      </label>
       <WithTooltip v-for="a in aligns" :key="a.value" :label="t(a.label)"><Button type="button" variant="ghost" size="icon" class="size-7" :class="pickedAlign === a.value && 'bg-accent text-accent-foreground'" :aria-label="t(a.label)" :aria-pressed="pickedAlign === a.value" @mousedown.prevent @click="setAlign(a.value)"><component :is="a.icon" /></Button></WithTooltip>
       <WithTooltip :label="t('shared.image_move_up')"><Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('shared.image_move_up')" @mousedown.prevent @click="moveImage(-1)"><ArrowUp /></Button></WithTooltip>
       <WithTooltip :label="t('shared.image_move_down')"><Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('shared.image_move_down')" @mousedown.prevent @click="moveImage(1)"><ArrowDown /></Button></WithTooltip>
@@ -639,6 +751,7 @@ watch(() => props.modelValue, fill);
       <Button type="button" variant="ghost" size="sm" class="h-7 px-2 text-xs text-destructive" @mousedown.prevent @click="delTable">{{ t("shared.delete_table") }}</Button>
     </div>
 
+    <div ref="wrap" class="relative overflow-hidden">
     <div
       ref="el"
       contenteditable
@@ -654,6 +767,25 @@ watch(() => props.modelValue, fill);
       @click="pick"
       @paste="onPaste"
       @drop="onDrop"
+      @scroll="place"
     />
+    <!-- The picked picture's frame, with a resize handle at each corner. -->
+    <div
+      v-if="box"
+      class="pointer-events-none absolute rounded-sm outline-2 outline-primary"
+      :style="{ left: `${box.left}px`, top: `${box.top}px`, width: `${box.width}px`, height: `${box.height}px` }"
+    >
+      <span
+        v-for="(h, i) in handles"
+        :key="i"
+        class="pointer-events-auto absolute size-3 touch-none rounded-full border-2 border-background bg-primary"
+        :class="h.class"
+        @pointerdown.prevent="startResize($event, h.side)"
+        @pointermove="resizing"
+        @pointerup="stopResize"
+        @pointercancel="stopResize"
+      />
+    </div>
+    </div>
   </div>
 </template>

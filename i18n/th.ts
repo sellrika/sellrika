@@ -2143,7 +2143,6 @@ export const th = {
 	"shared.image_caption_remove": "ลบคำบรรยาย",
 	"shared.delete_image": "ลบรูปภาพ",
 	"shared.image_caption": "คำบรรยาย",
-	"shared.image_width": "ความกว้าง",
 	"shared.image_align_left": "รูปภาพชิดซ้าย",
 	"shared.image_align_center": "รูปภาพกึ่งกลาง",
 	"shared.image_align_right": "รูปภาพชิดขวา",

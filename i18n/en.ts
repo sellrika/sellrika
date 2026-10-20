@@ -2255,7 +2255,6 @@ export const en = {
 	"shared.image_caption_remove": "Remove caption",
 	"shared.delete_image": "Delete picture",
 	"shared.image_caption": "Caption",
-	"shared.image_width": "Width",
 	"shared.image_align_left": "Picture to the left",
 	"shared.image_align_center": "Picture in the middle",
 	"shared.image_align_right": "Picture to the right",

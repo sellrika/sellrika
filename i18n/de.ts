@@ -2343,7 +2343,6 @@ export const de = {
 	"shared.image_caption_remove": "Bildunterschrift entfernen",
 	"shared.delete_image": "Bild löschen",
 	"shared.image_caption": "Bildunterschrift",
-	"shared.image_width": "Breite",
 	"shared.image_align_left": "Bild nach links",
 	"shared.image_align_center": "Bild in die Mitte",
 	"shared.image_align_right": "Bild nach rechts",

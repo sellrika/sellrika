@@ -217,7 +217,9 @@ Pictures (prop `images`, the upload folder):
 - The picture button, a pasted picture file and a dropped one are uploaded first (`uploadImage`). The text keeps a `<figure>` with the `/uploads/…` path.
 - The text never holds picture data. A picture pasted as base64 (`data:`) or as a `blob:` is taken out again.
 - A picture lands at the caret: the paragraph is split around it. A dropped file lands where it was dropped.
-- A click on a picture opens the picture tools: its width (a share of the text's width), left / middle / right, move up or down, its description (alt text), a caption on or off, delete.
+- A click on a picture opens the picture tools: its width (a share of the text's width, set by dragging a corner), left / middle / right, move up or down, its description (alt text), a caption on or off, delete.
+- A picked picture gets a frame with a handle at each corner. Drag a handle to resize it.
+- Left / middle / right set the picture's own margins (`margin-left: auto` …), not only `text-align` on the `<figure>`. The picture is a block, and a block ignores `text-align`. The figure keeps `text-align` for the caption.
 - Pasted text keeps its structure and loses the look of the page it came from: colours, fonts, sizes and class names go (`plainLook`). Pale text copied from a dark page would be unreadable on a light store.
 - The product form sets `images="products"`. The campaign email leaves it out: an email can't load a path of ours.
 - An extension gets the same editor as `api.richText` (see [extensions.md](extensions.md) › Pictures and the text editor).
