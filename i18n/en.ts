@@ -1750,6 +1750,11 @@ export const en = {
 	"products.unit_hint": "How it is counted (pcs, kg, m…).",
 	"products.unit_search": "Search or add…",
 	"products.updated": "Product updated",
+	"products.upload_failed": "Upload failed",
+	"products.upload_offline": "Upload failed — check your connection.",
+	"products.upload_load_failed": "Could not load the image",
+	"products.upload_load_offline":
+		"Could not load the image — check your connection.",
 	"products.uploading": "Uploading…",
 	"products.use_custom": "Use “{value}”",
 	"products.values_placeholder": "Red, Blue, Green",

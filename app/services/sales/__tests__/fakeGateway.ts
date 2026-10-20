@@ -154,3 +154,14 @@ export async function useGateway(
 		config: { ...defaults, ...config },
 	});
 }
+
+/**
+ * Delete both fake gateways from the platform, so a later test file starts with an empty catalog.
+ * @returns Nothing. A fake that was never uploaded is skipped.
+ */
+export async function removeGateways() {
+	const ext = Container.get(ExtensionService);
+	for (const key of [hostedManifest().key, tokenizeManifest().key]) {
+		await ext.remove(key);
+	}
+}

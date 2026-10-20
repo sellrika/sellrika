@@ -1,3 +1,5 @@
+import { t } from "@/lib/i18n";
+
 /** A folder `POST /uploads` accepts (the server's `UPLOAD_FOLDERS`, less `orders`). */
 export type UploadFolder =
 	| "products"
@@ -34,9 +36,9 @@ export async function uploadImage(
 			.catch(() => ({}));
 		return res.ok
 			? { url: data.url }
-			: { error: data?.errors?.file ?? "Upload failed" };
+			: { error: data?.errors?.file ?? t("products.upload_failed") };
 	} catch {
-		return { error: "Upload failed — check your connection." };
+		return { error: t("products.upload_offline") };
 	}
 }
 
@@ -64,8 +66,8 @@ export async function imageBlob(
 		const data: { errors?: { url?: string } } = await res
 			.json()
 			.catch(() => ({}));
-		return { error: data.errors?.url ?? "Could not load the image" };
+		return { error: data.errors?.url ?? t("products.upload_load_failed") };
 	} catch {
-		return { error: "Could not load the image — check your connection." };
+		return { error: t("products.upload_load_offline") };
 	}
 }
