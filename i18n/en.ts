@@ -1836,7 +1836,7 @@ export const en = {
 		"On the shop's clock ({tz}). The report has the sales of the day up to this time.",
 	"reports.daily_channels": "Send to",
 	"reports.daily_no_channels":
-		"No channel is set up yet. Switch on the Chat alerts extension and fill in Slack, Discord or LINE.",
+		"No channel is set up yet. Switch on the Chat alerts extension and fill in Slack, Discord, LINE or Telegram.",
 	"reports.daily_open_extensions": "Open Extensions",
 	"reports.daily_saved": "Daily report saved",
 	"reports.daily_failed": "Could not save. Try again.",

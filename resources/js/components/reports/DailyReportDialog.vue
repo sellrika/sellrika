@@ -28,7 +28,12 @@ const open = defineModel<boolean>("open", { required: true });
 const props = defineProps<{ schedule: ReportSchedule }>();
 
 /** The channels' own names. They are brand names, so never translated. */
-const NAMES = { slack: "Slack", discord: "Discord", line: "LINE" };
+const NAMES = {
+	slack: "Slack",
+	discord: "Discord",
+	line: "LINE",
+	telegram: "Telegram",
+};
 
 const page = usePage<SharedProps>();
 const { isAdmin } = useAuth();

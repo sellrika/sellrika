@@ -1892,7 +1892,7 @@ export const de = {
 		"Nach der Uhr des Shops ({tz}). Der Bericht enthält den Umsatz des Tages bis zu dieser Uhrzeit.",
 	"reports.daily_channels": "Senden an",
 	"reports.daily_no_channels":
-		"Es ist noch kein Kanal eingerichtet. Schalten Sie die Erweiterung Chat alerts ein und tragen Sie Slack, Discord oder LINE ein.",
+		"Es ist noch kein Kanal eingerichtet. Schalten Sie die Erweiterung Chat alerts ein und tragen Sie Slack, Discord, LINE oder Telegram ein.",
 	"reports.daily_open_extensions": "Erweiterungen öffnen",
 	"reports.daily_saved": "Tagesbericht gespeichert",
 	"reports.daily_failed": "Speichern fehlgeschlagen. Bitte erneut versuchen.",
