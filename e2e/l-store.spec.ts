@@ -582,6 +582,19 @@ test("visitor: every product has its own page — shareable, with product meta, 
 		'xmlns:g="http://base.google.com/ns/1.0"',
 	);
 	expect((await visitor.request.get("/feed.xml")).status()).toBe(404);
+	expect(html).toContain('"@type":"BreadcrumbList"');
+	// llms.txt for AI search tools: Markdown on store hosts only
+	const llms = await visitor.request.get(`${STORE}/llms.txt`);
+	expect(llms.headers()["content-type"]).toContain("text/markdown");
+	const llmsText = await llms.text();
+	expect(llmsText).toContain("# Main Shop");
+	expect(llmsText).toMatch(new RegExp(`- \\[${P}\\]\\(http://[^)]+${href}\\)`));
+	expect((await visitor.request.get("/llms.txt")).status()).toBe(404);
+	// the home page says who the shop is
+	const home = await (await visitor.request.get(STORE)).text();
+	expect(home).toContain('"@type":"OnlineStore"');
+	expect(home).toContain('"@type":"SearchAction"');
+	expect(home).toContain('"@type":"ItemList"');
 	// the main host: a sitemap of the app's own public pages only, no shops
 	const site = await (await visitor.request.get("/sitemap.xml")).text();
 	expect(site).toContain("<urlset");
