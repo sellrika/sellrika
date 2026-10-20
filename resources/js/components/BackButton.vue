@@ -4,6 +4,7 @@
 // `href` is where it goes when there is no page to go back to, and what a new-tab click opens.
 import { ArrowLeft } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
+import WithTooltip from "./WithTooltip.vue";
 import { goBack } from "@/lib/back";
 
 const props = defineProps<{
@@ -24,7 +25,9 @@ function back(e: MouseEvent) {
 </script>
 
 <template>
-  <Button as-child variant="ghost" :size="size ?? 'icon'">
-    <a :href="href" :aria-label="label" @click="back"><ArrowLeft /></a>
-  </Button>
+  <WithTooltip :label="label">
+    <Button as-child variant="ghost" :size="size ?? 'icon'">
+      <a :href="href" :aria-label="label" @click="back"><ArrowLeft /></a>
+    </Button>
+  </WithTooltip>
 </template>

@@ -37,6 +37,7 @@ import {
 import Pager from "@/components/Pager.vue";
 import PaymentState from "@/components/PaymentState.vue";
 import StepsDialog from "@/components/orders/StepsDialog.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { useAuth } from "@/lib/auth";
 import { useFitPage } from "@/lib/fitPage";
 import { money, fmtDate } from "@/lib/format";
@@ -196,7 +197,7 @@ const open = (o: Order) => router.visit(`/orders/${o.id}`);
         <Search class="pointer-events-none absolute inset-y-0 left-2.5 my-auto size-4 text-muted-foreground" />
         <Input v-model="search" class="pl-8" :placeholder="t('orders.search_placeholder')" type="search" :aria-label="t('orders.search_label')" />
       </div>
-      <Button v-if="isAdmin && !noDelivery" variant="outline" size="icon" :aria-label="t('orders.steps_open')" :title="t('orders.steps_open')" @click="stepsOpen = true"><Settings /></Button>
+      <WithTooltip v-if="isAdmin && !noDelivery" :label="t('orders.steps_open')"><Button variant="outline" size="icon" :aria-label="t('orders.steps_open')" @click="stepsOpen = true"><Settings /></Button></WithTooltip>
     </div>
     <StepsDialog v-if="isAdmin && !noDelivery" v-model:open="stepsOpen" />
 
@@ -251,7 +252,9 @@ const open = (o: Order) => router.visit(`/orders/${o.id}`);
       </Tabs>
       <Badge v-if="customerName" variant="secondary" class="h-8 gap-1.5 px-2.5 text-sm">
         <UserRound class="size-3.5" /> {{ customerName }}
-        <button type="button" class="-mr-1 rounded-full p-0.5 hover:bg-background" :aria-label="t('orders.clear_customer_filter')" @click="clearFilters"><X class="size-3.5" /></button>
+        <WithTooltip :label="t('orders.clear_customer_filter')">
+          <button type="button" class="-mr-1 rounded-full p-0.5 hover:bg-background" :aria-label="t('orders.clear_customer_filter')" @click="clearFilters"><X class="size-3.5" /></button>
+        </WithTooltip>
       </Badge>
     </div>
 

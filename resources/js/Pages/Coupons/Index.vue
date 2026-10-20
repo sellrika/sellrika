@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/table";
 import CategoryPicker from "@/components/products/CategoryPicker.vue";
 import Pager from "@/components/Pager.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { useFitPage } from "@/lib/fitPage";
 import { couponLabel } from "@/lib/coupons";
 import {
@@ -435,7 +436,7 @@ watch(open, (v) => !v && (productQuery.value = ""));
             <TableHead class="hidden lg:table-cell">{{ t("coupons.conditions") }}</TableHead>
             <TableHead class="hidden md:table-cell">{{ t("coupons.valid") }}</TableHead>
             <TableHead class="hidden w-28 text-right sm:table-cell" :aria-sort="filters.sort === 'used' ? 'descending' : 'none'">
-              <Button variant="ghost" size="sm" class="-mr-2" :title="t('coupons.sort_used')" @click="toggleSort">{{ t("coupons.used") }}<ArrowDown :class="filters.sort === 'used' ? '' : 'opacity-30'" /></Button>
+              <WithTooltip :label="t('coupons.sort_used')"><Button variant="ghost" size="sm" class="-mr-2" @click="toggleSort">{{ t("coupons.used") }}<ArrowDown :class="filters.sort === 'used' ? '' : 'opacity-30'" /></Button></WithTooltip>
             </TableHead>
             <TableHead class="w-24">{{ t("common.status") }}</TableHead>
             <TableHead class="w-12 pr-4" />
@@ -446,7 +447,7 @@ watch(open, (v) => !v && (productQuery.value = ""));
             <TableCell class="max-w-0 pl-4">
               <div class="flex items-center gap-1">
                 <span class="truncate font-mono font-semibold">{{ c.code }}</span>
-                <Button variant="ghost" size="icon-sm" class="size-6 shrink-0 text-muted-foreground" :aria-label="t('coupons.copy_aria', { code: c.code })" :title="t('coupons.copy_aria', { code: c.code })" @click.stop="copyCode(c.code)" @keydown.enter.stop @keydown.space.stop><Copy class="size-3.5" /></Button>
+                <WithTooltip :label="t('coupons.copy_aria', { code: c.code })"><Button variant="ghost" size="icon-sm" class="size-6 shrink-0 text-muted-foreground" :aria-label="t('coupons.copy_aria', { code: c.code })" @click.stop="copyCode(c.code)" @keydown.enter.stop @keydown.space.stop><Copy class="size-3.5" /></Button></WithTooltip>
               </div>
               <div v-if="c.description" class="truncate text-xs text-muted-foreground">{{ c.description }}</div>
             </TableCell>
@@ -460,7 +461,7 @@ watch(open, (v) => !v && (productQuery.value = ""));
             <TableCell><Badge :variant="status(c).variant">{{ status(c).label }}</Badge></TableCell>
             <TableCell class="pr-4">
               <!-- the row itself opens the editor; this goes to the history (stop so the click doesn't do both) -->
-              <Button variant="ghost" size="icon-sm" :aria-label="t('coupons.history_aria', { code: c.code })" :title="t('coupons.history_aria', { code: c.code })" @click.stop="router.visit(`/coupons/${c.id}`)" @keydown.enter.stop @keydown.space.stop><History /></Button>
+              <WithTooltip :label="t('coupons.history_aria', { code: c.code })"><Button variant="ghost" size="icon-sm" :aria-label="t('coupons.history_aria', { code: c.code })" @click.stop="router.visit(`/coupons/${c.id}`)" @keydown.enter.stop @keydown.space.stop><History /></Button></WithTooltip>
             </TableCell>
           </TableRow>
         </TableBody>
@@ -493,7 +494,7 @@ watch(open, (v) => !v && (productQuery.value = ""));
               <Label for="cp-code">{{ t("coupons.code") }}</Label>
               <InputGroup>
                 <InputGroupInput id="cp-code" v-model="form.code" class="font-mono uppercase" :placeholder="t('coupons.code_placeholder')" autocomplete="off" :aria-invalid="!!form.errors.code" />
-                <InputGroupAddon align="inline-end"><Button type="button" variant="ghost" size="icon-sm" :aria-label="t('coupons.generate_aria')" :title="t('coupons.generate_title')" @click="generate"><Sparkles /></Button></InputGroupAddon>
+                <InputGroupAddon align="inline-end"><WithTooltip :label="t('coupons.generate_title')"><Button type="button" variant="ghost" size="icon-sm" :aria-label="t('coupons.generate_aria')" @click="generate"><Sparkles /></Button></WithTooltip></InputGroupAddon>
               </InputGroup>
               <p v-if="form.errors.code" class="text-sm text-destructive">{{ form.errors.code }}</p>
             </div>

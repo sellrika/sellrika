@@ -8,6 +8,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import WithTooltip from "./WithTooltip.vue";
 import { t } from "@/lib/i18n";
 
 const model = defineModel<string | null>({ default: null });
@@ -67,20 +68,22 @@ const pick = (hex: string | null) => {
 
 <template>
   <Popover v-model:open="open">
-    <PopoverTrigger as-child>
-      <Button type="button" variant="outline" :size="size ?? 'default'" class="gap-2 font-normal" :aria-label="ariaLabel ?? t('shared.category_color')" :title="compact ? label : undefined">
-        <span class="size-4 rounded-full border border-black/10" :style="model ? { background: model } : undefined"
-          :class="!model && 'bg-[repeating-linear-gradient(45deg,transparent_0_4px,var(--color-muted)_4px_8px)]'" />
-        <template v-if="!compact">
-          {{ label }}
-          <ChevronDown class="size-4 opacity-60" />
-        </template>
-      </Button>
-    </PopoverTrigger>
+    <WithTooltip :label="compact ? label : null">
+      <PopoverTrigger as-child>
+        <Button type="button" variant="outline" :size="size ?? 'default'" class="gap-2 font-normal" :aria-label="ariaLabel ?? t('shared.category_color')">
+          <span class="size-4 rounded-full border border-black/10" :style="model ? { background: model } : undefined"
+            :class="!model && 'bg-[repeating-linear-gradient(45deg,transparent_0_4px,var(--color-muted)_4px_8px)]'" />
+          <template v-if="!compact">
+            {{ label }}
+            <ChevronDown class="size-4 opacity-60" />
+          </template>
+        </Button>
+      </PopoverTrigger>
+    </WithTooltip>
     <PopoverContent class="w-72 p-3" align="start">
       <p class="mb-2 text-xs font-medium text-muted-foreground">{{ t("shared.pick_color") }}</p>
       <div class="grid grid-cols-5 gap-2">
-        <button v-for="p in PALETTE" :key="p.hex" type="button" :title="t(p.name)" :aria-label="t(p.name)"
+        <button v-for="p in PALETTE" :key="p.hex" type="button" :aria-label="t(p.name)"
           class="group flex flex-col items-center gap-1 rounded-md p-1 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" @click="pick(p.hex)">
           <span class="flex size-8 items-center justify-center rounded-full border border-black/10 transition-transform group-hover:scale-110" :style="{ background: p.hex }">
             <Check v-if="model?.toLowerCase() === p.hex" class="size-4 text-white drop-shadow" />
@@ -89,10 +92,12 @@ const pick = (hex: string | null) => {
         </button>
       </div>
       <div class="mt-3 flex items-center gap-2 border-t pt-3">
-        <label class="relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border hover:bg-muted" :title="t('shared.custom_color')">
-          <Palette class="size-4 text-muted-foreground" />
-          <input type="color" class="absolute inset-0 size-full cursor-pointer opacity-0" :value="model ?? '#888888'" :aria-label="t('shared.custom_color')" @input="pick(($event.target as HTMLInputElement).value)" />
-        </label>
+        <WithTooltip :label="t('shared.custom_color')">
+          <label class="relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border hover:bg-muted">
+            <Palette class="size-4 text-muted-foreground" />
+            <input type="color" class="absolute inset-0 size-full cursor-pointer opacity-0" :value="model ?? '#888888'" :aria-label="t('shared.custom_color')" @input="pick(($event.target as HTMLInputElement).value)" />
+          </label>
+        </WithTooltip>
         <Input v-model="custom" :placeholder="t('shared.hex_placeholder')" class="h-9 font-mono text-xs" maxlength="7" @keydown.enter.prevent="applyCustom" />
         <Button type="button" variant="ghost" size="sm" class="shrink-0" @click="pick(null)">{{ t("common.none") }}</Button>
       </div>

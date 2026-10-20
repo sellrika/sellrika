@@ -13,6 +13,7 @@ import {
 	Underline,
 } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
+import WithTooltip from "./WithTooltip.vue";
 import { t } from "@/lib/i18n";
 
 /**
@@ -281,28 +282,27 @@ watch(() => props.modelValue, fill);
         <option value="h3">{{ t("shared.heading3") }}</option>
       </select>
       <span class="mx-0.5 h-5 w-px bg-border" />
-      <Button
-        v-for="m in marks"
-        :key="m.cmd"
-        type="button"
-        variant="ghost"
-        size="icon"
-        class="size-8"
-        :class="active[m.cmd] && 'bg-accent text-accent-foreground'"
-        :aria-label="t(m.label)"
-        :aria-pressed="!!active[m.cmd]"
-        :title="t(m.label)"
-        @mousedown.prevent
-        @click="exec(m.cmd)"
-      >
-        <component :is="m.icon" />
-      </Button>
+      <WithTooltip v-for="m in marks" :key="m.cmd" :label="t(m.label)">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          class="size-8"
+          :class="active[m.cmd] && 'bg-accent text-accent-foreground'"
+          :aria-label="t(m.label)"
+          :aria-pressed="!!active[m.cmd]"
+          @mousedown.prevent
+          @click="exec(m.cmd)"
+        >
+          <component :is="m.icon" />
+        </Button>
+      </WithTooltip>
       <span class="mx-0.5 h-5 w-px bg-border" />
-      <Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.decrease_indent')" :title="t('shared.decrease_indent')" @mousedown.prevent @click="exec('outdent', undefined, true)"><IndentDecrease /></Button>
-      <Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.increase_indent')" :title="t('shared.increase_indent')" @mousedown.prevent @click="exec('indent', undefined, true)"><IndentIncrease /></Button>
+      <WithTooltip :label="t('shared.decrease_indent')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.decrease_indent')" @mousedown.prevent @click="exec('outdent', undefined, true)"><IndentDecrease /></Button></WithTooltip>
+      <WithTooltip :label="t('shared.increase_indent')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.increase_indent')" @mousedown.prevent @click="exec('indent', undefined, true)"><IndentIncrease /></Button></WithTooltip>
       <span class="mx-0.5 h-5 w-px bg-border" />
-      <Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_table')" :title="t('shared.insert_table')" @mousedown.prevent @click="insertTable"><Table /></Button>
-      <Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_section')" :title="t('shared.insert_section_title')" @mousedown.prevent @click="insertSection"><ListCollapse /></Button>
+      <WithTooltip :label="t('shared.insert_table')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_table')" @mousedown.prevent @click="insertTable"><Table /></Button></WithTooltip>
+      <WithTooltip :label="t('shared.insert_section_title')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_section')" @mousedown.prevent @click="insertSection"><ListCollapse /></Button></WithTooltip>
     </div>
 
     <!-- Section tools: only while the caret is in a collapsible section. -->

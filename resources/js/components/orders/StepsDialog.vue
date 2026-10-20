@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import ColorPicker from "@/components/ColorPicker.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { t } from "@/lib/i18n";
 import { defaultSteps, FULFILLMENT_NEW_COLOR } from "@constants/Order.Constant";
 import { FULFILLMENT, LOCKED_STEPS, stepColor, stepLabel } from "@/lib/orders";
@@ -189,17 +190,18 @@ async function save() {
       <form class="space-y-3 pt-1" @submit.prevent="save">
         <ol ref="list" class="space-y-2">
           <li v-for="(s, i) in rows" :key="s.key" class="flex items-center gap-2 rounded-lg bg-popover">
-            <button
-              type="button"
-              :data-grip="s.key"
-              class="flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
-              :aria-label="t('orders.steps_reorder', { name: nameOf(s) })"
-              :title="t('orders.steps_reorder', { name: nameOf(s) })"
-              @keydown.up.prevent="nudge(i, -1)"
-              @keydown.down.prevent="nudge(i, 1)"
-            >
-              <GripVertical class="size-4" />
-            </button>
+            <WithTooltip :label="t('orders.steps_reorder', { name: nameOf(s) })">
+              <button
+                type="button"
+                :data-grip="s.key"
+                class="flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
+                :aria-label="t('orders.steps_reorder', { name: nameOf(s) })"
+                @keydown.up.prevent="nudge(i, -1)"
+                @keydown.down.prevent="nudge(i, 1)"
+              >
+                <GripVertical class="size-4" />
+              </button>
+            </WithTooltip>
             <span class="w-5 shrink-0 text-right text-sm tabular-nums text-muted-foreground">{{ i + 1 }}</span>
             <Input
               v-model="s.label"
@@ -208,7 +210,7 @@ async function save() {
               :aria-label="t('orders.steps_name')"
             />
             <ColorPicker v-model="s.color" size="icon" compact :aria-label="t('orders.steps_color', { name: nameOf(s) })" />
-            <Button type="button" variant="ghost" size="icon" :class="LOCKED_STEPS.includes(s.key) && 'invisible'" :disabled="LOCKED_STEPS.includes(s.key)" :aria-label="t('orders.steps_remove', { name: nameOf(s) })" @click="remove(i)"><Trash2 /></Button>
+            <WithTooltip :label="t('orders.steps_remove', { name: nameOf(s) })"><Button type="button" variant="ghost" size="icon" :class="LOCKED_STEPS.includes(s.key) && 'invisible'" :disabled="LOCKED_STEPS.includes(s.key)" :aria-label="t('orders.steps_remove', { name: nameOf(s) })" @click="remove(i)"><Trash2 /></Button></WithTooltip>
           </li>
         </ol>
         <div class="flex flex-wrap gap-2">

@@ -30,6 +30,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import MicrosoftConnect from "@/components/MicrosoftConnect.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import type { GoogleConfig } from "@/lib/google";
 import { RAWBT_APP, rawbtCols, rawbtOn } from "@/lib/rawbt";
 import { t } from "@/lib/i18n";
@@ -308,9 +309,11 @@ const cols = computed({
                     {{ p.last_used_at ? t("settings.passkey_last_used", { date: fmtDate(p.last_used_at) }) : t("settings.passkey_never_used") }}
                   </p>
                 </div>
-                <Button type="button" variant="ghost" size="icon" :aria-label="t('settings.passkey_delete', { name: passkeyLabel(p) })" @click="removePasskey(p)">
-                  <Trash2 />
-                </Button>
+                <WithTooltip :label="t('settings.passkey_delete', { name: passkeyLabel(p) })">
+                  <Button type="button" variant="ghost" size="icon" :aria-label="t('settings.passkey_delete', { name: passkeyLabel(p) })" @click="removePasskey(p)">
+                    <Trash2 />
+                  </Button>
+                </WithTooltip>
               </li>
             </ul>
             <p v-else class="text-sm text-muted-foreground">{{ t("settings.passkeys_empty") }}</p>
