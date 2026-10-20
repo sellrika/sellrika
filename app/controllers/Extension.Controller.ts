@@ -1,4 +1,5 @@
 import { Hooks } from "@xcore/hooks/Hooks";
+import { Url } from "@xcore/http/Url";
 import { Auth } from "@xcore/auth/Auth";
 import { ctx } from "@xcore/http/Context";
 import { HttpRequest, Query } from "@xcore/http/Request";
@@ -19,6 +20,8 @@ import {
 import { validate, type Errors } from "@validators/validate";
 import { ExtensionHandles } from "@controllers/support/Extension.Handles";
 import type { User } from "@models/User";
+import { StorefrontSupport } from "@controllers/support/Storefront.Support";
+import { StoreViewService } from "@services/sales/StoreView.Service";
 
 /**
  * Admin › Global Extensions.
@@ -40,6 +43,8 @@ export class ExtensionController {
 		private shops: ShopRepository,
 		private store: StoreService,
 		private handles: ExtensionHandles,
+		private site: StorefrontSupport,
+		private view: StoreViewService,
 	) {}
 
 	/**
@@ -233,6 +238,68 @@ export class ExtensionController {
 				handles: this.handles.for(shop.id),
 				customer: await this.#storeCustomer(req, shop),
 			},
+		);
+	}
+
+	/**
+	 * GET /* on a store's host — a page an extension brings to the store
+	 * (manifest `storefront.path`, like `/blog` and `/blog/my-post`).
+	 * Every route of the app wins over it: this is the last one tried.
+	 * The extension's `publicRoutes` answer, with `ctx.storefront.page()`
+	 * to send the whole page they built.
+	 * @param req The current request.
+	 * @returns The extension's page. 404 as plain text when no store or
+	 *   no extension owns the address, the theme's not-found page when
+	 *   the extension has no such page.
+	 */
+	async storePage(req: BunRequest) {
+		const s = await this.site.find(req);
+		if (!s) return HttpResponse.notFoundText();
+		const { pathname } = new URL(req.url);
+		const key = await this.extensions.storeOwner(
+			s.shop,
+			pathname.split("/")[1] ?? "",
+		);
+		if (!key) return HttpResponse.notFoundText();
+		const { shop, customer } = s;
+		const res = await this.extensions.handle(
+			"publicRoutes",
+			shop,
+			key,
+			req,
+			pathname,
+			{
+				actor: () => this.#storeActor(shop),
+				handles: {
+					...this.handles.for(shop.id),
+					storefront: { page: (page) => this.#own(page) },
+				},
+				customer: customer && {
+					id: customer.id,
+					name: customer.name,
+					email: customer.email,
+				},
+			},
+		);
+		return res.status === 404 ? this.view.notFound(req, s) : res;
+	}
+
+	/**
+	 * Send the page an extension built by itself: its whole HTML
+	 * document, head and all. No theme is around it.
+	 * It is not cleaned: `sanitizeHtml` would drop the page's own
+	 * `<head>`, `<style>` and `<script>`. An extension's code is trusted
+	 * (only the platform admin adds one). Text a person typed is the
+	 * extension's job: `ctx.html.clean()`.
+	 * Its pictures load from the app's own host, like a product's.
+	 * @param page What the extension gave `ctx.storefront.page()`.
+	 * @returns The HTML response.
+	 */
+	#own(page: unknown) {
+		const p = (page ?? {}) as Record<string, unknown>;
+		return HttpResponse.html(
+			Url.uploadsIn(String(p.html ?? "")),
+			p.status === 404 ? 404 : 200,
 		);
 	}
 

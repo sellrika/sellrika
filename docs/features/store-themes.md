@@ -105,7 +105,7 @@ Every template sees these, the layout too. They are set with `renderer.share()`.
 - `name`, `slug`, `base`, `logo`, `currency`
 - `display`, `currencies` (the currency switcher)
 - `languages` (the footer language switcher offers only these)
-- `pages[{ slug, title }]` (the footer page links)
+- `pages[{ slug, title }]` (the footer page links). The shop's own pages come first. Then the links its extensions add: their `slug` is a path, like `/blog`. `url.page(slug)` gives the right address for both.
 - `payments`, `payment_label`
 - `login`, `customer`
 - `country`, `pickup`, `guided_address`, `delivery_zones`

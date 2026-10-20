@@ -272,7 +272,7 @@ function submit() {
 
             <div class="space-y-1.5">
               <Label>{{ t("products.description") }}</Label>
-              <RichText v-model="form.description" :invalid="!!form.errors.description" />
+              <RichText v-model="form.description" images="products" :invalid="!!form.errors.description" />
               <p class="text-xs text-muted-foreground">{{ t("products.description_hint") }}</p>
               <p v-if="form.errors.description" class="text-sm text-destructive">{{ form.errors.description }}</p>
             </div>

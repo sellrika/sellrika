@@ -233,7 +233,8 @@ export class StoreCatalogService {
 			id: p.id,
 			name: p.name,
 			slug: p.slug,
-			description: p.description,
+			// its pictures load from the app's host, like the gallery's
+			description: Url.uploadsIn(p.description),
 			amount: p.amount,
 			unit: p.unit,
 			extra: p.extra,

@@ -154,7 +154,7 @@ It never holds an email, a cost or a key. Only what the store page already shows
 
 | Host | What it lists |
 |---|---|
-| A store's host (its subdomain or its own domain) | That shop's store, the catalog pages past the first (`?page=N`), the product pages and the custom pages |
+| A store's host (its subdomain or its own domain) | That shop's store, the catalog pages past the first (`?page=N`), the product pages, the custom pages and the pages its extensions bring (`ExtensionService.storePaths`, see [extensions.md](extensions.md) › Store pages) |
 | The main host | The paths in `Hooks.sitePaths`. This list is empty in the open-source app. An add-on may fill it. |
 
 The answer is cached for one hour: `Cache-Control: public, max-age=3600` (`SEO_CACHE_CONTROL`).

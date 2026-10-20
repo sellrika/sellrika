@@ -245,10 +245,14 @@ test("manual payments: bank transfer at the checkout → unpaid order → staff 
 		admin.getByText("Online store settings saved").last(),
 	).toBeVisible();
 	await admin.getByLabel("Bank transfer payments").click();
+	// the first toast may still show, so wait for the save request itself
+	const settingsSaved = admin.waitForResponse(
+		(r) =>
+			r.request().method() === "PUT" &&
+			new URL(r.url()).pathname === "/online-store",
+	);
 	await admin.getByRole("button", { name: "Save settings" }).click();
-	await expect(
-		admin.getByText("Online store settings saved").last(),
-	).toBeVisible();
+	await settingsSaved;
 	await admin.goto("/online-store?section=payments");
 	await expect(admin.getByLabel("Cash on delivery payments")).toBeChecked();
 	await expect(admin.getByLabel("Bank transfer payments")).toBeChecked();

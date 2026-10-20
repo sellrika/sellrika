@@ -2,9 +2,8 @@ import { defineConfig } from "@playwright/test";
 import { ADMIN } from "./e2e/helpers";
 import {
 	BASE_PORT,
-	CLOUD_DIR,
-	CLOUD_SPECS,
 	cloudEnv,
+	outsideDir,
 	portOf,
 	SPECS,
 	tmpOf,
@@ -54,9 +53,9 @@ export default defineConfig({
 	projects: SPECS.map((spec) => ({
 		name: spec,
 		testMatch: `${spec}.spec.ts`,
-		// an add-on's specs sit in its own folder, which git ignores
-		...(CLOUD_SPECS.includes(spec) && {
-			testDir: CLOUD_DIR,
+		// an add-on's specs and our own extensions' sit in their own folders, which git ignores
+		...(outsideDir(spec) && {
+			testDir: outsideDir(spec)!,
 			respectGitIgnore: false,
 		}),
 		use: { baseURL: `http://localhost:${portOf(spec)}` },

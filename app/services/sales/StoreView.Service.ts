@@ -386,9 +386,10 @@ export class StoreViewService {
 	 * @returns The `store` variable of every template.
 	 */
 	async storeInfo(s: Storefront, running?: RunningExtension[]) {
-		const [label, pages, payments, addresses, free] = await Promise.all([
+		const [label, own, links, payments, addresses, free] = await Promise.all([
 			this.store.paymentLabel(s.shop, running),
 			this.pages.links(s.shop.id),
+			this.extensions.storeLinks(s.shop, running),
 			this.store.paymentOptions(s.shop, running),
 			s.customer ? this.auth.addresses(s.customer) : [],
 			this.limits.isFree(s.shop.owner_id),
@@ -405,7 +406,11 @@ export class StoreViewService {
 			 */
 			currencies: s.currencies,
 			display: s.display,
-			pages,
+			/**
+			 * The shop's own pages, then the links its extensions add.
+			 * A link's `slug` is a path (`/blog`): `url.page()` knows both.
+			 */
+			pages: [...own, ...links],
 			payments,
 			/**
 			 * How customers may sign in (null = accounts off), and who is signed in.
@@ -487,6 +492,8 @@ export class StoreViewService {
 					return `${base}/p/${typeof p === "string" ? p : p.slug}`;
 				},
 				page: function page(slug: string) {
+					// a link an extension added is a path of the store itself
+					if (slug.startsWith("/")) return `${base}${slug}`;
 					return `${base}/pages/${slug}`;
 				},
 				checkout: `${base}/checkout`,

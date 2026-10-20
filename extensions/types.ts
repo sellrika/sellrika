@@ -811,6 +811,48 @@ export type RouteContext = {
 	 */
 	mail: ExtensionMail;
 	/**
+	 * HTML a person wrote, made safe to show.
+	 */
+	html: {
+		/**
+		 * Cleans HTML with the app's own cleaner, the one product
+		 * descriptions pass: scripts, frames, forms and `on…` handlers go,
+		 * links keep only http(s), mailto, tel and paths of the site.
+		 * Clean what a person typed before you save it.
+		 * @param html The HTML from an editor.
+		 * @returns The cleaned HTML.
+		 */
+		clean: (html: string) => Promise<string>;
+	};
+	/**
+	 * The pictures your browser code uploaded (`api.upload`).
+	 */
+	uploads: {
+		/**
+		 * Tells the app you stopped using these pictures (a post was
+		 * deleted, a cover was replaced). Call it after you saved.
+		 * Each one leaves storage when nothing else uses it: not your
+		 * data, not a product. Paths of another shop are ignored.
+		 * @param urls The `/uploads/…` paths.
+		 */
+		drop: (urls: string[]) => Promise<void>;
+	};
+	/**
+	 * Store pages only: a request for a page below your manifest's
+	 * `storefront.path`, on the host of the shop's online store.
+	 */
+	storefront?: {
+		/**
+		 * Sends the page you built: the whole HTML document, with its
+		 * own head, header, footer, CSS and scripts. No theme is around it.
+		 * It is not cleaned. Put text a person typed through
+		 * `html.clean` first.
+		 * @param page The page. See `StorePage`.
+		 * @returns The response to return from your handler.
+		 */
+		page: (page: StorePage) => Response;
+	};
+	/**
 	 * Public routes only: the customer signed in to the shop's online
 	 * store, or null for a guest. Read it from here, never from the
 	 * request: a buyer must not ask for another customer's data.
@@ -878,6 +920,61 @@ export type RouteContext = {
 		};
 	};
 /**
+ * A page of your extension on the shop's online store
+ * (`ctx.storefront.page`). You build all of it.
+ */
+export type StorePage = {
+	/**
+	 * The whole HTML document: `<!doctype html>`, `<head>` (title, head
+	 * tags for search engines, CSS) and `<body>`.
+	 * A picture path `/uploads/…` in an `<img src>` loads from the app's
+	 * own host.
+	 */
+	html: string;
+	/**
+	 * 404 = the page says something is not there. Default 200.
+	 */
+	status?: 200 | 404;
+};
+
+/**
+ * What the functions of `export const storefront` get.
+ */
+export type StorefrontContext = {
+	shop: Shop;
+	config: Config;
+	t: Translate;
+	locale: string;
+	data: ExtensionData;
+};
+
+/**
+ * `export const storefront` of the entry module: what your pages add to
+ * the shop's online store. The manifest must have `storefront.path`
+ * (`"blog"`): your `publicRoutes` then answer `GET /blog` and every path
+ * below it on the store's host. A page of the app itself always wins.
+ * Both functions run on store requests: keep them to one read of
+ * `ctx.data`. One that throws is logged and counts as an empty list.
+ */
+export type StorefrontHooks = {
+	/**
+	 * Links for the store's menu and footer, next to the shop's own
+	 * pages. At most 5. Each `path` must be your path or below it.
+	 * Return none while there is nothing to read.
+	 */
+	links?: (
+		ctx: StorefrontContext,
+	) =>
+		| Promise<{ title: string; path: string }[]>
+		| { title: string; path: string }[];
+	/**
+	 * Paths for the store's `sitemap.xml`, at most 5000. Each must be
+	 * your path or below it.
+	 */
+	sitemap?: (ctx: StorefrontContext) => Promise<string[]> | string[];
+};
+
+/**
  * The route maps an extension exports.
  * `export const routes` are staff routes, at `/ext/<key>/…`.
  * `export const publicRoutes` are storefront routes, at
@@ -932,6 +1029,17 @@ export type Api = {
 	 * @param kind How it looks. Defaults to a success toast.
 	 */
 	toast: (message: string, kind?: "success" | "error" | "info") => void;
+	/**
+	 * Uploads one picture to the shop's own storage, like a product picture.
+	 * Managers and admins only. It is made smaller when it is big.
+	 * Keep the path in your data (`ctx.data`): a picture is kept as long
+	 * as something there names it. Tell the app when you stop using one
+	 * (`ctx.uploads.drop`).
+	 * @param file The picture (JPEG, PNG, WebP, GIF or AVIF).
+	 * @returns `{ url }` with its path (`/uploads/…`), or `{ error }`
+	 * with the text to show.
+	 */
+	upload: (file: File) => Promise<{ url: string } | { error: string }>;
 	/**
 	 * Plain DOM elements dressed like the app's own form components.
 	 * See the extension guide › Looks like the app.
@@ -1047,6 +1155,29 @@ export type Api = {
 		setAmount: (cents: number) => void;
 		blocked: () => boolean;
 		ref: () => string | null;
+		destroy: () => void;
+	};
+	/**
+	 * The app's own text editor, the one product descriptions use: text
+	 * styles, lists, tables and pictures. A picture the person adds is
+	 * uploaded to the shop's storage (like `api.upload`) and the HTML holds
+	 * its `/uploads/…` path, never the picture's data.
+	 * Put `el` on your page and call `destroy()` when the page goes.
+	 * Clean the HTML on your route before you keep it (`ctx.html.clean`).
+	 * @param opts.value The HTML to start with.
+	 * @param opts.label The editor's name for screen readers.
+	 * @param opts.onChange Called with the HTML after every change.
+	 * @returns The element and its controls: `value()` is the HTML now,
+	 * `set(html)` replaces it.
+	 */
+	richText: (opts: {
+		value?: string;
+		label?: string;
+		onChange?: (html: string) => void;
+	}) => {
+		el: HTMLElement;
+		value: () => string;
+		set: (html: string) => void;
 		destroy: () => void;
 	};
 };

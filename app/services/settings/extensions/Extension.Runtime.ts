@@ -380,6 +380,7 @@ export class ExtensionRuntime {
 				fullscreen: page.fullscreen,
 				breadcrumb: page.breadcrumb,
 				fill: page.fill,
+				centered: page.centered,
 			},
 			script: assetUrl(active.ext, page.script),
 			strings: stringsOf(active.ext),

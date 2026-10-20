@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { amount, login, search, submitProduct } from "./helpers";
+import { amount, login, search, submitProduct, TINY_PNG } from "./helpers";
 
 // Catalogue admin: categories, products (edit/search/pagination/barcodes), POS search + scanning,
 // payment-method editing, and a second shop (isolation, currency, delete rules).
@@ -302,6 +302,35 @@ test("the description editor stores rich text, and every product view renders it
 			.getByRole("textbox", { name: "Description" })
 			.locator("details[open] summary"),
 	).toHaveText("Storage"); // the section, still open by default
+
+	// the picture tool: the file is uploaded and the text keeps its path, never the picture's data
+	const stored = page.getByRole("textbox", { name: "Description" });
+	await stored.click();
+	const chooser = page.waitForEvent("filechooser");
+	await page.getByRole("button", { name: "Insert picture" }).click();
+	await (await chooser).setFiles(TINY_PNG);
+	const picture = stored.locator("figure img");
+	await expect(picture).toHaveAttribute("src", /^\/uploads\/\d+\/products\//);
+	await picture.click();
+	await page.getByLabel("Describe the picture (alt text)").fill("A cracker");
+	await page.getByRole("button", { name: "Add caption" }).click();
+	await expect(stored.locator("figcaption")).toHaveText("Caption");
+	await page.getByRole("button", { name: "Remove caption" }).click();
+	await expect(stored.locator("figcaption")).toHaveCount(0);
+	// a picture pasted as data is taken out again
+	await stored.evaluate((el) => {
+		el.insertAdjacentHTML(
+			"beforeend",
+			'<p><img src="data:image/png;base64,iVBORw0KGgo="></p>',
+		);
+		el.dispatchEvent(new Event("input", { bubbles: true }));
+	});
+	await expect(stored.locator("img")).toHaveCount(1);
+	await submitProduct(page);
+	await page.reload();
+	await expect(
+		page.getByRole("textbox", { name: "Description" }).locator("img"),
+	).toHaveAttribute("alt", "A cracker");
 
 	// the POS product sheet renders it as real markup
 	await page.goto("/pos");

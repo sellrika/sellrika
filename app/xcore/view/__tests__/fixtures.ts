@@ -173,6 +173,7 @@ export const view = new StoreViewService(
 	{
 		storeTheme: async () => null,
 		storeScripts: async () => [],
+		storeLinks: async () => [],
 		allActive: async () => [],
 	} as never,
 	{ isFree: async () => false } as never,

@@ -11,6 +11,9 @@ The **Products** page holds everything your shop sells. The **Categories** page 
 5. Optional: fill **SKU**, **Barcode**, **Categories**, **Description**, **Images**, **Unit** and **Amount**.
 6. Click **Save product**. You stay on the form, so you can keep editing.
 
+To put a picture inside the **Description**, click the picture button in its toolbar, or paste or drop a picture.
+Click the picture to change its width (drag a corner of the picture), to put it left, in the middle or right, to move it up or down, to describe it, to add a caption or to delete it.
+
 ## How to set the prices
 
 All three prices are in the **Pricing** box of the **General** tab.

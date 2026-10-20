@@ -185,6 +185,7 @@ How it works:
 | `storeLogin` | 20 per 10 min | The store's customer sign-in. Every call asks Firebase to check a token. |
 | `storeUnsubscribe` | 20 per 10 min | The store's unsubscribe button. A script would try tokens. |
 | `storeExtension` | 120 per min | Public routes an extension adds to the store (`/store/:slug/ext/:key/*`). |
+| `storePage` | 300 per min | The pages an extension brings to a store (`GET /*`, the last route), and every address nothing answers. |
 | `marketingTest` | 10 per 10 min | "Send test to me" on a campaign. Each one sends an email. |
 | `upload` | 60 per 10 min | Image uploads of 5 MB each. |
 | `mailTest` | 5 per hour | "Send a test email". It is the one endpoint that makes the server mail any address. |
