@@ -16,9 +16,11 @@ const {
 	hostedManifest,
 	HOSTED_MODULE,
 	pay,
+	removeGateways,
 	resetPay,
 	useGateway,
 } = await import("./fakeGateway");
+afterAll(removeGateways);
 const { ExtensionService: _ExtensionService } = await import(
 	"@services/settings/extensions/Extension.Service"
 );
