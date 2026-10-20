@@ -3,6 +3,7 @@
 // The slot is the trigger: it gets the tooltip's handlers, so it must render one element.
 // It brings its own provider, so it also works on a page without the app layout.
 // A disabled button gets no pointer events: wrap a <span> around it to keep its tooltip.
+// Never wrap a popover or menu trigger: its menu would anchor to the tooltip. Put this inside the trigger.
 import {
 	Tooltip,
 	TooltipContent,

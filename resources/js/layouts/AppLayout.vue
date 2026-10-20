@@ -434,17 +434,20 @@ const initials = computed(() =>
       <!-- Shop switcher (doubles as the sidebar header) -->
       <div class="flex h-14 items-center gap-1" :class="collapsed ? 'justify-center px-0' : 'pl-2 pr-1'">
         <DropdownMenu>
-          <WithTooltip :label="collapsed ? shop?.name : null" side="right">
-            <DropdownMenuTrigger as-child>
-              <Button variant="ghost" class="h-auto gap-2 py-1.5" :class="collapsed ? 'justify-center px-0' : 'min-w-0 flex-1 justify-start px-1.5'" :aria-label="t('nav.shop_aria', { name: shop?.name ?? '' })">
-                <ShopLogo :shop="shop" class="size-7 shrink-0" />
-                <template v-if="!collapsed">
-                  <span class="min-w-0 flex-1 truncate text-left text-sm font-semibold">{{ shop?.name ?? t("nav.no_shop") }}</span>
-                  <ChevronsUpDown class="size-4 shrink-0 opacity-60" />
-                </template>
-              </Button>
-            </DropdownMenuTrigger>
-          </WithTooltip>
+          <DropdownMenuTrigger as-child>
+            <Button variant="ghost" class="h-auto gap-2 py-1.5" :class="collapsed ? 'justify-center px-0' : 'min-w-0 flex-1 justify-start px-1.5'" :aria-label="t('nav.shop_aria', { name: shop?.name ?? '' })">
+              <!-- the tooltip sits inside the trigger: around it, the menu would anchor to the tooltip -->
+              <WithTooltip :label="collapsed ? shop?.name : null" side="right">
+                <span class="flex min-w-0 flex-1 items-center gap-2">
+                  <ShopLogo :shop="shop" class="size-7 shrink-0" />
+                  <template v-if="!collapsed">
+                    <span class="min-w-0 flex-1 truncate text-left text-sm font-semibold">{{ shop?.name ?? t("nav.no_shop") }}</span>
+                    <ChevronsUpDown class="size-4 shrink-0 opacity-60" />
+                  </template>
+                </span>
+              </WithTooltip>
+            </Button>
+          </DropdownMenuTrigger>
           <DropdownMenuContent class="w-56" align="start" :side="collapsed ? 'right' : 'bottom'">
             <DropdownMenuLabel class="text-xs font-normal text-muted-foreground">{{ t("nav.switch_shop") }}</DropdownMenuLabel>
             <DropdownMenuItem v-for="s in shops" :key="s.id" class="gap-2 py-2" @select="router.post(`/shops/${s.id}/switch`)">
@@ -505,17 +508,19 @@ const initials = computed(() =>
       <!-- the user menu + the collapse toggle (beside it when open, above it when collapsed) -->
       <div class="flex items-center gap-1.5 p-2" :class="collapsed ? 'flex-col-reverse' : 'px-3'">
         <DropdownMenu>
-          <WithTooltip :label="t(`nav.${user?.role ?? 'cashier'}`)" :side="collapsed ? 'right' : 'top'">
-            <DropdownMenuTrigger as-child>
-              <button type="button" class="flex items-center gap-2 rounded-full border bg-muted/40 p-1 text-[13px] font-medium transition-colors hover:bg-accent" :class="!collapsed && 'min-w-0 flex-1 pr-3'" :aria-label="user?.name">
-                <Avatar class="size-6 shrink-0"><AvatarFallback class="text-[11px] font-semibold">{{ initials.slice(0, 1) }}</AvatarFallback></Avatar>
-                <template v-if="!collapsed">
-                  <span class="min-w-0 flex-1 truncate text-left">{{ user?.name }}</span>
-                  <ChevronDown class="size-3.5 shrink-0 opacity-60" />
-                </template>
-              </button>
-            </DropdownMenuTrigger>
-          </WithTooltip>
+          <DropdownMenuTrigger as-child>
+            <button type="button" class="flex items-center gap-2 rounded-full border bg-muted/40 p-1 text-[13px] font-medium transition-colors hover:bg-accent" :class="!collapsed && 'min-w-0 flex-1 pr-3'" :aria-label="user?.name">
+              <WithTooltip :label="t(`nav.${user?.role ?? 'cashier'}`)" :side="collapsed ? 'right' : 'top'">
+                <span class="flex min-w-0 flex-1 items-center gap-2">
+                  <Avatar class="size-6 shrink-0"><AvatarFallback class="text-[11px] font-semibold">{{ initials.slice(0, 1) }}</AvatarFallback></Avatar>
+                  <template v-if="!collapsed">
+                    <span class="min-w-0 flex-1 truncate text-left">{{ user?.name }}</span>
+                    <ChevronDown class="size-3.5 shrink-0 opacity-60" />
+                  </template>
+                </span>
+              </WithTooltip>
+            </button>
+          </DropdownMenuTrigger>
           <DropdownMenuContent class="w-52" :side="collapsed ? 'right' : 'top'" align="start">
             <DropdownMenuLabel class="font-normal">
               <div class="text-sm font-medium">{{ user?.name }}</div>

@@ -68,18 +68,23 @@ const pick = (hex: string | null) => {
 
 <template>
   <Popover v-model:open="open">
-    <WithTooltip :label="compact ? label : null">
-      <PopoverTrigger as-child>
-        <Button type="button" variant="outline" :size="size ?? 'default'" class="gap-2 font-normal" :aria-label="ariaLabel ?? t('shared.category_color')">
+    <PopoverTrigger as-child>
+      <Button type="button" variant="outline" :size="size ?? 'default'" class="gap-2 font-normal" :aria-label="ariaLabel ?? t('shared.category_color')">
+        <!-- compact: the tooltip fills the button from inside; around the trigger, the popover would anchor to it -->
+        <WithTooltip v-if="compact" :label="label">
+          <span class="grid size-full place-items-center">
+            <span class="size-4 rounded-full border border-black/10" :style="model ? { background: model } : undefined"
+              :class="!model && 'bg-[repeating-linear-gradient(45deg,transparent_0_4px,var(--color-muted)_4px_8px)]'" />
+          </span>
+        </WithTooltip>
+        <template v-else>
           <span class="size-4 rounded-full border border-black/10" :style="model ? { background: model } : undefined"
             :class="!model && 'bg-[repeating-linear-gradient(45deg,transparent_0_4px,var(--color-muted)_4px_8px)]'" />
-          <template v-if="!compact">
-            {{ label }}
-            <ChevronDown class="size-4 opacity-60" />
-          </template>
-        </Button>
-      </PopoverTrigger>
-    </WithTooltip>
+          {{ label }}
+          <ChevronDown class="size-4 opacity-60" />
+        </template>
+      </Button>
+    </PopoverTrigger>
     <PopoverContent class="w-72 p-3" align="start">
       <p class="mb-2 text-xs font-medium text-muted-foreground">{{ t("shared.pick_color") }}</p>
       <div class="grid grid-cols-5 gap-2">
