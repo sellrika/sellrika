@@ -213,7 +213,7 @@ Guides: `docs/guides/custom-domain.md`, `docs/guides/firebase-setup.md`, `docs/g
 - **Extensions never get raw SQL.** They keep data in `ctx.data`. They get the REST API as functions, built from the same routes.
 - **An extension runs** only when it is in the catalog, enabled for all shops, installed, enabled by the shop, and every required field is filled.
 - **Built-in extensions** are read raw in development and from `build/extensions` in production. `bunx playwright test <file>` does not build: run `bun run build` first after a change.
-- **An extension's store pages** (manifest `storefront.path`) are served by the last route, `GET /*`. Every route of the app wins over it. The page is drawn by `ctx.storefront.page()`, which always cleans the body.
+- **An extension's store pages** (manifest `storefront.path`) are served by the last route, `GET /*`. Every route of the app wins over it. The extension builds the whole HTML page itself, with no theme around it, and sends it with `ctx.storefront.page({ html })`. It is not cleaned: typed text goes through `ctx.html.clean()` first.
 - **Rich text never holds picture data.** A picture is uploaded first; the text keeps its `/uploads/…` path or an https link. On a store page it is loaded from the app's own host (`Url.uploadsIn`), never the store's.
 - **A new extension event** needs `EXTENSION_EVENTS`, `ExtensionEvents`, `extensions/types.ts` and the `emit()` call. A new slot needs `EXTENSION_SLOTS`, an `<ExtensionSlot>` and `SlotContexts`.
 - **An API route carries its own docs.** `routes/api.ts` registers both. The OpenAPI file, the MCP tools and the extension functions are all built from it.

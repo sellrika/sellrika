@@ -843,13 +843,14 @@ export type RouteContext = {
 	 */
 	storefront?: {
 		/**
-		 * Draws your page inside the shop's theme: its header, footer,
-		 * colours and font, with the page's own head tags.
-		 * The body is cleaned like `html.clean` does, always.
-		 * @param page What the page shows. See `StorePage`.
+		 * Sends the page you built: the whole HTML document, with its
+		 * own head, header, footer, CSS and scripts. No theme is around it.
+		 * It is not cleaned. Put text a person typed through
+		 * `html.clean` first.
+		 * @param page The page. See `StorePage`.
 		 * @returns The response to return from your handler.
 		 */
-		page: (page: StorePage) => Promise<Response>;
+		page: (page: StorePage) => Response;
 	};
 	/**
 	 * Public routes only: the customer signed in to the shop's online
@@ -920,57 +921,16 @@ export type RouteContext = {
 	};
 /**
  * A page of your extension on the shop's online store
- * (`ctx.storefront.page`).
+ * (`ctx.storefront.page`). You build all of it.
  */
 export type StorePage = {
 	/**
-	 * The page's heading and the start of its `<title>`.
-	 * At most 200 characters.
+	 * The whole HTML document: `<!doctype html>`, `<head>` (title, head
+	 * tags for search engines, CSS) and `<body>`.
+	 * A picture path `/uploads/…` in an `<img src>` loads from the app's
+	 * own host.
 	 */
-	title: string;
-	/**
-	 * The page's HTML. It is cleaned before it is shown.
-	 */
-	body: string;
-	/**
-	 * CSS for your page, printed in a `<style>` next to the body.
-	 */
-	css?: string;
-	/**
-	 * The description for search engines and shared links, at most 300
-	 * characters. Left out = the start of the body's text.
-	 */
-	description?: string;
-	/**
-	 * The picture of a shared link: a path `api.upload` gave you.
-	 * Left out = the shop's logo.
-	 */
-	image?: string | null;
-	/**
-	 * The page's address for search engines, when it is not the path of
-	 * the request: `"/blog?page=2"`.
-	 */
-	canonical?: string;
-	/**
-	 * True = search engines must not list the page.
-	 */
-	noindex?: boolean;
-	/**
-	 * How much of the page the theme draws.
-	 * `"page"` (default): the theme's own page box, with the title as
-	 * its heading and a back link. Good for a simple text page.
-	 * `"full"`: only the theme's header and footer. Your body is the
-	 * whole page between them: bring your own heading and back link.
-	 * The theme's colours are CSS variables: `--store-fg`, `--store-bg`,
-	 * `--store-muted`, `--store-line`, `--store-surface`, `--store-accent`,
-	 * `--store-on-accent`, `--store-font-heading`.
-	 */
-	frame?: "page" | "full";
-	/**
-	 * The link over the page, in place of the theme's "Back to shop":
-	 * a post leads back to its list. `path` is a path of the store.
-	 */
-	back?: { title: string; path: string };
+	html: string;
 	/**
 	 * 404 = the page says something is not there. Default 200.
 	 */

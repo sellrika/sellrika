@@ -31,7 +31,6 @@ resources/views/
   store/                      shared by every theme. A theme never copies these
     document.edge             the only <html>: head (SEO), theme CSS, the page, data island, scripts
     checkout.edge, done.edge  the payment pages (a Vue island mounts inside them)
-    extension.edge            a page an extension draws by itself, inside the theme's layout
     index.ts                  imports the shared .edge files as text
     partials/head.edge        title, canonical, og/twitter, JSON-LD, GA/Pixel
     partials/order.edge       optional order card (status steps, tracking, lines, totals)
@@ -136,7 +135,7 @@ Pass what the layout needs as component props.
 |---|---|
 | home | `catalog { data, total, page, per_page, last_page }`, `counts` (product count per category id, `all` = every product), `featured[]`, `categories[{ id, name, color, count }]`, `filters { q, category, sort, stock }`, `sorts[{ value, label }]`, `pager { prev, next, pages[{ n, url, current }] }` |
 | product | `product`, `related[]`, `gallery[]` (image URLs), `range { min, max }` or null |
-| page | `title`, `body` (sanitised HTML, print with `{{{ }}}`), `css` (safe to print inside `<style>`), `back { title, url }` (the page's own back link, for a page an extension brings; null = lead back to the shop) |
+| page | `title`, `body` (sanitised HTML, print with `{{{ }}}`), `css` (safe to print inside `<style>`) |
 | track | `query { code, contact }`, `order` (with `instructions`) or null, `error` or null |
 | account | `orders` (paged) or null, `states` (for the address fields), `errors {}`, `old {}` (posted values after an error), `tab`, `saved` (true right after the details form was saved: say "Saved") |
 | order | `order` (with `instructions`) |

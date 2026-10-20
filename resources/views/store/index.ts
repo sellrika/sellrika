@@ -7,7 +7,6 @@
 import document from "./document.edge" with { type: "text" };
 import checkout from "./checkout.edge" with { type: "text" };
 import done from "./done.edge" with { type: "text" };
-import extension from "./extension.edge" with { type: "text" };
 import head from "./partials/head.edge" with { type: "text" };
 import order from "./partials/order.edge" with { type: "text" };
 import address from "./partials/address.edge" with { type: "text" };
@@ -16,7 +15,6 @@ export default {
 	document,
 	checkout,
 	done,
-	extension,
 	"partials/head": head,
 	"partials/order": order,
 	"partials/address": address,

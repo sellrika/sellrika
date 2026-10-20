@@ -230,10 +230,10 @@ export type ExtensionOwnHandles = {
 	 */
 	uploads: { drop: (urls: string[]) => Promise<void> };
 	/**
-	 * Store pages only (manifest `storefront`): draw a page of the
-	 * extension inside the shop's theme.
+	 * Store pages only (manifest `storefront`): send the whole page
+	 * the extension built. No theme is around it.
 	 */
-	storefront?: { page: (page: unknown) => Promise<Response> };
+	storefront?: { page: (page: unknown) => Response };
 };
 
 /**

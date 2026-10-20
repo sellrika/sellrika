@@ -33,7 +33,7 @@ const { zip } = await import("@helpers/zip");
 
 /*
  * The pages an extension brings to a shop's online store (manifest
- * `storefront`): who owns an address, the themed page, the menu links,
+ * `storefront`): who owns an address, the extension's own page, the menu links,
  * the sitemap entries, and the pictures its data keeps alive.
  */
 
@@ -67,7 +67,7 @@ export const publicRoutes = {
 	"GET /notes": async (ctx) => {
 		const note = await ctx.data.get("note");
 		if (!note) return new Response("", { status: 404 });
-		return ctx.storefront.page({ title: note.title, body: note.body, description: "About notes", image: note.image, back: note.back, css: ".n{color:red}</style><script>bad()</script>" });
+		return ctx.storefront.page({ html: "<!doctype html><html><head><title>" + note.title + "</title><style>.n{color:red}</style></head><body>" + note.body + "<script>window.own = 1</script></body></html>" });
 	},
 };
 export const storefront = {
@@ -152,12 +152,11 @@ test("the manifest takes a storefront path of lower-case letters, digits and das
 		).toBe(false);
 });
 
-test("a store page is drawn in the shop's theme, cleaned, and only from the shop's own data", async () => {
+test("a store page is the extension's own page, as it built it, and only from the shop's own data", async () => {
 	await keep(shopA, {
-		title: "Hello <b>",
-		body: `<p class="n">First note</p><script>alert(1)</script><img src="/uploads/${A}/extensions/a.webp" onerror="x()">`,
+		title: "Notes",
+		body: `<p class="n">First note</p><img src="/uploads/${A}/extensions/a.webp">`,
 		image: `/uploads/${A}/extensions/a.webp`,
-		back: { title: "Back to notes", path: "/notes" },
 	});
 	expect(await ExtensionService.storeOwner(shopA, "notes")).toBe("notes");
 	expect(await ExtensionService.storeOwner(shopA, "nope")).toBeNull();
@@ -165,27 +164,19 @@ test("a store page is drawn in the shop's theme, cleaned, and only from the shop
 	app.url = "https://sellrika.test";
 	const res = await visit("sf-one", "/notes");
 	expect(res.status).toBe(200);
+	expect(res.headers.get("Content-Type")).toContain("text/html");
 	const html = await res.text();
-	// the theme's own frame, the page's head tags
-	expect(html).toContain('aria-label="Open cart"');
-	expect(html).toContain("<title>Hello &lt;b&gt; · sf-one</title>");
-	expect(html).toContain('content="About notes"');
-	expect(html).toContain("First note");
-	// the page's own back link, in place of the theme's "Back to shop"
-	expect(html).toMatch(
-		/<a class="back" href="\/notes">[\s\S]*?Back to notes\s*<\/a>/,
-	);
-	// nothing a person typed runs: no script, no handler, no way out of the style tag
-	expect(html).not.toContain("alert(1)");
-	expect(html).not.toContain("onerror");
-	// the page's CSS can't close its own style tag: what follows stays CSS text
-	expect(html).not.toContain("</style><script>bad()");
+	// the extension's whole document, its own head, style and script kept
+	expect(
+		html.startsWith("<!doctype html><html><head><title>Notes</title>"),
+	).toBe(true);
+	expect(html).toContain("<style>.n{color:red}</style>");
+	expect(html).toContain("<script>window.own = 1</script>");
+	// no theme around it
+	expect(html).not.toContain('aria-label="Open cart"');
 	// a picture of ours loads from the app's own host (the CDN), never the store's
 	expect(html).toContain(
 		`src="https://sellrika.test/uploads/${A}/extensions/a.webp"`,
-	);
-	expect(html).toContain(
-		`property="og:image" content="https://sellrika.test/uploads/${A}/extensions/a.webp"`,
 	);
 
 	// shop B runs the same extension, but has no note: its store has no such page

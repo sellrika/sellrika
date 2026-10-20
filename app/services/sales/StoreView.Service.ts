@@ -51,8 +51,7 @@ export type StorePageName =
 	| "unsubscribe"
 	| "not-found"
 	| "checkout"
-	| "done"
-	| "extension";
+	| "done";
 
 /**
  * The look a storefront renders with.
@@ -524,8 +523,7 @@ export class StoreViewService {
 	 * When an extension theme throws, the page is logged
 	 * and drawn again with Classic.
 	 * @param s The resolved storefront.
-	 * @param page Which page: a theme page, or the shared `checkout` / `done` /
-	 *   `extension` (a page an extension draws by itself).
+	 * @param page Which page: a theme page, or the shared `checkout` / `done`.
 	 * @param props The page's own variables.
 	 * @param seo The head.
 	 * @param status The HTTP status.
@@ -802,8 +800,7 @@ export class StoreViewService {
 		const { css, script, strings, views, look } = s.theme;
 		// the running extensions' own scripts for the store pages (slot `store.page`)
 		const extensions = await this.extensions.storeScripts(s.shop, running);
-		const shared =
-			page === "checkout" || page === "done" || page === "extension";
+		const shared = page === "checkout" || page === "done";
 		return StoreView.render(
 			shared ? `store/${page}` : `${views}/${page}`,
 			context,

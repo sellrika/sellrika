@@ -44,8 +44,7 @@ export type StorePageName =
 	| "unsubscribe"
 	| "not-found"
 	| "checkout"
-	| "done"
-	| "extension";
+	| "done";
 
 /** The data island `<script type="application/json" id="store-data">` every store page prints. */
 export type StoreData = {

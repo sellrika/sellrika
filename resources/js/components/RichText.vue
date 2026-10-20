@@ -778,6 +778,7 @@ function removeListeners() {
       <span
         v-for="(h, i) in handles"
         :key="i"
+        data-slot="image-resize"
         class="pointer-events-auto absolute size-3 touch-none rounded-full border-2 border-background bg-primary"
         :class="h.class"
         @pointerdown.prevent="startResize($event, h.side)"

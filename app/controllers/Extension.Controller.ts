@@ -21,17 +21,7 @@ import { validate, type Errors } from "@validators/validate";
 import { ExtensionHandles } from "@controllers/support/Extension.Handles";
 import type { User } from "@models/User";
 import { StorefrontSupport } from "@controllers/support/Storefront.Support";
-import {
-	StoreViewService,
-	type Storefront,
-} from "@services/sales/StoreView.Service";
-import { Storage } from "@xcore/storage/Storage";
-import { sanitizeHtml } from "@helpers/html";
-import {
-	EXTENSION_STORE_DESC_MAX,
-	EXTENSION_STORE_LINK_TITLE_MAX,
-	EXTENSION_STORE_TITLE_MAX,
-} from "@constants/Extension.Constant";
+import { StoreViewService } from "@services/sales/StoreView.Service";
 
 /**
  * Admin › Global Extensions.
@@ -256,7 +246,7 @@ export class ExtensionController {
 	 * (manifest `storefront.path`, like `/blog` and `/blog/my-post`).
 	 * Every route of the app wins over it: this is the last one tried.
 	 * The extension's `publicRoutes` answer, with `ctx.storefront.page()`
-	 * to draw the page inside the shop's theme.
+	 * to send the whole page they built.
 	 * @param req The current request.
 	 * @returns The extension's page. 404 as plain text when no store or
 	 *   no extension owns the address, the theme's not-found page when
@@ -282,7 +272,7 @@ export class ExtensionController {
 				actor: () => this.#storeActor(shop),
 				handles: {
 					...this.handles.for(shop.id),
-					storefront: { page: (page) => this.#themed(s, pathname, page) },
+					storefront: { page: (page) => this.#own(page) },
 				},
 				customer: customer && {
 					id: customer.id,
@@ -295,70 +285,22 @@ export class ExtensionController {
 	}
 
 	/**
-	 * Draw an extension's page inside the shop's theme: the theme's
-	 * `page` template, the one the shop's own pages use, or with
-	 * `frame: "full"` the shared `store/extension` template, where the
-	 * extension draws everything between the header and the footer.
-	 * The body is cleaned here, whatever the extension did before:
-	 * a store page never runs a script somebody typed.
+	 * Send the page an extension built by itself: its whole HTML
+	 * document, head and all. No theme is around it.
+	 * It is not cleaned: `sanitizeHtml` would drop the page's own
+	 * `<head>`, `<style>` and `<script>`. An extension's code is trusted
+	 * (only the platform admin adds one). Text a person typed is the
+	 * extension's job: `ctx.html.clean()`.
 	 * Its pictures load from the app's own host, like a product's.
-	 * @param s The resolved storefront.
-	 * @param pathname The path of the request.
 	 * @param page What the extension gave `ctx.storefront.page()`.
 	 * @returns The HTML response.
 	 */
-	async #themed(s: Storefront, pathname: string, page: unknown) {
+	#own(page: unknown) {
 		const p = (page ?? {}) as Record<string, unknown>;
-		const title = String(p.title ?? "").slice(0, EXTENSION_STORE_TITLE_MAX);
-		const body = Url.uploadsIn(await sanitizeHtml(String(p.body ?? "")));
-		const canonical =
-			typeof p.canonical === "string" && /^\/[^\s<>"]*$/.test(p.canonical)
-				? p.canonical
-				: pathname;
-		const image =
-			typeof p.image === "string" && Storage.isUploadUrl(p.image)
-				? Url.upload(p.image)
-				: null;
-		return this.view.render(
-			s,
-			// `frame: "full"`: only the theme's header and footer around it
-			p.frame === "full" ? "extension" : "page",
-			{
-				title,
-				body,
-				// printed inside <style>: a "</style" in it must not end the tag
-				css: String(p.css ?? "").replace(/<\/style/gi, "<\\/style"),
-				back: this.#backLink(s, p.back),
-			},
-			StoreViewService.storeSeo(s.shop, {
-				url: s.url + canonical,
-				title: `${title} · ${s.shop.name}`,
-				desc:
-					String(p.description ?? "").slice(0, EXTENSION_STORE_DESC_MAX) ||
-					StorefrontSupport.summary(body) ||
-					`${title} — ${s.shop.name}`,
-				image,
-				noindex: p.noindex === true,
-			}),
+		return HttpResponse.html(
+			Url.uploadsIn(String(p.html ?? "")),
 			p.status === 404 ? 404 : 200,
 		);
-	}
-
-	/**
-	 * The page's own back link ("Back to blog"), in place of the theme's
-	 * "Back to shop".
-	 * @param s The resolved storefront.
-	 * @param back What the extension gave: `{ title, path }`.
-	 * @returns `{ title, url }`, or null: the theme then leads back to the shop.
-	 */
-	#backLink(s: Storefront, back: unknown) {
-		const { title, path } = (back ?? {}) as Record<string, unknown>;
-		if (typeof title !== "string" || !title.trim()) return null;
-		if (typeof path !== "string" || !/^\/[^\s<>"]*$/.test(path)) return null;
-		return {
-			title: title.trim().slice(0, EXTENSION_STORE_LINK_TITLE_MAX),
-			url: s.base + path,
-		};
 	}
 
 	/**

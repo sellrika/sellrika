@@ -232,9 +232,3 @@ export const EXTENSION_STORE_LINK_TITLE_MAX = 60;
 
 /** How many pictures one `ctx.uploads.drop()` call looks at. */
 export const EXTENSION_DROP_MAX = 200;
-
-/** The longest title of a store page an extension draws (`ctx.storefront.page`). */
-export const EXTENSION_STORE_TITLE_MAX = 200;
-
-/** The longest description of such a page, for its head tags. */
-export const EXTENSION_STORE_DESC_MAX = 300;

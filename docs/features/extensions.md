@@ -651,14 +651,13 @@ An extension may bring pages of its own to the shop's online store, like a blog.
 3. It hands the request to the extension's `publicRoutes`, with the whole path: `"GET /blog"`, `"GET /blog/:slug"`.
 4. A 404 from the extension becomes the theme's not-found page.
 
-**The page.** The handler returns `ctx.storefront.page({ title, body, css, description, image, canonical, back, noindex, status })`.
+**The page.** The extension builds the whole page by itself. The handler returns `ctx.storefront.page({ html, status })`.
 
-- It is drawn with the theme's `page` template, the one the shop's own pages use. So it has the theme's header, footer, colours and font.
-- The body is cleaned with `sanitizeHtml`, always. The CSS can't close its `<style>` tag.
-- `frame: "full"` draws the shared `store/extension` template instead: only the theme's header and footer. The extension's body is the whole page between them, with its own heading and back link. It styles itself with the theme's CSS variables (`--store-fg`, `--store-bg`, `--store-muted`, `--store-line`, `--store-accent`, …).
-- `back: { title, path }` replaces the theme's "Back to shop" link over the page ("Back to blog"). The `page` template gets it as `back { title, url }`, null for the shop's own pages.
-- Head tags come from `StoreViewService.storeSeo`: the title, the description, the share picture.
-- `image` must be an upload path. Every `/uploads/…` picture in the body and the share picture is loaded from the app's own host (`Url.uploadsIn`, `Url.upload`), never the store's host. The CDN cache works that way.
+- `html` is the whole document: `<!doctype html>`, the `<head>` (title, head tags for search engines, CSS) and the `<body>` (its own header, footer and scripts). No theme is around it.
+- It is not cleaned. `sanitizeHtml` would drop the page's own `<head>`, `<style>` and `<script>`. An extension's code is trusted: only the platform admin adds one. Text a person typed is the extension's job: it puts it through `ctx.html.clean()` first.
+- Every `/uploads/…` picture in an `<img src>` is loaded from the app's own host (`Url.uploadsIn`), never the store's host. The CDN cache works that way.
+- `status: 404` = the page says something is not there. Default 200.
+- The menu links and the sitemap entries below still join the theme's menu and the store's `sitemap.xml`.
 
 **The module** may export `storefront` with two functions. Each gets `{ shop, config, t, locale, data }`.
 
