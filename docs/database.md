@@ -302,7 +302,7 @@ The daily report (migration 0084):
 |---|---|
 | `report_enabled` | Boolean. Default false. |
 | `report_time` | `HH:MM` on the shop's clock. Default `22:00`. |
-| `report_channels` | A comma list of `slack`, `discord`, `line` |
+| `report_channels` | A comma list of `slack`, `discord`, `line`, `telegram` |
 | `report_sent_on` | The shop's day of the last report. `''` = never. |
 
 ### `sales_staff`

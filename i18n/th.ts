@@ -1756,7 +1756,7 @@ export const th = {
 	"reports.daily_time_hint": "ตามเวลาของร้าน ({tz}) รายงานมียอดขายของวันจนถึงเวลานี้",
 	"reports.daily_channels": "ส่งไปที่",
 	"reports.daily_no_channels":
-		"ยังไม่ได้ตั้งค่าช่องทาง เปิดส่วนขยาย Chat alerts แล้วกรอก Slack, Discord หรือ LINE",
+		"ยังไม่ได้ตั้งค่าช่องทาง เปิดส่วนขยาย Chat alerts แล้วกรอก Slack, Discord, LINE หรือ Telegram",
 	"reports.daily_open_extensions": "เปิดส่วนขยาย",
 	"reports.daily_saved": "บันทึกรายงานประจำวันแล้ว",
 	"reports.daily_failed": "บันทึกไม่ได้ ลองอีกครั้ง",

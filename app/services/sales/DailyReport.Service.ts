@@ -47,7 +47,8 @@ export class DailyReportService {
 
 	/**
 	 * The channels the shop can get a report on right now.
-	 * A channel counts when Chat alerts runs and has it filled in.
+	 * A channel counts when Chat alerts runs and has all its settings
+	 * filled in.
 	 * @param shop The shop.
 	 * @returns The channel names; empty while the extension does not run.
 	 */
@@ -56,7 +57,7 @@ export class DailyReportService {
 		if (!active) return [];
 		const names = Object.keys(REPORT_CHANNELS) as ReportChannel[];
 		return names.filter(function filled(name) {
-			return !!active.config[REPORT_CHANNELS[name]];
+			return REPORT_CHANNELS[name].every((field) => !!active.config[field]);
 		});
 	}
 

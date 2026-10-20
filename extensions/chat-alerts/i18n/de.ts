@@ -5,7 +5,7 @@
 export default {
 	name: "Chat-Meldungen",
 	description:
-		"Schickt neue Bestellungen, Zahlungen, Erstattungen, Stornos und Warnungen bei wenig Bestand an Slack, Discord und LINE. Tragen Sie die Kanäle ein, die Sie nutzen; jeder ausgefüllte Kanal bekommt jedes angehakte Ereignis. Der Tagesbericht der Seite Berichte wird ebenfalls hier gesendet.",
+		"Schickt neue Bestellungen, Zahlungen, Erstattungen, Stornos und Warnungen bei wenig Bestand an Slack, Discord, LINE und Telegram. Tragen Sie die Kanäle ein, die Sie nutzen; jeder ausgefüllte Kanal bekommt jedes angehakte Ereignis. Der Tagesbericht der Seite Berichte wird ebenfalls hier gesendet.",
 
 	"field.events": "Senden",
 	"field.slack_url": "Slack — Incoming-Webhook-URL",
@@ -17,6 +17,11 @@ export default {
 		"LINE Official Account › Messaging API › langlebiges Token",
 	"field.line_to": "LINE — Nutzer- oder Gruppen-ID",
 	"field.line_to_hint": "Leer = alle Follower des Kontos",
+	"field.telegram_token": "Telegram — Bot-Token",
+	"field.telegram_token_hint": "Telegram › @BotFather › /newbot",
+	"field.telegram_chat": "Telegram — Chat-ID",
+	"field.telegram_chat_hint":
+		"Fügen Sie den Bot zuerst dem Chat hinzu. Ein Kanal kann @name sein",
 
 	"option.order.online": "Neue Online-Bestellung",
 	"option.order.pos": "Neuer POS-Verkauf",

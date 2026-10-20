@@ -4,6 +4,7 @@
  * Slack and Discord take a webhook URL.
  * LINE uses the Messaging API: a push to one ID, or a broadcast to the
  * official account's followers.
+ * Telegram uses the Bot API: `sendMessage` to one chat.
  * New orders and low stock are the point of it.
  * "Paid later" is the manual-payment case: cash on delivery and bank
  * transfer.
@@ -44,6 +45,19 @@ const LINE_PUSH = "https://api.line.me/v2/bot/message/push";
  * Where a message to every follower of the account is sent.
  */
 const LINE_BROADCAST = "https://api.line.me/v2/bot/message/broadcast";
+/**
+ * Characters Telegram takes in one message.
+ */
+const TELEGRAM_MAX = 4096;
+/**
+ * The Telegram Bot API host. The bot token goes in the path.
+ */
+const TELEGRAM_API = "https://api.telegram.org";
+/**
+ * What a bot token from BotFather looks like.
+ * Anything else could change the path of the request.
+ */
+const TELEGRAM_TOKEN = /^\d+:[\w-]+$/;
 
 /**
  * The settings the admin filled in on /extensions.
@@ -55,6 +69,8 @@ type Settings = {
 	discord_url: string;
 	line_token: string;
 	line_to: string;
+	telegram_token: string;
+	telegram_chat: string;
 };
 /**
  * What a listener for one event receives.
@@ -302,12 +318,28 @@ function toLine(c: Settings, text: string): Promise<void> {
 }
 
 /**
+ * Sends the text to one Telegram chat through the shop's bot.
+ * @param c The settings, which hold the bot token and the chat ID.
+ * @param text The message. It is cut short when Telegram would refuse it.
+ * @returns A promise that settles once the send is done.
+ * @throws When the token does not look like a bot token.
+ */
+function toTelegram(c: Settings, text: string): Promise<void> {
+	if (!TELEGRAM_TOKEN.test(c.telegram_token))
+		return Promise.reject(new Error("api.telegram.org: bad bot token"));
+	return postJson(`${TELEGRAM_API}/bot${c.telegram_token}/sendMessage`, {
+		chat_id: c.telegram_chat,
+		text: text.slice(0, TELEGRAM_MAX),
+	});
+}
+
+/**
  * Posts one text to every channel that is filled in.
  * Every channel is tried; the error lists the ones that failed.
  * @param config The settings.
  * @param text The message.
  * @param only When given, only these channels get it (`slack`,
- * `discord`, `line`).
+ * `discord`, `line`, `telegram`).
  * @throws When any channel failed.
  */
 async function send(
@@ -328,6 +360,8 @@ async function send(
 	if (c.slack_url && picked("slack")) jobs.push(toSlack(c, text));
 	if (c.discord_url && picked("discord")) jobs.push(toDiscord(c, text));
 	if (c.line_token && picked("line")) jobs.push(toLine(c, text));
+	if (c.telegram_token && c.telegram_chat && picked("telegram"))
+		jobs.push(toTelegram(c, text));
 	const results = await Promise.allSettled(jobs);
 	const failed = results.filter(
 		(r): r is PromiseRejectedResult => r.status === "rejected",
