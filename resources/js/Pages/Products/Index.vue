@@ -62,6 +62,7 @@ import { money, packSize, plain } from "@/lib/format";
 import { ariaSort, dirOf, nextSort, type Sort } from "@/lib/sort";
 import SortButton from "@/components/SortButton.vue";
 import ShareDialog from "@/components/products/ShareDialog.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { contentsOf } from "@/lib/bundleLabels";
 import { t } from "@/lib/i18n";
 import type { Category, Paged, Product, SharedProps } from "@/types";
@@ -412,15 +413,17 @@ watch(
               <Checkbox class="mx-auto" :model-value="selected.includes(p.id)" :aria-label="t('products.select_aria', { name: p.name })" @update:model-value="(on) => pick(p.id, on)" />
             </TableCell>
             <TableCell class="hidden pr-0 sm:table-cell">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                :aria-label="t('products.feature_aria', { name: p.name })"
-                :aria-pressed="p.featured"
-                @click="toggleFeatured(p, !p.featured)"
-              >
-                <Star :class="p.featured ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'" />
-              </Button>
+              <WithTooltip :label="t('products.feature_aria', { name: p.name })">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  :aria-label="t('products.feature_aria', { name: p.name })"
+                  :aria-pressed="p.featured"
+                  @click="toggleFeatured(p, !p.featured)"
+                >
+                  <Star :class="p.featured ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'" />
+                </Button>
+              </WithTooltip>
             </TableCell>
             <TableCell>
               <img v-if="p.images[0]" :src="p.images[0]" :alt="p.name" loading="lazy" decoding="async" class="size-10 rounded-md border object-cover" />
@@ -462,11 +465,13 @@ watch(
             </TableCell>
             <TableCell class="text-right">
               <div class="flex justify-end gap-1">
-                <Button as-child variant="ghost" size="icon-sm">
-                  <Link :href="`/products/${p.id}/edit`" :aria-label="t('products.edit_aria', { name: p.name })"><Pencil /></Link>
-                </Button>
-                <Button v-if="storeOn && p.active" variant="ghost" size="icon-sm" :aria-label="t('products.share_aria', { name: p.name })" @click="sharing = p"><Share2 /></Button>
-                <Button variant="ghost" size="icon-sm" :aria-label="t('products.delete_aria', { name: p.name })" @click="pending = p"><Trash2 class="text-destructive" /></Button>
+                <WithTooltip :label="t('products.edit_aria', { name: p.name })">
+                  <Button as-child variant="ghost" size="icon-sm">
+                    <Link :href="`/products/${p.id}/edit`" :aria-label="t('products.edit_aria', { name: p.name })"><Pencil /></Link>
+                  </Button>
+                </WithTooltip>
+                <WithTooltip v-if="storeOn && p.active" :label="t('products.share_aria', { name: p.name })"><Button variant="ghost" size="icon-sm" :aria-label="t('products.share_aria', { name: p.name })" @click="sharing = p"><Share2 /></Button></WithTooltip>
+                <WithTooltip :label="t('products.delete_aria', { name: p.name })"><Button variant="ghost" size="icon-sm" :aria-label="t('products.delete_aria', { name: p.name })" @click="pending = p"><Trash2 class="text-destructive" /></Button></WithTooltip>
               </div>
             </TableCell>
           </TableRow>

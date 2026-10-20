@@ -7,6 +7,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import WithTooltip from "./WithTooltip.vue";
 import {
 	PAYMENT_ICONS,
 	PAYMENT_ICON_NAMES,
@@ -36,11 +37,13 @@ const pick = (name: string) => {
     <PopoverContent class="w-64 p-3" align="start">
       <p class="mb-2 text-xs font-medium text-muted-foreground">{{ t("shared.pick_icon") }}</p>
       <div class="grid grid-cols-5 gap-1">
-        <button v-for="name in PAYMENT_ICON_NAMES" :key="name" type="button" :title="name" :aria-label="name" :aria-pressed="model === name"
-          class="flex size-10 items-center justify-center rounded-md border hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          :class="model === name ? 'border-primary bg-primary/15' : 'border-transparent'" @click="pick(name)">
-          <component :is="PAYMENT_ICONS[name]" class="size-5" />
-        </button>
+        <WithTooltip v-for="name in PAYMENT_ICON_NAMES" :key="name" :label="name">
+          <button type="button" :aria-label="name" :aria-pressed="model === name"
+            class="flex size-10 items-center justify-center rounded-md border hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            :class="model === name ? 'border-primary bg-primary/15' : 'border-transparent'" @click="pick(name)">
+            <component :is="PAYMENT_ICONS[name]" class="size-5" />
+          </button>
+        </WithTooltip>
       </div>
     </PopoverContent>
   </Popover>

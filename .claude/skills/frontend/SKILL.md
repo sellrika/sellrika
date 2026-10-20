@@ -20,6 +20,7 @@ Copy `Pages/Customers/Index.vue` (list + dialog + server search + pager) or `Pag
 - Dialogs: `DialogContent` / `AlertDialogContent` already cap their height, scroll only the body (never sideways) and keep the header + footer pinned — never add `max-h` / `overflow` to a dialog or its form; pass `p-0 gap-0` only for full-bleed layouts that scroll themselves.
 - UI primitives: `@/components/ui/*` (shadcn-vue). Missing one → `bunx shadcn-vue@latest add <component>`. Icons from `@lucide/vue`.
 - Shared pieces go in `resources/js/components/` (`CurrencySelect`, `IconPicker`, `Pager`, `pos/*`, `products/*`) — check there before writing a new one.
+- Icon-only buttons get a tooltip: wrap them in `components/WithTooltip.vue` (`:label` is usually the `aria-label` text). Never a `title` attribute. Wrap a dialog trigger from the outside (`<WithTooltip><AlertDialogTrigger as-child><Button>`); a popover or dropdown trigger from the inside (`<DropdownMenuTrigger as-child><Button><WithTooltip><span>`), or its menu anchors to the tooltip, and put a `<span>` around a disabled button so its tooltip still shows.
 - Give interactive controls accessible names (`aria-label`, `<Label for>`, button text like `Delete {{ name }}`) — e2e tests locate by role/label, not CSS.
 
 ## Rules

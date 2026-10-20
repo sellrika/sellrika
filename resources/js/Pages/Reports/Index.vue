@@ -27,6 +27,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { smoothPath } from "@/lib/curve";
 import { money } from "@/lib/format";
 import { locale, t } from "@/lib/i18n";
@@ -567,7 +568,7 @@ function initials(name: string) {
         <h1 class="text-xl font-semibold tracking-tight">{{ t("reports.title") }}</h1>
         <p class="text-sm text-muted-foreground">{{ rangeLabel }}</p>
       </div>
-      <Button variant="outline" size="icon" :aria-label="t('reports.daily_title')" :title="t('reports.daily_title')" @click="scheduleOpen = true"><Settings /></Button>
+      <WithTooltip :label="t('reports.daily_title')"><Button variant="outline" size="icon" :aria-label="t('reports.daily_title')" @click="scheduleOpen = true"><Settings /></Button></WithTooltip>
       <!-- phones: two select boxes instead of the tab rows -->
       <div class="flex w-full gap-2 sm:hidden">
         <Select v-model="preset">

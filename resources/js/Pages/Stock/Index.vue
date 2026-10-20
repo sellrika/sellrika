@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Pager from "@/components/Pager.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { useFitPage } from "@/lib/fitPage";
 import { fmtDate } from "@/lib/format";
 import { t } from "@/lib/i18n";
@@ -279,9 +280,11 @@ function startHistory(i: StockItem) {
               <div class="flex flex-wrap justify-end gap-1">
                 <Button variant="outline" size="sm" @click="startAdjust(i)"><SlidersHorizontal /> {{ t("stock.adjust") }}</Button>
                 <Button variant="ghost" size="sm" @click="startHistory(i)"><History /> {{ t("stock.history") }}</Button>
-                <Button as-child variant="ghost" size="icon-sm" :aria-label="t('stock.edit_aria', { name: i.name })">
-                  <Link :href="`/products/${i.product_id}/edit`"><Pencil /></Link>
-                </Button>
+                <WithTooltip :label="t('stock.edit_aria', { name: i.name })">
+                  <Button as-child variant="ghost" size="icon-sm" :aria-label="t('stock.edit_aria', { name: i.name })">
+                    <Link :href="`/products/${i.product_id}/edit`"><Pencil /></Link>
+                  </Button>
+                </WithTooltip>
               </div>
             </TableCell>
           </TableRow>

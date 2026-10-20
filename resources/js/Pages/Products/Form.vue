@@ -27,6 +27,7 @@ import BundleItemsEditor, {
 } from "@/components/products/BundleItemsEditor.vue";
 import UnitSelect from "@/components/products/UnitSelect.vue";
 import ShareDialog from "@/components/products/ShareDialog.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import {
 	Boxes,
 	PackageOpen,
@@ -444,7 +445,7 @@ function submit() {
             <Input v-model="r.value" :aria-label="t('products.extra_value')" :placeholder="t('products.extra_value')" :aria-invalid="!!(form.errors as Record<string, string>)[`extra.${i}.value`]" @keydown.enter.prevent />
             <p v-if="(form.errors as Record<string, string>)[`extra.${i}.value`]" class="text-sm text-destructive">{{ (form.errors as Record<string, string>)[`extra.${i}.value`] }}</p>
           </div>
-          <Button type="button" variant="ghost" size="icon" :aria-label="t('products.remove_row')" @click="form.extra.splice(i, 1)"><Trash2 class="size-4" /></Button>
+          <WithTooltip :label="t('products.remove_row')"><Button type="button" variant="ghost" size="icon" :aria-label="t('products.remove_row')" @click="form.extra.splice(i, 1)"><Trash2 class="size-4" /></Button></WithTooltip>
         </div>
         <Button type="button" variant="outline" size="sm" @click="addExtra"><Plus class="size-4" /> {{ t("products.add_row") }}</Button>
       </CardContent>

@@ -12,6 +12,7 @@ import { computed, ref } from "vue";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { ImageIcon, Package, Plus, Search, Trash2 } from "@lucide/vue";
 import { money } from "@/lib/format";
 import { t } from "@/lib/i18n";
@@ -119,9 +120,11 @@ const perUnit = computed(() =>
           <p v-if="errors[`bundle_items.${i}.qty`]" class="text-xs text-destructive">{{ errors[`bundle_items.${i}.qty`] }}</p>
         </div>
         <span class="w-20 pt-2 text-right text-sm tabular-nums text-muted-foreground">{{ money(rowValue(row), currency) }}</span>
-        <Button type="button" variant="ghost" size="icon-sm" :aria-label="t('products.remove_name', { name: productOf(row.product_id)?.name ?? t('common.product') })" @click="rows.splice(i, 1)">
-          <Trash2 />
-        </Button>
+        <WithTooltip :label="t('products.remove_name', { name: productOf(row.product_id)?.name ?? t('common.product') })">
+          <Button type="button" variant="ghost" size="icon-sm" :aria-label="t('products.remove_name', { name: productOf(row.product_id)?.name ?? t('common.product') })" @click="rows.splice(i, 1)">
+            <Trash2 />
+          </Button>
+        </WithTooltip>
       </li>
     </ul>
 

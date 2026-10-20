@@ -40,6 +40,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { methodStyle, paymentIcon } from "@/lib/paymentIcons";
 import { t } from "@/lib/i18n";
 import type { PaymentMethod, SharedProps } from "@/types";
@@ -227,11 +228,13 @@ function chipStyle(color: string | null) {
             <TableCell class="w-16"><Switch :model-value="m.enabled" :aria-label="t('payment_methods.enabled_aria', { name: m.name })" @update:model-value="(v: boolean) => toggle(m, v)" /></TableCell>
             <TableCell class="w-24 pr-4 text-right">
               <div class="flex justify-end gap-1">
-                <Button size="icon-sm" variant="ghost" :aria-label="t('payment_methods.edit_aria', { name: m.name })" @click="startEdit(m)"><Pencil /></Button>
+                <WithTooltip :label="t('payment_methods.edit_aria', { name: m.name })"><Button size="icon-sm" variant="ghost" :aria-label="t('payment_methods.edit_aria', { name: m.name })" @click="startEdit(m)"><Pencil /></Button></WithTooltip>
                 <AlertDialog>
-                  <AlertDialogTrigger as-child>
-                    <Button size="icon-sm" variant="ghost" :aria-label="t('payment_methods.delete_aria', { name: m.name })"><Trash2 class="text-destructive" /></Button>
-                  </AlertDialogTrigger>
+                  <WithTooltip :label="t('payment_methods.delete_aria', { name: m.name })">
+                    <AlertDialogTrigger as-child>
+                      <Button size="icon-sm" variant="ghost" :aria-label="t('payment_methods.delete_aria', { name: m.name })"><Trash2 class="text-destructive" /></Button>
+                    </AlertDialogTrigger>
+                  </WithTooltip>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>{{ t("payment_methods.delete_title", { name: m.name }) }}</AlertDialogTitle>

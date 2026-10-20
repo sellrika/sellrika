@@ -22,6 +22,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { t } from "@/lib/i18n";
 import { imageBlob } from "@/lib/upload";
 import {
@@ -620,12 +621,16 @@ watch([edit, image, canvas], draw, { flush: "post" });
         <div class="flex flex-wrap items-center gap-2">
           <DialogTitle class="mr-auto">{{ t("products.edit_image") }}</DialogTitle>
           <div class="flex">
-            <Button type="button" variant="ghost" size="icon-sm" :disabled="step === 0" :aria-label="t('common.undo')" :title="t('common.undo')" @click="go(-1)">
-              <Undo2 />
-            </Button>
-            <Button type="button" variant="ghost" size="icon-sm" :disabled="step >= history.length - 1" :aria-label="t('common.redo')" :title="t('common.redo')" @click="go(1)">
-              <Redo2 />
-            </Button>
+            <WithTooltip :label="t('common.undo')">
+              <Button type="button" variant="ghost" size="icon-sm" :disabled="step === 0" :aria-label="t('common.undo')" @click="go(-1)">
+                <Undo2 />
+              </Button>
+            </WithTooltip>
+            <WithTooltip :label="t('common.redo')">
+              <Button type="button" variant="ghost" size="icon-sm" :disabled="step >= history.length - 1" :aria-label="t('common.redo')" @click="go(1)">
+                <Redo2 />
+              </Button>
+            </WithTooltip>
           </div>
           <Button type="button" variant="outline" size="sm" @click="emit('discard')">{{ t("common.discard") }}</Button>
           <Button type="button" size="sm" :disabled="!image || saving" @click="save">
@@ -735,38 +740,38 @@ watch([edit, image, canvas], draw, { flush: "post" });
           <div class="space-y-1.5">
             <p class="text-xs text-muted-foreground">{{ t("products.background") }}</p>
             <div class="flex flex-wrap items-center gap-2">
-              <button
-                v-for="b in BACKGROUNDS"
-                :key="b.color"
-                type="button"
-                class="size-7 rounded-full border border-black/15 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                :class="[edit.bg === b.color && 'ring-2 ring-primary ring-offset-2 ring-offset-background', !b.color && 'bg-[repeating-conic-gradient(var(--color-muted)_0_25%,transparent_0_50%)] bg-size-[8px_8px]']"
-                :style="b.color ? { background: b.color } : undefined"
-                :title="t(b.label)"
-                :aria-label="t(b.label)"
-                :aria-pressed="edit.bg === b.color"
-                :disabled="!image"
-                @click="apply({ bg: b.color })"
-              />
-              <!-- the colour picker: a rainbow ring with a + (or the picked colour), so it doesn't read as one more swatch -->
-              <label
-                class="relative grid size-7 place-items-center rounded-full bg-[conic-gradient(#ef4444,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#ef4444)] has-focus-visible:ring-3 has-focus-visible:ring-ring/50"
-                :class="[customBg && 'ring-2 ring-primary ring-offset-2 ring-offset-background', image ? 'cursor-pointer' : 'cursor-not-allowed opacity-50']"
-                :title="t('products.bg_custom')"
-              >
-                <span class="grid size-5 place-items-center rounded-full bg-background" :style="customBg ? { background: edit.bg } : undefined">
-                  <Plus v-if="!customBg" class="size-3.5" />
-                </span>
-                <input
-                  type="color"
-                  class="absolute inset-0 size-full cursor-[inherit] opacity-0"
-                  :value="edit.bg || '#ffffff'"
-                  :aria-label="t('products.bg_custom')"
+              <WithTooltip v-for="b in BACKGROUNDS" :key="b.color" :label="t(b.label)">
+                <button
+                  type="button"
+                  class="size-7 rounded-full border border-black/15 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                  :class="[edit.bg === b.color && 'ring-2 ring-primary ring-offset-2 ring-offset-background', !b.color && 'bg-[repeating-conic-gradient(var(--color-muted)_0_25%,transparent_0_50%)] bg-size-[8px_8px]']"
+                  :style="b.color ? { background: b.color } : undefined"
+                  :aria-label="t(b.label)"
+                  :aria-pressed="edit.bg === b.color"
                   :disabled="!image"
-                  @input="onColor"
-                  @change="commit"
+                  @click="apply({ bg: b.color })"
                 />
-              </label>
+              </WithTooltip>
+              <!-- the colour picker: a rainbow ring with a + (or the picked colour), so it doesn't read as one more swatch -->
+              <WithTooltip :label="t('products.bg_custom')">
+                <label
+                  class="relative grid size-7 place-items-center rounded-full bg-[conic-gradient(#ef4444,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#ef4444)] has-focus-visible:ring-3 has-focus-visible:ring-ring/50"
+                  :class="[customBg && 'ring-2 ring-primary ring-offset-2 ring-offset-background', image ? 'cursor-pointer' : 'cursor-not-allowed opacity-50']"
+                >
+                  <span class="grid size-5 place-items-center rounded-full bg-background" :style="customBg ? { background: edit.bg } : undefined">
+                    <Plus v-if="!customBg" class="size-3.5" />
+                  </span>
+                  <input
+                    type="color"
+                    class="absolute inset-0 size-full cursor-[inherit] opacity-0"
+                    :value="edit.bg || '#ffffff'"
+                    :aria-label="t('products.bg_custom')"
+                    :disabled="!image"
+                    @input="onColor"
+                    @change="commit"
+                  />
+                </label>
+              </WithTooltip>
             </div>
           </div>
 
@@ -774,23 +779,31 @@ watch([edit, image, canvas], draw, { flush: "post" });
             <div class="space-y-1.5">
               <p class="text-xs text-muted-foreground">{{ t("products.flip") }}</p>
               <div class="grid grid-cols-2 gap-1">
-                <Button type="button" variant="secondary" :disabled="!image" :aria-label="t('products.flip_horizontal')" :title="t('products.flip_horizontal')" @click="flipHorizontal">
-                  <FlipHorizontal2 />
-                </Button>
-                <Button type="button" variant="secondary" :disabled="!image" :aria-label="t('products.flip_vertical')" :title="t('products.flip_vertical')" @click="flipVertical">
-                  <FlipVertical2 />
-                </Button>
+                <WithTooltip :label="t('products.flip_horizontal')">
+                  <Button type="button" variant="secondary" :disabled="!image" :aria-label="t('products.flip_horizontal')" @click="flipHorizontal">
+                    <FlipHorizontal2 />
+                  </Button>
+                </WithTooltip>
+                <WithTooltip :label="t('products.flip_vertical')">
+                  <Button type="button" variant="secondary" :disabled="!image" :aria-label="t('products.flip_vertical')" @click="flipVertical">
+                    <FlipVertical2 />
+                  </Button>
+                </WithTooltip>
               </div>
             </div>
             <div class="space-y-1.5">
               <p class="text-xs text-muted-foreground">{{ t("products.rotate") }}</p>
               <div class="grid grid-cols-2 gap-1">
-                <Button type="button" variant="secondary" :disabled="!image" :aria-label="t('products.rotate_left')" :title="t('products.rotate_left')" @click="turn(-1)">
-                  <RotateCcwSquare />
-                </Button>
-                <Button type="button" variant="secondary" :disabled="!image" :aria-label="t('products.rotate_right')" :title="t('products.rotate_right')" @click="turn(1)">
-                  <RotateCwSquare />
-                </Button>
+                <WithTooltip :label="t('products.rotate_left')">
+                  <Button type="button" variant="secondary" :disabled="!image" :aria-label="t('products.rotate_left')" @click="turn(-1)">
+                    <RotateCcwSquare />
+                  </Button>
+                </WithTooltip>
+                <WithTooltip :label="t('products.rotate_right')">
+                  <Button type="button" variant="secondary" :disabled="!image" :aria-label="t('products.rotate_right')" @click="turn(1)">
+                    <RotateCwSquare />
+                  </Button>
+                </WithTooltip>
               </div>
             </div>
           </div>

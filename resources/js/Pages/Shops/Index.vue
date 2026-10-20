@@ -33,6 +33,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { t } from "@/lib/i18n";
 import type { Shop, SharedProps } from "@/types";
 
@@ -119,11 +120,13 @@ const remove = (s: Shop) =>
           <div class="flex gap-1">
             <Button as-child size="sm" variant="ghost"><Link :href="`/shops/${s.id}/edit`" :aria-label="t('shops.edit_aria', { name: s.name })"><Pencil /> {{ t("common.edit") }}</Link></Button>
             <AlertDialog>
-              <AlertDialogTrigger as-child>
-                <Button size="icon-sm" variant="ghost" class="text-destructive hover:text-destructive" :aria-label="t('shops.delete_aria', { name: s.name })">
-                  <Trash2 />
-                </Button>
-              </AlertDialogTrigger>
+              <WithTooltip :label="t('shops.delete_aria', { name: s.name })">
+                <AlertDialogTrigger as-child>
+                  <Button size="icon-sm" variant="ghost" class="text-destructive hover:text-destructive" :aria-label="t('shops.delete_aria', { name: s.name })">
+                    <Trash2 />
+                  </Button>
+                </AlertDialogTrigger>
+              </WithTooltip>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>{{ t("shops.delete_title", { name: s.name }) }}</AlertDialogTitle>

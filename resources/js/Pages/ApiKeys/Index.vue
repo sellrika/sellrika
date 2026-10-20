@@ -44,6 +44,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { fmtDate } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import type { ApiKey, Role, SharedProps } from "@/types";
@@ -188,7 +189,7 @@ function remove(k: ApiKey) {
         </div>
         <div class="flex min-w-0 flex-1 items-center gap-2 rounded-md border bg-muted/40 py-0.5 pr-0.5 pl-3">
           <code class="min-w-0 flex-1 truncate font-mono text-xs" :title="mcp_url">{{ mcp_url }}</code>
-          <Button size="icon-sm" variant="ghost" :aria-label="t('api_keys.mcp_copy_url')" @click="copyText(mcp_url)"><Copy /></Button>
+          <WithTooltip :label="t('api_keys.mcp_copy_url')"><Button size="icon-sm" variant="ghost" :aria-label="t('api_keys.mcp_copy_url')" @click="copyText(mcp_url)"><Copy /></Button></WithTooltip>
         </div>
       </div>
       <details class="group border-t">
@@ -204,7 +205,7 @@ function remove(k: ApiKey) {
             <p class="text-xs font-medium text-foreground">{{ t("api_keys.mcp_example") }}</p>
             <div class="flex items-start gap-2 rounded-md border bg-muted/40 py-0.5 pr-0.5 pl-3">
               <code class="min-w-0 flex-1 py-1.5 font-mono text-xs break-all text-foreground">{{ mcpCommand }}</code>
-              <Button size="icon-sm" variant="ghost" :aria-label="t('api_keys.mcp_copy_command')" @click="copyText(mcpCommand)"><Copy /></Button>
+              <WithTooltip :label="t('api_keys.mcp_copy_command')"><Button size="icon-sm" variant="ghost" :aria-label="t('api_keys.mcp_copy_command')" @click="copyText(mcpCommand)"><Copy /></Button></WithTooltip>
             </div>
           </div>
           <div class="space-y-1.5">
@@ -213,7 +214,7 @@ function remove(k: ApiKey) {
             <p class="text-xs font-medium text-foreground">{{ t("api_keys.mcp_key_example") }}</p>
             <div class="flex items-start gap-2 rounded-md border bg-muted/40 py-0.5 pr-0.5 pl-3">
               <code class="min-w-0 flex-1 py-1.5 font-mono text-xs break-all text-foreground">{{ mcpKeyCommand }}</code>
-              <Button size="icon-sm" variant="ghost" :aria-label="t('api_keys.mcp_copy_key_command')" @click="copyText(mcpKeyCommand)"><Copy /></Button>
+              <WithTooltip :label="t('api_keys.mcp_copy_key_command')"><Button size="icon-sm" variant="ghost" :aria-label="t('api_keys.mcp_copy_key_command')" @click="copyText(mcpKeyCommand)"><Copy /></Button></WithTooltip>
             </div>
           </div>
         </div>
@@ -251,9 +252,11 @@ function remove(k: ApiKey) {
             </TableCell>
             <TableCell class="pr-4 text-right">
               <AlertDialog>
-                <AlertDialogTrigger as-child>
-                  <Button size="icon-sm" variant="ghost" :aria-label="t('api_keys.delete_aria', { name: k.name })"><Trash2 class="text-destructive" /></Button>
-                </AlertDialogTrigger>
+                <WithTooltip :label="t('api_keys.delete_aria', { name: k.name })">
+                  <AlertDialogTrigger as-child>
+                    <Button size="icon-sm" variant="ghost" :aria-label="t('api_keys.delete_aria', { name: k.name })"><Trash2 class="text-destructive" /></Button>
+                  </AlertDialogTrigger>
+                </WithTooltip>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>{{ t("api_keys.delete_title", { name: k.name }) }}</AlertDialogTitle>

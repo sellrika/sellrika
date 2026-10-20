@@ -59,6 +59,7 @@ import {
 } from "@/lib/bundles";
 import { contentsLabel, contentsOf } from "@/lib/bundleLabels";
 import { saleTotals } from "@/components/pos/CartPanel.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import type {
 	BundleItem,
 	Category,
@@ -792,8 +793,8 @@ onUnmounted(() => window.removeEventListener("keydown", onKey));
             <Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input ref="searchInput" v-model="search" :placeholder="t('pos.search_placeholder')" class="h-9 pl-9" @keydown.enter.prevent="scan" />
           </div>
-          <Button variant="outline" size="icon" class="size-9 shrink-0" :aria-label="t('pos.display')" :title="t('pos.display')" @click="openDisplay"><Monitor /></Button>
-          <Button variant="outline" size="icon" class="size-9 shrink-0" :aria-label="t(maximized ? 'nav.fullscreen_exit' : 'nav.fullscreen')" :title="t(maximized ? 'nav.fullscreen_exit' : 'nav.fullscreen')" data-fullscreen-toggle @click="toggleMaximized"><Minimize v-if="maximized" /><Maximize v-else /></Button>
+          <WithTooltip :label="t('pos.display')"><Button variant="outline" size="icon" class="size-9 shrink-0" :aria-label="t('pos.display')" @click="openDisplay"><Monitor /></Button></WithTooltip>
+          <WithTooltip :label="t(maximized ? 'nav.fullscreen_exit' : 'nav.fullscreen')"><Button variant="outline" size="icon" class="size-9 shrink-0" :aria-label="t(maximized ? 'nav.fullscreen_exit' : 'nav.fullscreen')" data-fullscreen-toggle @click="toggleMaximized"><Minimize v-if="maximized" /><Maximize v-else /></Button></WithTooltip>
         </div>
         <div class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           <Badge as="button" :variant="categoryId === null ? 'default' : 'outline'" class="h-7 cursor-pointer px-3 text-sm" @click="categoryId = null">
@@ -947,9 +948,9 @@ onUnmounted(() => window.removeEventListener("keydown", onKey));
           <div class="space-y-2 border-t bg-background p-4">
             <div class="flex items-center gap-3">
               <div class="flex h-12 shrink-0 items-center rounded-xl border">
-                <Button variant="ghost" size="icon" class="size-10 sm:size-11" :aria-label="t('pos.decrease_quantity')" :disabled="pickQty <= 1" @click="pickQty--"><Minus /></Button>
+                <WithTooltip :label="t('pos.decrease_quantity')"><Button variant="ghost" size="icon" class="size-10 sm:size-11" :aria-label="t('pos.decrease_quantity')" :disabled="pickQty <= 1" @click="pickQty--"><Minus /></Button></WithTooltip>
                 <span class="w-7 text-center font-semibold tabular-nums sm:w-8">{{ pickQty }}</span>
-                <Button variant="ghost" size="icon" class="size-10 sm:size-11" :aria-label="t('pos.increase_quantity')" @click="pickQty++"><Plus /></Button>
+                <WithTooltip :label="t('pos.increase_quantity')"><Button variant="ghost" size="icon" class="size-10 sm:size-11" :aria-label="t('pos.increase_quantity')" @click="pickQty++"><Plus /></Button></WithTooltip>
               </div>
               <Button class="h-12 min-w-0 flex-1 justify-between px-3 text-base sm:px-4" :disabled="!canAdd || !!pickerError" @click="addChosen">
                 <span class="flex min-w-0 items-center gap-2"><ShoppingCart class="shrink-0" /><span class="truncate"><span class="sm:hidden">{{ addLabel.short }}</span><span class="hidden sm:inline">{{ addLabel.long }}</span></span></span>
