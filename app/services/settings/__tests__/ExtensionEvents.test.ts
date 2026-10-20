@@ -43,10 +43,11 @@ const DailyReportService = Container.get(_DailyReportService);
 const { EXTENSION_EVENTS } = await import("@constants/Extension.Constant");
 const { zip } = await import("@helpers/zip");
 const { ExtensionFiles } = await import("@xcore/extensions/ExtensionFiles");
+const { emptyCatalog } = await import("./emptyCatalog");
 
 await migrate(true);
 afterAll(async () => {
-	await ExtensionService.remove("recorder"); // so a later test file starts with an empty catalog
+	await emptyCatalog(); // so a later test file starts with an empty catalog
 	await ExtensionFiles.remove(process.env.EXTENSION_UPLOAD_DIR!);
 });
 

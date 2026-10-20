@@ -55,6 +55,10 @@ Pin such values in the preload. It pins these:
 | `EXTENSION_BUILTIN_DIR` | A temp folder. So unit tests start with no built-in extensions, and upload the repo's examples as zips. |
 | `UPLOAD_DIR` | A temp folder for images |
 
+The extension catalog is shared too: one file's uploads show up in the next file's lists.
+`emptyCatalog()` (`app/services/settings/__tests__/emptyCatalog.ts`) deletes every uploaded extension and every global switch.
+`Extension.Service.test.ts` calls it first, so it starts empty. It and `ExtensionEvents.test.ts` call it again when they finish.
+
 ### Other databases
 
 **MySQL**
