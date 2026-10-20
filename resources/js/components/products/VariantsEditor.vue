@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { ChevronDown, Copy, Plus, Trash2, Wand2, X } from "@lucide/vue";
 import ImagesUpload from "./ImagesUpload.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { t } from "@/lib/i18n";
 
 type VariantRow = {
@@ -233,10 +234,12 @@ function applyBulkPrice() {
           <span class="w-20 truncate text-sm font-medium" :title="g.name">{{ g.name }}</span>
           <Badge v-for="val in g.values" :key="val" variant="secondary" class="gap-1 pr-1 font-normal">
             {{ val }}
-            <button type="button" class="rounded-full p-0.5 hover:bg-foreground/10" :aria-label="t('products.remove_group_value', { group: g.name, value: val })" @click="removeValue(g.name, val)"><X class="size-3" /></button>
+            <WithTooltip :label="t('products.remove_group_value', { group: g.name, value: val })">
+              <button type="button" class="rounded-full p-0.5 hover:bg-foreground/10" :aria-label="t('products.remove_group_value', { group: g.name, value: val })" @click="removeValue(g.name, val)"><X class="size-3" /></button>
+            </WithTooltip>
           </Badge>
           <Input v-model="newValue[g.name]" class="h-7 w-32 text-xs" :placeholder="t('products.add_value')" :aria-label="t('products.new_group_value', { group: g.name })" @keydown.enter.prevent="addValue(g.name)" @blur="addValue(g.name)" />
-          <Button type="button" variant="ghost" size="icon-sm" class="ml-auto" :aria-label="t('products.remove_group', { group: g.name })" @click="removeGroup(g.name)"><X /></Button>
+          <WithTooltip :label="t('products.remove_group', { group: g.name })"><Button type="button" variant="ghost" size="icon-sm" class="ml-auto" :aria-label="t('products.remove_group', { group: g.name })" @click="removeGroup(g.name)"><X /></Button></WithTooltip>
         </div>
         <p v-if="!optionGroups.length" class="text-xs text-muted-foreground">{{ t("products.no_groups") }}</p>
       </div>
@@ -253,16 +256,18 @@ function applyBulkPrice() {
       <div v-for="(g, gi) in groups" :key="gi" class="flex flex-wrap items-center gap-2">
         <Input v-model="g.name" class="w-full sm:w-36" :placeholder="t('products.color_placeholder')" :aria-label="t('products.option_group_name')" />
         <Input v-model="g.values" class="w-full flex-1 sm:w-auto" :placeholder="t('products.values_placeholder')" :aria-label="t('products.option_values')" />
-        <Button
-          v-if="groups.length > 1"
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          :aria-label="t('products.remove_option_group')"
-          @click="groups.splice(gi, 1)"
-        >
-          <Trash2 />
-        </Button>
+        <WithTooltip :label="t('products.remove_option_group')">
+          <Button
+            v-if="groups.length > 1"
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            :aria-label="t('products.remove_option_group')"
+            @click="groups.splice(gi, 1)"
+          >
+            <Trash2 />
+          </Button>
+        </WithTooltip>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <Button type="button" variant="outline" size="sm" @click="groups.push({ name: '', values: '' })"><Plus /> {{ t("products.add_group") }}</Button>
@@ -371,12 +376,16 @@ function applyBulkPrice() {
             </TableCell>
             <TableCell class="max-md:absolute max-md:top-3 max-md:right-3 max-md:p-0">
               <div class="flex">
-                <Button type="button" variant="ghost" size="icon-sm" :aria-label="t('products.duplicate_variant')" @click="duplicate(i)">
-                  <Copy />
-                </Button>
-                <Button type="button" variant="ghost" size="icon-sm" :aria-label="t('products.remove_variant')" @click="variants.splice(i, 1)">
-                  <Trash2 />
-                </Button>
+                <WithTooltip :label="t('products.duplicate_variant')">
+                  <Button type="button" variant="ghost" size="icon-sm" :aria-label="t('products.duplicate_variant')" @click="duplicate(i)">
+                    <Copy />
+                  </Button>
+                </WithTooltip>
+                <WithTooltip :label="t('products.remove_variant')">
+                  <Button type="button" variant="ghost" size="icon-sm" :aria-label="t('products.remove_variant')" @click="variants.splice(i, 1)">
+                    <Trash2 />
+                  </Button>
+                </WithTooltip>
               </div>
             </TableCell>
           </TableRow>

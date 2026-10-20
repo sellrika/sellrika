@@ -92,6 +92,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { locale, t } from "@/lib/i18n";
 import { LOCALES, type Key, type Locale } from "@i18n";
 import type {
@@ -733,10 +734,12 @@ async function copyUrl() {
                 <div class="flex items-center gap-2">
                   <Input id="store-slug" v-model="form.slug" placeholder="my-shop" :aria-invalid="!!form.errors.slug" />
                   <span class="hidden shrink-0 text-sm text-muted-foreground sm:inline">{{ slugSuffix }}</span>
-                  <Button type="button" variant="outline" size="icon" :aria-label="t('online_store.copy_link_aria')" @click="copyUrl"><Copy /></Button>
-                  <Button as-child variant="outline" size="icon" :aria-label="t('online_store.open_url_aria', { url: publicUrl })">
-                    <a :href="slugUrl" target="_blank" rel="noopener"><ExternalLink /></a>
-                  </Button>
+                  <WithTooltip :label="t('online_store.copy_link_aria')"><Button type="button" variant="outline" size="icon" :aria-label="t('online_store.copy_link_aria')" @click="copyUrl"><Copy /></Button></WithTooltip>
+                  <WithTooltip :label="t('online_store.open_url_aria', { url: publicUrl })">
+                    <Button as-child variant="outline" size="icon" :aria-label="t('online_store.open_url_aria', { url: publicUrl })">
+                      <a :href="slugUrl" target="_blank" rel="noopener"><ExternalLink /></a>
+                    </Button>
+                  </WithTooltip>
                 </div>
                 <p v-if="form.errors.slug" class="text-sm text-destructive">{{ form.errors.slug }}</p>
                 <p v-else class="text-xs text-muted-foreground">{{ slugUrl }}</p>
@@ -745,9 +748,11 @@ async function copyUrl() {
                 <Label for="store-domain">{{ t("online_store.custom_domain") }} <span class="text-muted-foreground">{{ t("online_store.optional_paren") }}</span></Label>
                 <div class="flex items-center gap-2">
                   <Input id="store-domain" v-model="form.domain" placeholder="shop.example.com" :aria-invalid="!!form.errors.domain" />
-                  <Button v-if="form.domain" as-child variant="outline" size="icon" :aria-label="t('online_store.open_url_aria', { url: `https://${form.domain}` })">
-                    <a :href="`https://${form.domain}`" target="_blank" rel="noopener"><ExternalLink /></a>
-                  </Button>
+                  <WithTooltip v-if="form.domain" :label="t('online_store.open_url_aria', { url: `https://${form.domain}` })">
+                    <Button as-child variant="outline" size="icon" :aria-label="t('online_store.open_url_aria', { url: `https://${form.domain}` })">
+                      <a :href="`https://${form.domain}`" target="_blank" rel="noopener"><ExternalLink /></a>
+                    </Button>
+                  </WithTooltip>
                 </div>
                 <p v-if="form.errors.domain" class="text-sm text-destructive">{{ form.errors.domain }}</p>
                 <p v-else-if="!domainSetup" class="text-xs text-muted-foreground">{{ settings.domain_setup ? t("online_store.domain_hint_managed") : t("online_store.domain_hint") }}</p>
@@ -778,7 +783,7 @@ async function copyUrl() {
                           <td class="py-2 align-top">
                             <span class="inline-flex items-center gap-1 break-all">
                               {{ domainSetup.cname }}
-                              <Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('online_store.copy_value_aria', { value: domainSetup.cname })" @click="copyValue(domainSetup.cname)"><Copy class="size-3.5" /></Button>
+                              <WithTooltip :label="t('online_store.copy_value_aria', { value: domainSetup.cname })"><Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('online_store.copy_value_aria', { value: domainSetup.cname })" @click="copyValue(domainSetup.cname)"><Copy class="size-3.5" /></Button></WithTooltip>
                             </span>
                             <p class="font-sans text-xs text-muted-foreground">{{ t("online_store.domain_for_sub") }}</p>
                           </td>
@@ -789,7 +794,7 @@ async function copyUrl() {
                           <td class="py-2 align-top">
                             <span class="inline-flex items-center gap-1">
                               {{ ip }}
-                              <Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('online_store.copy_value_aria', { value: ip })" @click="copyValue(ip)"><Copy class="size-3.5" /></Button>
+                              <WithTooltip :label="t('online_store.copy_value_aria', { value: ip })"><Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('online_store.copy_value_aria', { value: ip })" @click="copyValue(ip)"><Copy class="size-3.5" /></Button></WithTooltip>
                             </span>
                             <p class="font-sans text-xs text-muted-foreground">{{ t("online_store.domain_for_root") }}</p>
                           </td>
@@ -800,7 +805,7 @@ async function copyUrl() {
                           <td class="py-2 align-top">
                             <span class="inline-flex items-center gap-1 break-all">
                               {{ domainSetup.txt.value }}
-                              <Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('online_store.copy_value_aria', { value: 'TXT' })" @click="copyValue(domainSetup.txt.value)"><Copy class="size-3.5" /></Button>
+                              <WithTooltip :label="t('online_store.copy_value_aria', { value: 'TXT' })"><Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('online_store.copy_value_aria', { value: 'TXT' })" @click="copyValue(domainSetup.txt.value)"><Copy class="size-3.5" /></Button></WithTooltip>
                             </span>
                             <p class="font-sans text-xs text-muted-foreground">{{ t("online_store.domain_for_txt") }}</p>
                           </td>
@@ -840,9 +845,11 @@ async function copyUrl() {
                 <Label for="store-google">{{ t("online_store.verification") }} <span class="text-muted-foreground">{{ t("online_store.optional_paren") }}</span></Label>
                 <div class="flex items-center gap-2">
                   <Input id="store-google" v-model="form.google_site_verification" placeholder='<meta name="google-site-verification" content="…">' :aria-invalid="!!form.errors.google_site_verification" />
-                  <Button as-child variant="outline" size="icon" :aria-label="t('online_store.gsc_open_aria')">
-                    <a href="https://search.google.com/search-console" target="_blank" rel="noopener"><ExternalLink /></a>
-                  </Button>
+                  <WithTooltip :label="t('online_store.gsc_open_aria')">
+                    <Button as-child variant="outline" size="icon" :aria-label="t('online_store.gsc_open_aria')">
+                      <a href="https://search.google.com/search-console" target="_blank" rel="noopener"><ExternalLink /></a>
+                    </Button>
+                  </WithTooltip>
                 </div>
                 <p v-if="form.errors.google_site_verification" class="text-sm text-destructive">{{ form.errors.google_site_verification }}</p>
                 <p v-else class="text-xs text-muted-foreground">
@@ -853,7 +860,7 @@ async function copyUrl() {
                 <Label>{{ t("online_store.sitemap") }}</Label>
                 <div class="flex items-center gap-2">
                   <a :href="sitemapUrl" target="_blank" rel="noopener" class="min-w-0 truncate font-mono text-sm hover:underline">{{ sitemapUrl }}</a>
-                  <Button type="button" variant="outline" size="icon" :aria-label="t('online_store.copy_sitemap_aria')" @click="copySitemap"><Copy /></Button>
+                  <WithTooltip :label="t('online_store.copy_sitemap_aria')"><Button type="button" variant="outline" size="icon" :aria-label="t('online_store.copy_sitemap_aria')" @click="copySitemap"><Copy /></Button></WithTooltip>
                 </div>
                 <p class="text-xs text-muted-foreground">{{ t("online_store.sitemap_hint") }}</p>
               </div>
@@ -869,7 +876,7 @@ async function copyUrl() {
             <CardContent class="space-y-2">
               <div class="flex items-center gap-2">
                 <a :href="feedUrl" target="_blank" rel="noopener" class="min-w-0 truncate font-mono text-sm hover:underline">{{ feedUrl }}</a>
-                <Button type="button" variant="outline" size="icon" :aria-label="t('online_store.copy_feed_aria')" @click="copyFeed"><Copy /></Button>
+                <WithTooltip :label="t('online_store.copy_feed_aria')"><Button type="button" variant="outline" size="icon" :aria-label="t('online_store.copy_feed_aria')" @click="copyFeed"><Copy /></Button></WithTooltip>
               </div>
               <p class="text-xs text-muted-foreground">{{ t("online_store.feed_hint") }}</p>
             </CardContent>
@@ -919,9 +926,11 @@ async function copyUrl() {
                       <span v-if="settings.theme_config[key]" class="mt-1 block text-xs font-medium text-primary">{{ t("online_store.theme_customized") }}</span>
                     </span>
                   </button>
-                  <Button v-if="isBuiltIn(key)" type="button" variant="ghost" size="icon" class="absolute top-2 right-2" :aria-label="t('online_store.theme_title', { name: label })" :title="t('online_store.theme_customize')" @click="customize(key, label)">
-                    <Settings2 class="size-4" />
-                  </Button>
+                  <WithTooltip v-if="isBuiltIn(key)" :label="t('online_store.theme_customize')">
+                    <Button type="button" variant="ghost" size="icon" class="absolute top-2 right-2" :aria-label="t('online_store.theme_title', { name: label })" @click="customize(key, label)">
+                      <Settings2 class="size-4" />
+                    </Button>
+                  </WithTooltip>
                 </div>
               </div>
               <ThemeConfigDialog v-if="customizing" v-model:open="customizeOpen" :template="customizing" :look="settings.theme_config[customizing.key]" :own="customizingColors" :fonts="fonts" />
@@ -1169,8 +1178,8 @@ async function copyUrl() {
                       <TableCell class="text-right tabular-nums">{{ money(toCents(z.fee), currency) }}</TableCell>
                       <TableCell class="text-right tabular-nums" :class="!z.free_delivery_min && 'text-muted-foreground'">{{ z.free_delivery_min ? money(toCents(z.free_delivery_min), currency) : "—" }}</TableCell>
                       <TableCell class="whitespace-nowrap">
-                        <Button type="button" size="icon" variant="ghost" :aria-label="t('online_store.edit_zone_aria', { n: i + 1 })" @click="editZone(i)"><Pencil /></Button>
-                        <Button type="button" size="icon" variant="ghost" :aria-label="t('online_store.remove_zone_aria', { n: i + 1 })" :disabled="delivery.processing" @click="removeZone(i)"><Trash2 /></Button>
+                        <WithTooltip :label="t('online_store.edit_zone_aria', { n: i + 1 })"><Button type="button" size="icon" variant="ghost" :aria-label="t('online_store.edit_zone_aria', { n: i + 1 })" @click="editZone(i)"><Pencil /></Button></WithTooltip>
+                        <WithTooltip :label="t('online_store.remove_zone_aria', { n: i + 1 })"><Button type="button" size="icon" variant="ghost" :aria-label="t('online_store.remove_zone_aria', { n: i + 1 })" :disabled="delivery.processing" @click="removeZone(i)"><Trash2 /></Button></WithTooltip>
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -1248,7 +1257,7 @@ async function copyUrl() {
                     <InputGroupInput v-model="c.rate" type="number" step="any" min="0" inputmode="decimal" :placeholder="t('online_store.currency_rate_auto')" :aria-label="t('online_store.currency_rate_for', { code: c.code })" />
                     <InputGroupAddon align="inline-end"><InputGroupText>{{ c.code }}</InputGroupText></InputGroupAddon>
                   </InputGroup>
-                  <Button type="button" size="icon" variant="ghost" :aria-label="t('online_store.currency_remove', { code: c.code })" @click="removeCurrency(c.code)"><Trash2 /></Button>
+                  <WithTooltip :label="t('online_store.currency_remove', { code: c.code })"><Button type="button" size="icon" variant="ghost" :aria-label="t('online_store.currency_remove', { code: c.code })" @click="removeCurrency(c.code)"><Trash2 /></Button></WithTooltip>
                   <p v-if="(currencies.errors as Record<string, string>)[`currencies.${i}.rate`]" class="w-full text-sm text-destructive">{{ (currencies.errors as Record<string, string>)[`currencies.${i}.rate`] }}</p>
                 </div>
               </div>
@@ -1386,9 +1395,11 @@ async function copyUrl() {
                     <Link :href="`/online-store/pages/${p.id}/edit`" :aria-label="t('online_store.edit_page_aria', { title: p.title })"><Pencil /> {{ t("common.edit") }}</Link>
                   </Button>
                   <AlertDialog>
-                    <AlertDialogTrigger as-child>
-                      <Button variant="ghost" size="icon" :aria-label="t('online_store.delete_page_aria', { title: p.title })"><Trash2 /></Button>
-                    </AlertDialogTrigger>
+                    <WithTooltip :label="t('online_store.delete_page_aria', { title: p.title })">
+                      <AlertDialogTrigger as-child>
+                        <Button variant="ghost" size="icon" :aria-label="t('online_store.delete_page_aria', { title: p.title })"><Trash2 /></Button>
+                      </AlertDialogTrigger>
+                    </WithTooltip>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>{{ t("online_store.delete_page_title", { title: p.title }) }}</AlertDialogTitle>

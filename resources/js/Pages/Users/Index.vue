@@ -46,6 +46,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { useAuth } from "@/lib/auth";
 import { fmtDate, money } from "@/lib/format";
 import { t } from "@/lib/i18n";
@@ -412,16 +413,25 @@ function removeSales(s: SalesStaff) {
             <TableCell class="hidden text-muted-foreground md:table-cell">{{ fmtDate(u.created_at, { dateStyle: "medium" }) }}</TableCell>
             <TableCell class="pr-4 text-right">
               <div class="flex justify-end gap-1">
-                <Button size="sm" variant="ghost" :disabled="!!lockedFor(u)" :title="lockedFor(u) || undefined" :aria-label="t('users.edit_aria', { name: u.name })" @click="startEdit(u)">
-                  <Pencil /> <span class="hidden sm:inline">{{ t("common.edit") }}</span>
-                </Button>
-                <span v-if="deleteBlocked(u)" :title="deleteBlocked(u)" class="inline-flex">
-                  <Button size="icon-sm" variant="ghost" disabled :aria-label="t('users.delete_blocked_aria', { name: u.name, reason: deleteBlocked(u) })"><Trash2 /></Button>
-                </span>
+                <WithTooltip :label="lockedFor(u)">
+                  <span class="inline-flex">
+                    <Button size="sm" variant="ghost" :disabled="!!lockedFor(u)" :aria-label="t('users.edit_aria', { name: u.name })" @click="startEdit(u)">
+                      <Pencil /> <span class="hidden sm:inline">{{ t("common.edit") }}</span>
+                    </Button>
+                  </span>
+                </WithTooltip>
+                <!-- a disabled button gets no pointer events, so the span carries the reason -->
+                <WithTooltip v-if="deleteBlocked(u)" :label="deleteBlocked(u)">
+                  <span class="inline-flex">
+                    <Button size="icon-sm" variant="ghost" disabled :aria-label="t('users.delete_blocked_aria', { name: u.name, reason: deleteBlocked(u) })"><Trash2 /></Button>
+                  </span>
+                </WithTooltip>
                 <AlertDialog v-else>
-                  <AlertDialogTrigger as-child>
-                    <Button size="icon-sm" variant="ghost" :aria-label="t('users.delete_aria', { name: u.name })"><Trash2 class="text-destructive" /></Button>
-                  </AlertDialogTrigger>
+                  <WithTooltip :label="t('users.delete_aria', { name: u.name })">
+                    <AlertDialogTrigger as-child>
+                      <Button size="icon-sm" variant="ghost" :aria-label="t('users.delete_aria', { name: u.name })"><Trash2 class="text-destructive" /></Button>
+                    </AlertDialogTrigger>
+                  </WithTooltip>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>{{ t("users.delete_title", { name: u.name }) }}</AlertDialogTitle>
@@ -489,9 +499,11 @@ function removeSales(s: SalesStaff) {
                     <Pencil /> <span class="hidden sm:inline">{{ t("common.edit") }}</span>
                   </Button>
                   <AlertDialog>
-                    <AlertDialogTrigger as-child>
-                      <Button size="icon-sm" variant="ghost" :aria-label="t('users.delete_aria', { name: s.name })"><Trash2 class="text-destructive" /></Button>
-                    </AlertDialogTrigger>
+                    <WithTooltip :label="t('users.delete_aria', { name: s.name })">
+                      <AlertDialogTrigger as-child>
+                        <Button size="icon-sm" variant="ghost" :aria-label="t('users.delete_aria', { name: s.name })"><Trash2 class="text-destructive" /></Button>
+                      </AlertDialogTrigger>
+                    </WithTooltip>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>{{ t("users.delete_title", { name: s.name }) }}</AlertDialogTitle>
@@ -571,8 +583,8 @@ function removeSales(s: SalesStaff) {
             <InputGroup>
               <InputGroupInput id="new-password" v-model="form.password" type="text" autocomplete="off" spellcheck="false" class="font-mono" :aria-invalid="!!form.errors.password" />
               <InputGroupAddon align="inline-end">
-                <InputGroupButton size="icon-xs" :aria-label="t('users.generate_password')" :title="t('users.generate_password')" @click="regenerate"><RefreshCw /></InputGroupButton>
-                <InputGroupButton size="icon-xs" :aria-label="t('users.copy_password')" :title="t('users.copy_password')" :disabled="!form.password" @click="copyPassword"><Copy /></InputGroupButton>
+                <WithTooltip :label="t('users.generate_password')"><InputGroupButton size="icon-xs" :aria-label="t('users.generate_password')" @click="regenerate"><RefreshCw /></InputGroupButton></WithTooltip>
+                <WithTooltip :label="t('users.copy_password')"><InputGroupButton size="icon-xs" :aria-label="t('users.copy_password')" :disabled="!form.password" @click="copyPassword"><Copy /></InputGroupButton></WithTooltip>
               </InputGroupAddon>
             </InputGroup>
             <p v-if="form.errors.password" class="text-sm text-destructive">{{ form.errors.password }}</p>

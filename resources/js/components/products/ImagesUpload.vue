@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { t } from "@/lib/i18n";
 import ImageEditor from "./ImageEditor.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 
 // Multiple images; the first one is the cover. `compact` = small tiles (variant rows).
 // Every image is one of our uploads (`/uploads/…`): a pasted https link is cropped and uploaded like a picked file.
@@ -104,73 +105,80 @@ function addLink() {
         class="group relative shrink-0"
         :class="compact ? 'size-9' : 'size-24'"
       >
-        <button
-          type="button"
-          class="relative block size-full rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          :title="t('products.edit_image_n', { n: i + 1 })"
-          :aria-label="t('products.edit_image_n', { n: i + 1 })"
-          @click="editing = i"
-        >
-          <img :src="img" :alt="i === 0 ? t('products.cover_image') : t('products.image_n', { n: i + 1 })" class="size-full cursor-pointer rounded-lg border bg-muted object-cover" />
-          <!-- hover / keyboard focus: a dark layer with a pencil says "click to edit" -->
-          <span class="absolute inset-0 hidden items-center justify-center gap-1 rounded-lg bg-black/45 text-xs font-medium text-white group-hover:flex group-has-[:focus-visible]:flex" aria-hidden="true">
-            <Pencil :class="compact ? 'size-3.5' : 'size-4'" />
-            <span v-if="!compact">{{ t("common.edit") }}</span>
-          </span>
-        </button>
+        <WithTooltip :label="t('products.edit_image_n', { n: i + 1 })">
+          <button
+            type="button"
+            class="relative block size-full rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            :aria-label="t('products.edit_image_n', { n: i + 1 })"
+            @click="editing = i"
+          >
+            <img :src="img" :alt="i === 0 ? t('products.cover_image') : t('products.image_n', { n: i + 1 })" class="size-full cursor-pointer rounded-lg border bg-muted object-cover" />
+            <!-- hover / keyboard focus: a dark layer with a pencil says "click to edit" -->
+            <span class="absolute inset-0 hidden items-center justify-center gap-1 rounded-lg bg-black/45 text-xs font-medium text-white group-hover:flex group-has-[:focus-visible]:flex" aria-hidden="true">
+              <Pencil :class="compact ? 'size-3.5' : 'size-4'" />
+              <span v-if="!compact">{{ t("common.edit") }}</span>
+            </span>
+          </button>
+        </WithTooltip>
         <span v-if="i === 0 && !compact" class="absolute bottom-1 left-1 rounded bg-background/90 px-1 text-[10px] font-medium">{{ t("products.cover") }}</span>
-        <button
-          v-if="i > 0 && !compact"
-          type="button"
-          class="absolute bottom-1 right-1 hidden rounded bg-background/90 p-0.5 text-muted-foreground hover:text-foreground group-hover:block group-has-[:focus-visible]:block"
-          :title="t('products.make_cover')"
-          :aria-label="t('products.make_cover')"
-          @click="makeCover(i)"
-        >
-          <Star class="size-3" />
-        </button>
-        <button
-          type="button"
-          class="absolute flex items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm hover:text-destructive"
-          :class="compact ? '-top-1.5 -right-1.5 size-4' : 'top-1 right-1 hidden size-5 group-hover:flex group-has-[:focus-visible]:flex'"
-          :aria-label="t('products.remove_image')"
-          @click="images.splice(i, 1)"
-        >
-          <X class="size-3" />
-        </button>
+        <WithTooltip v-if="i > 0 && !compact" :label="t('products.make_cover')">
+          <button
+            type="button"
+            class="absolute bottom-1 right-1 hidden rounded bg-background/90 p-0.5 text-muted-foreground hover:text-foreground group-hover:block group-has-[:focus-visible]:block"
+            :aria-label="t('products.make_cover')"
+            @click="makeCover(i)"
+          >
+            <Star class="size-3" />
+          </button>
+        </WithTooltip>
+        <WithTooltip :label="t('products.remove_image')">
+          <button
+            type="button"
+            class="absolute flex items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm hover:text-destructive"
+            :class="compact ? '-top-1.5 -right-1.5 size-4' : 'top-1 right-1 hidden size-5 group-hover:flex group-has-[:focus-visible]:flex'"
+            :aria-label="t('products.remove_image')"
+            @click="images.splice(i, 1)"
+          >
+            <X class="size-3" />
+          </button>
+        </WithTooltip>
       </div>
 
-      <button
-        v-if="images.length < limit()"
-        type="button"
-        class="flex shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-input text-muted-foreground outline-none transition-colors hover:border-primary/40 hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        :class="[compact ? 'h-9 px-2.5 text-xs' : 'size-24 border-2 text-xs', dragging && 'border-primary bg-muted/60']"
-        :disabled="uploading > 0"
-        @click="fileInput?.click()"
-        @dragover.prevent="dragging = true"
-        @dragleave="dragging = false"
-        @drop.prevent="onDrop"
-      >
-        <span class="flex items-center gap-1.5">
-          <Loader2 v-if="uploading" class="size-4 animate-spin" />
-          <ImagePlus v-else class="size-4" />
-          <span v-if="compact && !images.length">{{ uploading ? t("products.uploading") : t("products.add_images") }}</span>
-        </span>
-        <span v-if="!compact">{{ uploading ? t("products.uploading") : t("common.add") }}</span>
-      </button>
+      <!-- compact with pictures: only the icon is left, so it gets a name and a tooltip -->
+      <WithTooltip v-if="images.length < limit()" :label="compact && images.length ? t('products.add_images') : null">
+        <button
+          type="button"
+          class="flex shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-input text-muted-foreground outline-none transition-colors hover:border-primary/40 hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          :class="[compact ? 'h-9 px-2.5 text-xs' : 'size-24 border-2 text-xs', dragging && 'border-primary bg-muted/60']"
+          :aria-label="compact && images.length ? t('products.add_images') : undefined"
+          :disabled="uploading > 0"
+          @click="fileInput?.click()"
+          @dragover.prevent="dragging = true"
+          @dragleave="dragging = false"
+          @drop.prevent="onDrop"
+        >
+          <span class="flex items-center gap-1.5">
+            <Loader2 v-if="uploading" class="size-4 animate-spin" />
+            <ImagePlus v-else class="size-4" />
+            <span v-if="compact && !images.length">{{ uploading ? t("products.uploading") : t("products.add_images") }}</span>
+          </span>
+          <span v-if="!compact">{{ uploading ? t("products.uploading") : t("common.add") }}</span>
+        </button>
+      </WithTooltip>
 
-      <button
-        v-if="images.length < limit()"
-        type="button"
-        class="flex shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-input text-muted-foreground outline-none transition-colors hover:border-primary/40 hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        :class="compact ? 'h-9 px-2.5 text-xs' : 'size-24 border-2 text-xs'"
-        :aria-label="t('products.add_image_link')"
-        :aria-expanded="linking"
-        @click="linking = !linking"
-      >
-        <Link class="size-4" />
-        <span v-if="!compact">{{ t("products.link") }}</span>
-      </button>
+      <WithTooltip v-if="images.length < limit()" :label="compact ? t('products.add_image_link') : null">
+        <button
+          type="button"
+          class="flex shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-input text-muted-foreground outline-none transition-colors hover:border-primary/40 hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          :class="compact ? 'h-9 px-2.5 text-xs' : 'size-24 border-2 text-xs'"
+          :aria-label="t('products.add_image_link')"
+          :aria-expanded="linking"
+          @click="linking = !linking"
+        >
+          <Link class="size-4" />
+          <span v-if="!compact">{{ t("products.link") }}</span>
+        </button>
+      </WithTooltip>
     </div>
 
     <div v-if="linking" class="flex items-center gap-2">

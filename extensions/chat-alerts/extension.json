@@ -1,7 +1,7 @@
 {
 	"key": "chat-alerts",
 	"name": "name",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "description",
 	"help_url": "https://api.slack.com/messaging/webhooks",
 	"icon": "assets/icon.svg",
@@ -52,6 +52,21 @@
 			"grid": 4,
 			"placeholder": "U… / C…",
 			"hint": "field.line_to_hint"
+		},
+		{
+			"name": "telegram_token",
+			"label": "field.telegram_token",
+			"secret": true,
+			"grid": 4,
+			"placeholder": "123456:ABC…",
+			"hint": "field.telegram_token_hint"
+		},
+		{
+			"name": "telegram_chat",
+			"label": "field.telegram_chat",
+			"grid": 4,
+			"placeholder": "-100… / @channel",
+			"hint": "field.telegram_chat_hint"
 		}
 	]
 }

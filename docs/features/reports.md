@@ -168,7 +168,7 @@ It is a core feature. But the **Chat alerts** extension does the posting and hol
 The gear button next to the page title opens the dialog. It has:
 
 - a switch
-- a time, `HH:MM` on the shop's clock. It is 22:00 until changed (`REPORT_DEFAULT_TIME`).
+- a time, `HH:MM` on the shop's clock. It is 22:00 until changed (the column default in migration `0084_shop_daily_report.ts`).
 - the channels
 
 `PUT /reports/schedule` saves it.
@@ -179,10 +179,10 @@ The gear button next to the page title opens the dialog. It has:
 
 ### Channels
 
-The channels are `slack`, `discord` and `line`.
-`REPORT_CHANNELS` maps each one to the Chat alerts setting that must be filled.
+The channels are `slack`, `discord`, `line` and `telegram`.
+`REPORT_CHANNELS` maps each one to the Chat alerts settings that must all be filled. Telegram needs both the bot token and the chat ID.
 
-- The dialog offers only the channels that work now: the extension runs for the shop, and that setting is filled.
+- The dialog offers only the channels that work now: the extension runs for the shop, and those settings are filled.
 - Switching the report on needs at least one channel.
 - With nothing to offer, the dialog says to set up Chat alerts. Admins get a link to `/extensions`.
 

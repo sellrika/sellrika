@@ -32,6 +32,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import Pager from "@/components/Pager.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { fmtDate } from "@/lib/format";
 import { campaignStatus } from "@/lib/marketing";
 import { t } from "@/lib/i18n";
@@ -110,7 +111,7 @@ function open(c: Campaign) {
         <p class="text-sm text-muted-foreground">{{ t("marketing.subtitle") }}</p>
       </div>
       <Button v-if="!campaign_blocked" as-child><Link href="/marketing/campaigns/create"><Plus /> {{ t("marketing.new_campaign") }}</Link></Button>
-      <Button variant="outline" size="icon" :aria-label="t('nav.settings')" :title="t('nav.settings')" @click="settingsOpen = true"><Settings /></Button>
+      <WithTooltip :label="t('nav.settings')"><Button variant="outline" size="icon" :aria-label="t('nav.settings')" @click="settingsOpen = true"><Settings /></Button></WithTooltip>
     </div>
 
     <p v-if="campaign_blocked" class="flex flex-wrap items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200" role="note">

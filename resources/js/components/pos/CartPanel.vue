@@ -112,6 +112,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MessageSquare, Minus, Percent, Plus, ShoppingCart, Tag, Trash2, UserRound, UserRoundPlus, X } from "@lucide/vue";
 import ExtensionSlot from "@/components/ExtensionSlot.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { fromCents, money, toCents } from "@/lib/format";
 import type { Customer, SharedProps } from "@/types";
 
@@ -265,7 +266,7 @@ const discountLabel = computed(function label() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <Button v-if="closable" variant="ghost" size="icon-sm" :class="!lines.length && 'ml-auto'" :aria-label="t('pos.close_cart')" @click="emit('close')"><X /></Button>
+      <WithTooltip v-if="closable" :label="t('pos.close_cart')"><Button variant="ghost" size="icon-sm" :class="!lines.length && 'ml-auto'" :aria-label="t('pos.close_cart')" @click="emit('close')"><X /></Button></WithTooltip>
     </header>
 
     <!-- Customer -->
@@ -274,7 +275,7 @@ const discountLabel = computed(function label() {
         <span class="flex size-6 items-center justify-center rounded-full bg-primary/20"><UserRound class="size-3.5" /></span>
         <span class="min-w-0 flex-1 truncate font-medium">{{ customer.name }}<span v-if="customer.phone" class="font-normal text-muted-foreground"> · {{ customer.phone }}</span></span>
         <Button variant="ghost" size="sm" class="h-7 text-muted-foreground" @click="emit('pickCustomer')">{{ t("pos.change_customer") }}</Button>
-        <Button variant="ghost" size="icon-sm" :aria-label="t('pos.remove_customer')" @click="emit('update:customer', null)"><X /></Button>
+        <WithTooltip :label="t('pos.remove_customer')"><Button variant="ghost" size="icon-sm" :aria-label="t('pos.remove_customer')" @click="emit('update:customer', null)"><X /></Button></WithTooltip>
       </template>
       <Button v-else variant="ghost" size="sm" class="h-8 -ml-1 text-muted-foreground" @click="emit('pickCustomer')"><UserRoundPlus /> {{ t("pos.add_customer") }}</Button>
     </div>
@@ -323,23 +324,31 @@ const discountLabel = computed(function label() {
           <!-- Qty stepper + note + remove -->
           <div class="flex items-center justify-between">
             <div class="inline-flex h-8 items-center rounded-md border">
-              <Button variant="ghost" size="icon" class="size-8 rounded-r-none" :aria-label="t('pos.decrease_line', { name: l.name })" @click="emit('setQty', l.key, l.qty - 1)">
-                <Minus class="size-3.5" />
-              </Button>
+              <WithTooltip :label="t('pos.decrease_line', { name: l.name })">
+                <Button variant="ghost" size="icon" class="size-8 rounded-r-none" :aria-label="t('pos.decrease_line', { name: l.name })" @click="emit('setQty', l.key, l.qty - 1)">
+                  <Minus class="size-3.5" />
+                </Button>
+              </WithTooltip>
               <span class="min-w-8 border-x text-center text-sm font-medium tabular-nums leading-8">{{ l.qty }}</span>
-              <Button variant="ghost" size="icon" class="size-8 rounded-l-none" :aria-label="t('pos.increase_line', { name: l.name })" :disabled="l.stock !== null && l.qty >= l.stock" @click="emit('setQty', l.key, l.qty + 1)">
-                <Plus class="size-3.5" />
-              </Button>
+              <WithTooltip :label="t('pos.increase_line', { name: l.name })">
+                <Button variant="ghost" size="icon" class="size-8 rounded-l-none" :aria-label="t('pos.increase_line', { name: l.name })" :disabled="l.stock !== null && l.qty >= l.stock" @click="emit('setQty', l.key, l.qty + 1)">
+                  <Plus class="size-3.5" />
+                </Button>
+              </WithTooltip>
             </div>
             <div class="flex items-center">
-              <Button variant="ghost" size="icon" class="size-8" :class="l.note ? 'text-primary' : 'text-muted-foreground'"
-                :aria-label="t('pos.note_for', { name: l.name })" :aria-pressed="noting === l.key" @mousedown.prevent @click="toggleNote(l.key)">
-                <MessageSquare class="size-4" />
-              </Button>
-              <Button variant="ghost" size="icon" class="size-8 text-muted-foreground hover:text-destructive"
-                :aria-label="t('pos.remove_line', { name: l.name })" @click="emit('remove', l.key)">
-                <Trash2 class="size-4" />
-              </Button>
+              <WithTooltip :label="t('pos.note_for', { name: l.name })">
+                <Button variant="ghost" size="icon" class="size-8" :class="l.note ? 'text-primary' : 'text-muted-foreground'"
+                  :aria-label="t('pos.note_for', { name: l.name })" :aria-pressed="noting === l.key" @mousedown.prevent @click="toggleNote(l.key)">
+                  <MessageSquare class="size-4" />
+                </Button>
+              </WithTooltip>
+              <WithTooltip :label="t('pos.remove_line', { name: l.name })">
+                <Button variant="ghost" size="icon" class="size-8 text-muted-foreground hover:text-destructive"
+                  :aria-label="t('pos.remove_line', { name: l.name })" @click="emit('remove', l.key)">
+                  <Trash2 class="size-4" />
+                </Button>
+              </WithTooltip>
             </div>
           </div>
         </div>

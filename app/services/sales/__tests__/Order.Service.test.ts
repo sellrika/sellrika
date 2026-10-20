@@ -250,7 +250,7 @@ test("refund: partial with restock, then the rest; status and caches follow", as
 				items: [],
 			})
 		).errors?.amount,
-	).toMatch(/At most 2700/);
+	).toMatch(/At most \$27\b/);
 	expect(
 		(
 			await OrderService.refund(o.id, S, U, {
@@ -672,7 +672,7 @@ test("manual online order: unpaid → partly paid → paid; refunds only what ca
 	).toMatch(/Nothing has been paid/);
 	expect(
 		(await OrderService.recordPayment(o.id, S, { amount: 600 })).errors?.amount,
-	).toMatch(/At most 500/);
+	).toMatch(/At most \$5\b/);
 	expect(await OrderService.recordPayment(o.id, S, { amount: 200 })).toEqual({
 		paid: 200,
 		payment_status: "partial",
@@ -697,7 +697,7 @@ test("manual online order: unpaid → partly paid → paid; refunds only what ca
 				items: [],
 			})
 		).errors?.amount,
-	).toMatch(/At most 200/);
+	).toMatch(/At most \$2\b/);
 	expect(await OrderService.recordPayment(o.id, S, { amount: 300 })).toEqual({
 		paid: 500,
 		payment_status: "paid",

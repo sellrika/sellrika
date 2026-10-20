@@ -99,8 +99,9 @@ Free title and value rows, stored as a JSON array `[{ title, value }]`.
 
 ### Relations
 
-- Many **categories**, through `product_categories`.
-- Many **variants**.
+- Many **categories**, through `product_categories`. At most `PRODUCT_CATEGORIES_MAX` = 200.
+- Many **variants**. At most `PRODUCT_VARIANTS_MAX` = 500.
+- A package holds at most `BUNDLE_ITEMS_MAX` = 100 products.
 
 ## Pictures
 
@@ -795,6 +796,7 @@ In this exact order:
 ### Values
 
 - Prices and costs are decimals (`4.50`). They are converted to and from integer cents.
+- A blank price is a bad row. It is never read as 0.
 - Barcodes are plain strings. So leading zeros survive (good for GTIN, EAN, UPC).
 - `sku` goes out and comes back with the product's or variant's `sku` column.
 - When a unit has no SKU, the export uses a generated `P<id>` or `P<id>-<variantId>`. So the column is never empty. The spec needs one.

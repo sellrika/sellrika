@@ -686,7 +686,7 @@ resources/js/
   layouts/AppLayout.vue  sidebar and mobile nav, shop switcher, user menu
   Pages/<Area>/*.vue     Inertia pages
   components/ui/*        shadcn-vue primitives
-  components/*.vue       shared pieces: CurrencySelect, TimezoneSelect, IconPicker, ColorPicker, CategoryDot, Pager, ReceiptSlip, ShopLogo, BackButton…
+  components/*.vue       shared pieces: CurrencySelect, TimezoneSelect, IconPicker, ColorPicker, CategoryDot, Pager, ReceiptSlip, ShopLogo, BackButton, WithTooltip…
   components/pos/*       ProductCard, CartPanel, CheckoutDialog, CustomerPicker, PaymentMethodPicker, PaymentShow
   components/products/*  VariantsEditor, BundleItemsEditor, CategoryPicker, ImageUpload, ImagesUpload, ImageEditor, ShareDialog, UnitSelect
   store/                 `window.Store` and the checkout island of the online store

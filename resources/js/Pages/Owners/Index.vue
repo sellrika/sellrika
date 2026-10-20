@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import Pager from "@/components/Pager.vue";
 import SignupSwitch from "@/components/SignupSwitch.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { fmtDate } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import type { OwnerRow, Paged } from "@/types";
@@ -75,7 +76,7 @@ function day(s: string | null) {
         <Search class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input v-model="search" type="search" class="pl-8" :aria-label="t('owners.search')" :placeholder="t('owners.search')" />
       </div>
-      <Button variant="outline" size="icon" :aria-label="t('nav.settings')" :title="t('nav.settings')" @click="settingsOpen = true"><Settings /></Button>
+      <WithTooltip :label="t('nav.settings')"><Button variant="outline" size="icon" :aria-label="t('nav.settings')" @click="settingsOpen = true"><Settings /></Button></WithTooltip>
     </div>
 
     <Dialog v-model:open="settingsOpen">

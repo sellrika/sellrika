@@ -1,6 +1,6 @@
 import { ShopRepository } from "@repositories/Shop.Repository";
 import { PlanLimitService } from "@services/settings/PlanLimit.Service";
-import { t } from "@xcore/i18n/I18n";
+import { I18n, t } from "@xcore/i18n/I18n";
 import { Service } from "@xcore/di";
 import type { Shop } from "@models/Shop";
 import type { Coupon } from "@models/Coupon";
@@ -11,6 +11,7 @@ import { oneAtATime } from "@helpers/lock";
 import { COUPON_HOLD_MS, type CouponSort } from "@constants/Coupon.Constant";
 import type { StoreCart } from "@repositories/StoreCart.Repository";
 import { discountAmount } from "@helpers/discount";
+import { formatMoney } from "@helpers/currency";
 import { CartPricer } from "./CartPricer.Service";
 
 type Errors = Record<string, string>;
@@ -203,7 +204,7 @@ export class CouponService {
 		if (subtotal < c.min_subtotal)
 			return {
 				error: t("server.coupon_min_subtotal", {
-					amount: this.#money(c.min_subtotal, shop.currency),
+					amount: formatMoney(c.min_subtotal, shop.currency, I18n.current()),
 				}),
 			};
 		const eligible = CartPricer.linesTotal(await this.#eligible(c, cart.lines));
@@ -336,19 +337,5 @@ export class CouponService {
 				c.product_ids.includes(l.product_id) ||
 				(cats[l.product_id] ?? []).some((id) => c.category_ids.includes(id)),
 		);
-	}
-
-	/**
-	 * An amount as a message shows it, e.g. "$18" or "$18.23".
-	 * @param cents The amount in cents.
-	 * @param currency The shop's currency code.
-	 * @returns The formatted amount.
-	 */
-	#money(cents: number, currency: string) {
-		return new Intl.NumberFormat("en", {
-			style: "currency",
-			currency,
-			trailingZeroDisplay: "stripIfInteger",
-		}).format(cents / 100);
 	}
 }

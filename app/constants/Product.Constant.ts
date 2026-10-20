@@ -67,3 +67,24 @@ export type ProductSort = ListSort<(typeof PRODUCT_SORTS)[number]>;
  * (e.g. "Add to categories").
  */
 export const PRODUCT_BULK_MAX = 500;
+
+/** The most categories one product may be in. */
+export const PRODUCT_CATEGORIES_MAX = 200;
+
+/** The most products one package may hold. */
+export const BUNDLE_ITEMS_MAX = 100;
+
+/**
+ * The most variants one product may have.
+ * It is also the most variants one package slot may allow.
+ */
+export const PRODUCT_VARIANTS_MAX = 500;
+
+/** The most options one variant may have, like Color and Size. */
+export const VARIANT_ATTRIBUTES_MAX = 100;
+
+/** The longest option name of a variant ("Color"), in characters. */
+export const VARIANT_ATTRIBUTE_NAME_MAX = 100;
+
+/** The longest option value of a variant ("Red"), in characters. */
+export const VARIANT_ATTRIBUTE_VALUE_MAX = 200;

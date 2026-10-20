@@ -58,6 +58,7 @@ import { fmtDate, money } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import { statusBadges } from "@/lib/orders";
 import PaymentState from "@/components/PaymentState.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { methodStyle, paymentIcon } from "@/lib/paymentIcons";
 import type {
 	CustomerAddress,
@@ -252,9 +253,11 @@ const destroy = () =>
       <div class="flex gap-2">
         <Button variant="outline" @click="startEdit()"><Pencil /> {{ t("common.edit") }}</Button>
         <AlertDialog>
-          <AlertDialogTrigger as-child>
-            <Button variant="ghost" size="icon" :aria-label="t('customers.delete_label', { name: customer.name })"><Trash2 class="text-destructive" /></Button>
-          </AlertDialogTrigger>
+          <WithTooltip :label="t('customers.delete_label', { name: customer.name })">
+            <AlertDialogTrigger as-child>
+              <Button variant="ghost" size="icon" :aria-label="t('customers.delete_label', { name: customer.name })"><Trash2 class="text-destructive" /></Button>
+            </AlertDialogTrigger>
+          </WithTooltip>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{{ t("customers.delete_title", { name: customer.name }) }}</AlertDialogTitle>
@@ -302,8 +305,8 @@ const destroy = () =>
               <p v-if="a.phone" class="text-muted-foreground">{{ a.phone }}</p>
               <p v-if="a.tax_id" class="text-muted-foreground" data-address-tax-id>{{ t("customers.tax_id") }}: {{ a.tax_id }}</p>
             </div>
-            <Button variant="ghost" size="icon" class="size-8" :aria-label="t('customers.edit_address_label', { label: a.label || a.address_1 })" @click="openAddress(a)"><Pencil /></Button>
-            <Button variant="ghost" size="icon" class="size-8" :aria-label="t('customers.delete_address', { label: a.label || a.address_1 })" @click="removeAddress(a)"><Trash2 class="text-destructive" /></Button>
+            <WithTooltip :label="t('customers.edit_address_label', { label: a.label || a.address_1 })"><Button variant="ghost" size="icon" class="size-8" :aria-label="t('customers.edit_address_label', { label: a.label || a.address_1 })" @click="openAddress(a)"><Pencil /></Button></WithTooltip>
+            <WithTooltip :label="t('customers.delete_address', { label: a.label || a.address_1 })"><Button variant="ghost" size="icon" class="size-8" :aria-label="t('customers.delete_address', { label: a.label || a.address_1 })" @click="removeAddress(a)"><Trash2 class="text-destructive" /></Button></WithTooltip>
           </li>
         </ul>
       </CardContent>

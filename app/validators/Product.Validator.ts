@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { Storage } from "@xcore/storage/Storage";
-import { PRODUCT_BULK_MAX } from "@constants/Product.Constant";
+import {
+	BUNDLE_ITEMS_MAX,
+	PRODUCT_BULK_MAX,
+	PRODUCT_CATEGORIES_MAX,
+	PRODUCT_VARIANTS_MAX,
+	VARIANT_ATTRIBUTE_NAME_MAX,
+	VARIANT_ATTRIBUTE_VALUE_MAX,
+	VARIANT_ATTRIBUTES_MAX,
+} from "@constants/Product.Constant";
 import { nullableText } from "@validators/Fields.Validator";
 
 /**
@@ -185,7 +193,10 @@ export const ProductInput = z.object({
 	 * The categories the product is in.
 	 * Left out = none.
 	 */
-	category_ids: z.array(z.coerce.number().int()).default([]),
+	category_ids: z
+		.array(z.coerce.number().int())
+		.max(PRODUCT_CATEGORIES_MAX)
+		.default([]),
 	/**
 	 * `item` = a normal product. Left out = `item`.
 	 * `bundle` = a package of other products.
@@ -207,7 +218,11 @@ export const ProductInput = z.object({
 				 * null = the component has no variants.
 				 * 2+ ids = the customer picks one at sale time.
 				 */
-				variant_ids: z.array(z.coerce.number().int()).nullable().default(null),
+				variant_ids: z
+					.array(z.coerce.number().int())
+					.max(PRODUCT_VARIANTS_MAX)
+					.nullable()
+					.default(null),
 				/** How many units of it one package holds: 1 to 100000. */
 				qty: z.coerce
 					.number()
@@ -216,6 +231,7 @@ export const ProductInput = z.object({
 					.max(100000, "validation.too_many"),
 			}),
 		)
+		.max(BUNDLE_ITEMS_MAX)
 		.default([]),
 	/**
 	 * The product's variants. Left out = none.
@@ -249,7 +265,21 @@ export const ProductInput = z.object({
 				 * like `{ "Color": "Red", "Size": "M" }`.
 				 * null = none.
 				 */
-				attributes: z.record(z.string(), z.string()).nullable().default(null),
+				attributes: z
+					.record(
+						z
+							.string()
+							.max(VARIANT_ATTRIBUTE_NAME_MAX, "validation.title_too_long"),
+						z
+							.string()
+							.max(VARIANT_ATTRIBUTE_VALUE_MAX, "validation.value_too_long"),
+					)
+					.refine(
+						(a) => Object.keys(a).length <= VARIANT_ATTRIBUTES_MAX,
+						"validation.too_many",
+					)
+					.nullable()
+					.default(null),
 				/** The variant's own code. Blank becomes null. */
 				sku,
 				/** The variant's barcode, unique per shop. Blank becomes null. */
@@ -263,6 +293,7 @@ export const ProductInput = z.object({
 				stock,
 			}),
 		)
+		.max(PRODUCT_VARIANTS_MAX)
 		.default([]),
 });
 /** A checked `ProductInput`. */

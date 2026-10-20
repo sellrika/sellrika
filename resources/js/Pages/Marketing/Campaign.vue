@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import Pager from "@/components/Pager.vue";
 import RichText from "@/components/RichText.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { fmtDate } from "@/lib/format";
 import { campaignStatus } from "@/lib/marketing";
 import { t } from "@/lib/i18n";
@@ -274,7 +275,7 @@ function when(s: string) {
       <BackButton href="/marketing" :label="t('marketing.back_aria')" />
       <h1 class="mr-auto text-xl font-semibold tracking-tight">{{ campaign ? campaign.subject : t("marketing.new_campaign") }}</h1>
       <Badge v-if="campaign" :variant="campaignStatus(campaign.status).variant">{{ campaignStatus(campaign.status).label }}</Badge>
-      <Button v-if="campaign && campaign.status !== 'sending'" variant="ghost" size="icon" :aria-label="t('marketing.delete')" @click="confirmDelete = true"><Trash2 /></Button>
+      <WithTooltip v-if="campaign && campaign.status !== 'sending'" :label="t('marketing.delete')"><Button variant="ghost" size="icon" :aria-label="t('marketing.delete')" @click="confirmDelete = true"><Trash2 /></Button></WithTooltip>
     </div>
 
     <!-- read-only: sending or sent -->

@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import Pager from "@/components/Pager.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { fmtDate } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import type { ExchangeRates, RateSchedule } from "@/types";
@@ -134,7 +135,7 @@ watch(q, function resetPage() {
         <p class="text-sm text-muted-foreground">{{ t("exchange_rates.desc") }}</p>
       </header>
       <Input v-if="Object.keys(rates.rates).length" v-model="q" class="w-48" :placeholder="t('exchange_rates.filter')" :aria-label="t('exchange_rates.filter')" />
-      <Button variant="outline" size="icon" :aria-label="t('nav.settings')" :title="t('nav.settings')" @click="settingsOpen = true"><Settings /></Button>
+      <WithTooltip :label="t('nav.settings')"><Button variant="outline" size="icon" :aria-label="t('nav.settings')" @click="settingsOpen = true"><Settings /></Button></WithTooltip>
     </div>
 
     <Card v-if="Object.keys(rates.rates).length" class="py-0">

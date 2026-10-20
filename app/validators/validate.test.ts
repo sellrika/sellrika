@@ -48,6 +48,19 @@ test("validate(ProductInput)", () => {
 		"variants.0.price": "Variant price must be ≥ 0",
 		"variants.0.images.0": "Invalid image",
 	});
+	const variant = (attributes: Record<string, string>) =>
+		validate(ProductInput, {
+			name: "x",
+			price: 1,
+			variants: [{ name: "S", price: 1, attributes }],
+		}).errors;
+	expect(variant({ Size: "S" })).toBeUndefined();
+	expect(variant({ Size: "x".repeat(201) })).toEqual({
+		"variants.0.attributes.Size": "Value is too long",
+	});
+	expect(
+		variant(Object.fromEntries([...Array(101)].map((_, i) => [`k${i}`, "v"]))),
+	).toEqual({ "variants.0.attributes": "Too many" });
 });
 
 test("validate(CheckoutInput / RefundInput / StockAdjustInput / CustomerInput / user inputs)", async () => {
@@ -83,6 +96,20 @@ test("validate(CheckoutInput / RefundInput / StockAdjustInput / CustomerInput / 
 	expect(validate(CheckoutInput, { ...base, items: [] }).errors?.items).toBe(
 		"Cart is empty",
 	);
+	const choices = (n: number) =>
+		Object.fromEntries([...Array(n)].map((_, i) => [`${i}`, 1]));
+	expect(
+		validate(CheckoutInput, {
+			...base,
+			items: [{ product_id: 1, qty: 1, choices: choices(100) }],
+		}).errors,
+	).toBeUndefined();
+	expect(
+		validate(CheckoutInput, {
+			...base,
+			items: [{ product_id: 1, qty: 1, choices: choices(101) }],
+		}).errors?.["items.0.choices"],
+	).toBeDefined();
 	expect(validate(RefundInput, { amount: 0 }).errors?.amount).toMatch(
 		/more than zero/,
 	);

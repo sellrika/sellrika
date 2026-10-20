@@ -342,6 +342,7 @@ ponytail: `fetch()` resolves the name again. A DNS server that answers different
   - Public addresses only.
   - A redirect is never followed.
   - The Slack and Discord fields of Chat alerts must start with the full host (`https://hooks.slack.com/`, `https://discord.com/api/webhooks/`). So a prefix can not name another host.
+  - The Telegram bot token of Chat alerts goes in the path of `https://api.telegram.org/bot<token>/sendMessage`. A token that is not `<digits>:<letters>` is refused before the request. Errors name only the host, never the token.
 - **A shop's own mail server** (`/shop-email`). The host must resolve to public addresses only (`Outbound.isPublicHost()`). A failed send shows fixed words, not the server's reply. See [features/email.md](features/email.md).
 - **SMTP**. A password is sent only over an encrypted channel.
   - A server on another machine with no STARTTLS (and not port 465) is refused with `server.smtp_needs_tls` before `AUTH`.

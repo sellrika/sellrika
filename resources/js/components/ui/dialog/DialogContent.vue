@@ -10,6 +10,7 @@ import {
 	DialogPortal,
 	useForwardPropsEmits,
 } from "reka-ui";
+import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import DialogOverlay from "./DialogOverlay.vue";
@@ -80,7 +81,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
       >
         <Button variant="secondary" class="absolute -top-3 -right-3 z-20 size-8 rounded-full shadow-md ring-1 ring-foreground/10" size="icon-sm">
           <XIcon />
-          <span class="sr-only">Close</span>
+          <span class="sr-only">{{ t("common.close") }}</span>
         </Button>
       </DialogClose>
     </DialogContent>

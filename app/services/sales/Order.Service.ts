@@ -1,4 +1,4 @@
-import { t } from "@xcore/i18n/I18n";
+import { I18n, t } from "@xcore/i18n/I18n";
 import { OrderImages } from "@xcore/storage/OrderImages";
 import { Service } from "@xcore/di";
 import { CustomerRepository } from "@repositories/Customer.Repository";
@@ -13,6 +13,7 @@ import { ShopRepository } from "@repositories/Shop.Repository";
 import { SalesStaffRepository } from "@repositories/SalesStaff.Repository";
 import type { Order, OrderDetail, OrderFull, OrderItem } from "@models/Order";
 import { oneAtATime } from "@helpers/lock";
+import { formatMoney } from "@helpers/currency";
 import type { FulfillmentStep, PaymentStatus } from "@constants/Order.Constant";
 import type { Shop } from "@models/Shop";
 import type { Key } from "@i18n";
@@ -474,7 +475,9 @@ export class OrderService {
 		if (input.amount > remaining)
 			return {
 				errors: {
-					amount: t("server.order_refund_max", { amount: remaining }),
+					amount: t("server.order_refund_max", {
+						amount: await this.#money(remaining, shopId),
+					}),
 				} as Errors,
 			};
 		const lines: OrderItem[] = order.items;
@@ -523,7 +526,13 @@ export class OrderService {
 		const due = order.total - (order.paid - order.change);
 		if (due <= 0) return { errors: { amount: t("server.order_already_paid") } };
 		if (input.amount > due)
-			return { errors: { amount: t("server.order_due_max", { amount: due }) } };
+			return {
+				errors: {
+					amount: t("server.order_due_max", {
+						amount: await this.#money(due, shopId),
+					}),
+				},
+			};
 		if (
 			input.payment_method != null &&
 			!(await this.methods.usable(shopId, input.payment_method))
@@ -1191,10 +1200,21 @@ export class OrderService {
 		return {
 			errors: {
 				amount: t("server.order_refund_max", {
-					amount: this.#refundable(now),
+					amount: await this.#money(this.#refundable(now), shopId),
 				}),
 			} as Errors,
 		};
+	}
+
+	/**
+	 * An amount as an error message shows it, e.g. "$27".
+	 * @param cents The amount in cents.
+	 * @param shopId The shop whose currency it is in.
+	 * @returns The formatted amount.
+	 */
+	async #money(cents: number, shopId: number) {
+		const shop = (await this.shops.find(shopId))!;
+		return formatMoney(cents, shop.currency, I18n.current());
 	}
 
 	/**

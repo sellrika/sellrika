@@ -763,6 +763,7 @@ export const de = {
 	"nav.login_signup": "Konto erstellen",
 	"nav.logout": "Abmelden",
 	"nav.logout_desc": "Aktion · diese Sitzung beenden",
+	"nav.star_us": "Gib uns einen Stern auf GitHub",
 	"nav.manage_shops": "Shops verwalten…",
 	"nav.more_pages": "Weitere Seiten",
 	"nav.new_product": "Neues Produkt",
@@ -1804,6 +1805,12 @@ export const de = {
 	"products.unit_hint": "Wie es gezählt wird (pcs, kg, m…).",
 	"products.unit_search": "Suchen oder hinzufügen…",
 	"products.updated": "Produkt aktualisiert",
+	"products.upload_failed": "Hochladen fehlgeschlagen",
+	"products.upload_offline":
+		"Hochladen fehlgeschlagen — prüfen Sie Ihre Verbindung.",
+	"products.upload_load_failed": "Das Bild konnte nicht geladen werden",
+	"products.upload_load_offline":
+		"Das Bild konnte nicht geladen werden — prüfen Sie Ihre Verbindung.",
 	"products.uploading": "Wird hochgeladen…",
 	"products.use_custom": "„{value}“ verwenden",
 	"products.values_placeholder": "Rot, Blau, Grün",
@@ -1885,7 +1892,7 @@ export const de = {
 		"Nach der Uhr des Shops ({tz}). Der Bericht enthält den Umsatz des Tages bis zu dieser Uhrzeit.",
 	"reports.daily_channels": "Senden an",
 	"reports.daily_no_channels":
-		"Es ist noch kein Kanal eingerichtet. Schalten Sie die Erweiterung Chat alerts ein und tragen Sie Slack, Discord oder LINE ein.",
+		"Es ist noch kein Kanal eingerichtet. Schalten Sie die Erweiterung Chat alerts ein und tragen Sie Slack, Discord, LINE oder Telegram ein.",
 	"reports.daily_open_extensions": "Erweiterungen öffnen",
 	"reports.daily_saved": "Tagesbericht gespeichert",
 	"reports.daily_failed": "Speichern fehlgeschlagen. Bitte erneut versuchen.",

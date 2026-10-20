@@ -49,8 +49,11 @@ const { DailyReportService: _DailyReportService } = await import(
 const DailyReportService = Container.get(_DailyReportService);
 const { zip } = await import("@helpers/zip");
 const { ExtensionFiles } = await import("@xcore/extensions/ExtensionFiles");
+const { emptyCatalog } = await import("./emptyCatalog");
 
 await migrate(true);
+// an earlier file may have left its extensions on: start with none
+await emptyCatalog();
 
 const [s] = await Db.insert(
 	sql,
@@ -111,6 +114,7 @@ Bun.dns.lookup = (async (host: string) => [
 afterAll(async () => {
 	globalThis.fetch = realFetch;
 	Bun.dns.lookup = realLookup;
+	await emptyCatalog();
 	await ExtensionFiles.remove(process.env.EXTENSION_UPLOAD_DIR!);
 });
 const calls: { url: string; headers: Record<string, string>; body: string }[] =
@@ -452,7 +456,7 @@ test("webhook example: uploaded, needs a webhook row (URL + events), secrets enc
 	).resolves.toBeUndefined();
 });
 
-test("chat-alerts example: one text per ticked event to every filled channel (Slack, Discord, LINE); low stock only when the unit crosses its line; the daily report goes once a day to the picked channels", async () => {
+test("chat-alerts example: one text per ticked event to every filled channel (Slack, Discord, LINE, Telegram); low stock only when the unit crosses its line; the daily report goes once a day to the picked channels", async () => {
 	calls.length = 0;
 	globalThis.fetch = (async (url: any, init: any) => {
 		calls.push({ url: String(url), headers: init.headers, body: init.body });
@@ -484,6 +488,8 @@ test("chat-alerts example: one text per ticked event to every filled channel (Sl
 		discord_url: "https://discord.com/api/webhooks/1/y",
 		line_token: "line-secret",
 		line_to: "",
+		telegram_token: "123456:ABC-def_1",
+		telegram_chat: "-1001",
 	};
 	expect(
 		await ExtensionService.save(S, "chat-alerts", { enabled: true, config }),
@@ -498,6 +504,7 @@ test("chat-alerts example: one text per ticked event to every filled channel (Sl
 	await ExtensionService.emit("order.created", shop, { order: online });
 	expect(calls.map((c) => new URL(c.url).host).sort()).toEqual([
 		"api.line.me",
+		"api.telegram.org",
 		"discord.com",
 		"hooks.slack.com",
 	]);
@@ -520,6 +527,13 @@ test("chat-alerts example: one text per ticked event to every filled channel (Sl
 			{ messages: [{ type: "text", text }] },
 		],
 	); // no ID → broadcast
+	const telegram = calls.find((c) =>
+		c.url.startsWith("https://api.telegram.org"),
+	)!;
+	expect([telegram.url, JSON.parse(telegram.body)]).toEqual([
+		"https://api.telegram.org/bot123456:ABC-def_1/sendMessage",
+		{ chat_id: "-1001", text },
+	]);
 	calls.length = 0;
 	await ExtensionService.emit("order.created", shop, { order }); // a POS sale, not ticked
 	await ExtensionService.emit("order.paid", shop, { order }); // "paid later" listens to the status change, not to order.paid
@@ -599,6 +613,7 @@ test("chat-alerts example: one text per ticked event to every filled channel (Sl
 		"slack",
 		"discord",
 		"line",
+		"telegram",
 	]);
 	const at = (hhmm: string, day = "06") =>
 		new Date(`2026-10-${day}T${hhmm}:00Z`); // the shop's clock is UTC
@@ -656,6 +671,25 @@ test("chat-alerts example: one text per ticked event to every filled channel (Sl
 		),
 	).toBeNull();
 	expect(await DailyReportService.run(at("08:00", "10"))).toBe(0);
+	// Telegram needs both fields; a token that is not a bot token is never sent
+	calls.length = 0;
+	expect(
+		await ExtensionService.save(S, "chat-alerts", {
+			enabled: true,
+			config: { ...config, telegram_chat: "" },
+		}),
+	).toEqual({});
+	expect(await DailyReportService.channels(shop)).not.toContain("telegram");
+	expect(
+		await ExtensionService.save(S, "chat-alerts", {
+			enabled: true,
+			config: { ...config, telegram_token: "1:x/../../evil" },
+		}),
+	).toEqual({});
+	await ExtensionService.emit("order.created", shop, { order: online });
+	expect(calls.map((c) => new URL(c.url).host)).not.toContain(
+		"api.telegram.org",
+	);
 	await uninstall("chat-alerts");
 	// without the extension no channel works, so it can't be switched on
 	expect(await DailyReportService.channels(shop)).toEqual([]);

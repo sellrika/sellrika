@@ -39,6 +39,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { t } from "@/lib/i18n";
 import type { Category, SharedProps } from "@/types";
 
@@ -147,13 +148,15 @@ const remove = (c: Category) =>
             </TableCell>
             <TableCell class="pr-4 text-right">
               <div class="flex justify-end gap-1">
-                <Button size="icon-sm" variant="ghost" :aria-label="t('categories.edit_aria', { name: c.name })" @click="startEdit(c)"><Pencil /></Button>
+                <WithTooltip :label="t('categories.edit_aria', { name: c.name })"><Button size="icon-sm" variant="ghost" :aria-label="t('categories.edit_aria', { name: c.name })" @click="startEdit(c)"><Pencil /></Button></WithTooltip>
                 <AlertDialog>
-                  <AlertDialogTrigger as-child>
-                    <Button size="icon-sm" variant="ghost" :aria-label="t('categories.delete_aria', { name: c.name })">
-                      <Trash2 class="text-destructive" />
-                    </Button>
-                  </AlertDialogTrigger>
+                  <WithTooltip :label="t('categories.delete_aria', { name: c.name })">
+                    <AlertDialogTrigger as-child>
+                      <Button size="icon-sm" variant="ghost" :aria-label="t('categories.delete_aria', { name: c.name })">
+                        <Trash2 class="text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                  </WithTooltip>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>{{ t("categories.delete_title", { name: c.name }) }}</AlertDialogTitle>

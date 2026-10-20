@@ -934,8 +934,8 @@ export type ShopTotals = {
 export type ReportSchedule = {
 	enabled: boolean;
 	time: string;
-	channels: ("slack" | "discord" | "line")[];
-	available: ("slack" | "discord" | "line")[];
+	channels: ("slack" | "discord" | "line" | "telegram")[];
+	available: ("slack" | "discord" | "line" | "telegram")[];
 };
 /** The headline numbers of one period (mirror of `Summary` in app/services/sales/Report.Service.ts). */
 export type ReportSummary = {

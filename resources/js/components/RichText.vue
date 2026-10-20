@@ -20,6 +20,7 @@ import {
 } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import WithTooltip from "./WithTooltip.vue";
 import { t } from "@/lib/i18n";
 import { toast } from "vue-sonner";
 import { uploadImage, type UploadFolder } from "@/lib/upload";
@@ -579,30 +580,29 @@ watch(() => props.modelValue, fill);
         <option value="h3">{{ t("shared.heading3") }}</option>
       </select>
       <span class="mx-0.5 h-5 w-px bg-border" />
-      <Button
-        v-for="m in marks"
-        :key="m.cmd"
-        type="button"
-        variant="ghost"
-        size="icon"
-        class="size-8"
-        :class="active[m.cmd] && 'bg-accent text-accent-foreground'"
-        :aria-label="t(m.label)"
-        :aria-pressed="!!active[m.cmd]"
-        :title="t(m.label)"
-        @mousedown.prevent
-        @click="exec(m.cmd)"
-      >
-        <component :is="m.icon" />
-      </Button>
+      <WithTooltip v-for="m in marks" :key="m.cmd" :label="t(m.label)">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          class="size-8"
+          :class="active[m.cmd] && 'bg-accent text-accent-foreground'"
+          :aria-label="t(m.label)"
+          :aria-pressed="!!active[m.cmd]"
+          @mousedown.prevent
+          @click="exec(m.cmd)"
+        >
+          <component :is="m.icon" />
+        </Button>
+      </WithTooltip>
       <span class="mx-0.5 h-5 w-px bg-border" />
-      <Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.decrease_indent')" :title="t('shared.decrease_indent')" @mousedown.prevent @click="exec('outdent', undefined, true)"><IndentDecrease /></Button>
-      <Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.increase_indent')" :title="t('shared.increase_indent')" @mousedown.prevent @click="exec('indent', undefined, true)"><IndentIncrease /></Button>
+      <WithTooltip :label="t('shared.decrease_indent')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.decrease_indent')" @mousedown.prevent @click="exec('outdent', undefined, true)"><IndentDecrease /></Button></WithTooltip>
+      <WithTooltip :label="t('shared.increase_indent')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.increase_indent')" @mousedown.prevent @click="exec('indent', undefined, true)"><IndentIncrease /></Button></WithTooltip>
       <span class="mx-0.5 h-5 w-px bg-border" />
-      <Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_table')" :title="t('shared.insert_table')" @mousedown.prevent @click="insertTable"><Table /></Button>
-      <Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_section')" :title="t('shared.insert_section_title')" @mousedown.prevent @click="insertSection"><ListCollapse /></Button>
+      <WithTooltip :label="t('shared.insert_table')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_table')" @mousedown.prevent @click="insertTable"><Table /></Button></WithTooltip>
+      <WithTooltip :label="t('shared.insert_section_title')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_section')" @mousedown.prevent @click="insertSection"><ListCollapse /></Button></WithTooltip>
       <template v-if="images">
-        <Button type="button" variant="ghost" size="icon" class="size-8" :disabled="uploading" :aria-label="t('shared.insert_image')" :title="t('shared.insert_image')" @mousedown.prevent @click="pickFiles"><ImagePlus /></Button>
+        <WithTooltip :label="t('shared.insert_image')"><span class="inline-flex"><Button type="button" variant="ghost" size="icon" class="size-8" :disabled="uploading" :aria-label="t('shared.insert_image')" @mousedown.prevent @click="pickFiles"><ImagePlus /></Button></span></WithTooltip>
       </template>
     </div>
 
@@ -615,9 +615,9 @@ watch(() => props.modelValue, fill);
         <input v-model.number="pickedWidth" type="range" min="10" max="100" step="5" class="w-24 accent-primary" :aria-label="t('shared.image_width')" @input="setWidth">
         <span class="w-8 tabular-nums">{{ pickedWidth }}%</span>
       </label>
-      <Button v-for="a in aligns" :key="a.value" type="button" variant="ghost" size="icon" class="size-7" :class="pickedAlign === a.value && 'bg-accent text-accent-foreground'" :aria-label="t(a.label)" :aria-pressed="pickedAlign === a.value" :title="t(a.label)" @mousedown.prevent @click="setAlign(a.value)"><component :is="a.icon" /></Button>
-      <Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('shared.image_move_up')" :title="t('shared.image_move_up')" @mousedown.prevent @click="moveImage(-1)"><ArrowUp /></Button>
-      <Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('shared.image_move_down')" :title="t('shared.image_move_down')" @mousedown.prevent @click="moveImage(1)"><ArrowDown /></Button>
+      <WithTooltip v-for="a in aligns" :key="a.value" :label="t(a.label)"><Button type="button" variant="ghost" size="icon" class="size-7" :class="pickedAlign === a.value && 'bg-accent text-accent-foreground'" :aria-label="t(a.label)" :aria-pressed="pickedAlign === a.value" @mousedown.prevent @click="setAlign(a.value)"><component :is="a.icon" /></Button></WithTooltip>
+      <WithTooltip :label="t('shared.image_move_up')"><Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('shared.image_move_up')" @mousedown.prevent @click="moveImage(-1)"><ArrowUp /></Button></WithTooltip>
+      <WithTooltip :label="t('shared.image_move_down')"><Button type="button" variant="ghost" size="icon" class="size-7" :aria-label="t('shared.image_move_down')" @mousedown.prevent @click="moveImage(1)"><ArrowDown /></Button></WithTooltip>
       <Button type="button" variant="ghost" size="sm" class="h-7 px-2 text-xs" @mousedown.prevent @click="toggleCaption">{{ pickedCaption ? t("shared.image_caption_remove") : t("shared.image_caption_add") }}</Button>
       <Button type="button" variant="ghost" size="sm" class="h-7 px-2 text-xs text-destructive" @mousedown.prevent @click="delImage">{{ t("shared.delete_image") }}</Button>
     </div>

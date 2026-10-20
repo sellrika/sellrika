@@ -37,6 +37,7 @@ import {
 	ChevronRight,
 	ChevronsUpDown,
 	LogOut,
+	Star,
 	Check,
 	Settings,
 	PanelLeft,
@@ -63,6 +64,7 @@ import {
 } from "@lucide/vue";
 import type { SharedProps } from "@/types";
 import ShopLogo from "@/components/ShopLogo.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { useGlobalSearch } from "@/lib/search";
 import { t } from "@/lib/i18n";
 import { keepFullscreen, maximized, toggleMaximized } from "@/lib/fullscreen";
@@ -433,12 +435,17 @@ const initials = computed(() =>
       <div class="flex h-14 items-center gap-1" :class="collapsed ? 'justify-center px-0' : 'pl-2 pr-1'">
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
-            <Button variant="ghost" class="h-auto gap-2 py-1.5" :class="collapsed ? 'justify-center px-0' : 'min-w-0 flex-1 justify-start px-1.5'" :aria-label="t('nav.shop_aria', { name: shop?.name ?? '' })" :title="collapsed ? shop?.name : undefined">
-              <ShopLogo :shop="shop" class="size-7 shrink-0" />
-              <template v-if="!collapsed">
-                <span class="min-w-0 flex-1 truncate text-left text-sm font-semibold">{{ shop?.name ?? t("nav.no_shop") }}</span>
-                <ChevronsUpDown class="size-4 shrink-0 opacity-60" />
-              </template>
+            <Button variant="ghost" class="h-auto gap-2 py-1.5" :class="collapsed ? 'justify-center px-0' : 'min-w-0 flex-1 justify-start px-1.5'" :aria-label="t('nav.shop_aria', { name: shop?.name ?? '' })">
+              <!-- the tooltip sits inside the trigger: around it, the menu would anchor to the tooltip -->
+              <WithTooltip :label="collapsed ? shop?.name : null" side="right">
+                <span class="flex min-w-0 flex-1 items-center gap-2">
+                  <ShopLogo :shop="shop" class="size-7 shrink-0" />
+                  <template v-if="!collapsed">
+                    <span class="min-w-0 flex-1 truncate text-left text-sm font-semibold">{{ shop?.name ?? t("nav.no_shop") }}</span>
+                    <ChevronsUpDown class="size-4 shrink-0 opacity-60" />
+                  </template>
+                </span>
+              </WithTooltip>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-56" align="start" :side="collapsed ? 'right' : 'bottom'">
@@ -502,12 +509,16 @@ const initials = computed(() =>
       <div class="flex items-center gap-1.5 p-2" :class="collapsed ? 'flex-col-reverse' : 'px-3'">
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
-            <button type="button" class="flex items-center gap-2 rounded-full border bg-muted/40 p-1 text-[13px] font-medium transition-colors hover:bg-accent" :class="!collapsed && 'min-w-0 flex-1 pr-3'" :aria-label="user?.name" :title="t(`nav.${user?.role ?? 'cashier'}`)">
-              <Avatar class="size-6 shrink-0"><AvatarFallback class="text-[11px] font-semibold">{{ initials.slice(0, 1) }}</AvatarFallback></Avatar>
-              <template v-if="!collapsed">
-                <span class="min-w-0 flex-1 truncate text-left">{{ user?.name }}</span>
-                <ChevronDown class="size-3.5 shrink-0 opacity-60" />
-              </template>
+            <button type="button" class="flex items-center gap-2 rounded-full border bg-muted/40 p-1 text-[13px] font-medium transition-colors hover:bg-accent" :class="!collapsed && 'min-w-0 flex-1 pr-3'" :aria-label="user?.name">
+              <WithTooltip :label="t(`nav.${user?.role ?? 'cashier'}`)" :side="collapsed ? 'right' : 'top'">
+                <span class="flex min-w-0 flex-1 items-center gap-2">
+                  <Avatar class="size-6 shrink-0"><AvatarFallback class="text-[11px] font-semibold">{{ initials.slice(0, 1) }}</AvatarFallback></Avatar>
+                  <template v-if="!collapsed">
+                    <span class="min-w-0 flex-1 truncate text-left">{{ user?.name }}</span>
+                    <ChevronDown class="size-3.5 shrink-0 opacity-60" />
+                  </template>
+                </span>
+              </WithTooltip>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-52" :side="collapsed ? 'right' : 'top'" align="start">
@@ -534,10 +545,11 @@ const initials = computed(() =>
                 </DropdownMenuRadioGroup>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+            <DropdownMenuItem as-child><a href="https://github.com/sellrika/sellrika" target="_blank" rel="noopener"><Star class="size-4" /> {{ t("nav.star_us") }}</a></DropdownMenuItem>
             <DropdownMenuItem @select="router.post('/logout')"><LogOut class="size-4" /> {{ t("nav.logout") }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button variant="ghost" size="icon-sm" class="shrink-0 text-muted-foreground" :aria-label="t(collapsed ? 'nav.expand_sidebar' : 'nav.collapse_sidebar')" @click="collapsed = !collapsed"><PanelLeft /></Button>
+        <WithTooltip :label="t(collapsed ? 'nav.expand_sidebar' : 'nav.collapse_sidebar')" :side="collapsed ? 'right' : 'top'"><Button variant="ghost" size="icon-sm" class="shrink-0 text-muted-foreground" :aria-label="t(collapsed ? 'nav.expand_sidebar' : 'nav.collapse_sidebar')" @click="collapsed = !collapsed"><PanelLeft /></Button></WithTooltip>
       </div>
     </aside>
 
@@ -600,6 +612,7 @@ const initials = computed(() =>
                 </DropdownMenuRadioGroup>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+            <DropdownMenuItem as-child><a href="https://github.com/sellrika/sellrika" target="_blank" rel="noopener"><Star class="size-4" /> {{ t("nav.star_us") }}</a></DropdownMenuItem>
             <DropdownMenuItem @select="router.post('/logout')"><LogOut class="size-4" /> {{ t("nav.logout") }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -623,7 +636,7 @@ const initials = computed(() =>
         <slot />
       </main>
       <!-- maximized on a page with no Full screen button of its own (an order, Tables): the way back -->
-      <Button v-if="maximized && !extPage?.fullscreen && !isActive('/pos')" variant="outline" size="icon" class="fixed bottom-3 left-3 z-40 size-9 shadow-md" :aria-label="t('nav.fullscreen_exit')" :title="t('nav.fullscreen_exit')" data-fullscreen-toggle @click="toggleMaximized"><Minimize /></Button>
+      <WithTooltip v-if="maximized && !extPage?.fullscreen && !isActive('/pos')" :label="t('nav.fullscreen_exit')"><Button variant="outline" size="icon" class="fixed bottom-3 left-3 z-40 size-9 shadow-md" :aria-label="t('nav.fullscreen_exit')" data-fullscreen-toggle @click="toggleMaximized"><Minimize /></Button></WithTooltip>
     </div>
     <Toaster rich-colors close-button position="top-right" :theme="theme === 'auto' ? 'system' : theme" />
   </div>

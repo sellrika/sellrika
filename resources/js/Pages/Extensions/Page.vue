@@ -4,6 +4,7 @@ import { onBeforeUnmount, onMounted, ref } from "vue";
 import { Head } from "@inertiajs/vue3";
 import { Maximize, Minimize } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { maximized, toggleMaximized } from "@/lib/fullscreen";
 import { t } from "@/lib/i18n";
 import AppLayout from "@/layouts/AppLayout.vue";
@@ -55,7 +56,7 @@ onBeforeUnmount(() => cleanup());
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <div ref="actions" class="flex flex-wrap items-center gap-2 empty:hidden" data-page-actions />
-          <Button v-if="page.fullscreen" variant="outline" size="icon" class="size-9 shrink-0" :aria-label="t(maximized ? 'nav.fullscreen_exit' : 'nav.fullscreen')" :title="t(maximized ? 'nav.fullscreen_exit' : 'nav.fullscreen')" data-fullscreen-toggle @click="toggleMaximized"><Minimize v-if="maximized" /><Maximize v-else /></Button>
+          <WithTooltip v-if="page.fullscreen" :label="t(maximized ? 'nav.fullscreen_exit' : 'nav.fullscreen')"><Button variant="outline" size="icon" class="size-9 shrink-0" :aria-label="t(maximized ? 'nav.fullscreen_exit' : 'nav.fullscreen')" data-fullscreen-toggle @click="toggleMaximized"><Minimize v-if="maximized" /><Maximize v-else /></Button></WithTooltip>
         </div>
       </div>
       <div ref="root" :class="page.fill && 'md:min-h-0 md:flex-1'" :data-extension="extension.key" :data-page="page.path" />

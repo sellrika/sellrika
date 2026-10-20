@@ -1,5 +1,5 @@
 import { tmpdir } from "node:os"; // Bun has no equivalent
-import { expect, test } from "bun:test";
+import { afterAll, expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 // Temp SQLite DB (never the real data/pos.db); db.ts reads DB_FILE at import, hence the dynamic imports.
 // The module cache is shared across test files, so never `sql.close()` here.
@@ -13,7 +13,10 @@ const { StoreReconcileService: _Reconcile } = await import(
 	"../StoreReconcile.Service"
 );
 const Reconcile = Container.get(_Reconcile);
-const { useGateway, pay, resetPay } = await import("./fakeGateway"); // the gateway is an extension: this shop uploads a fake one
+const { useGateway, pay, resetPay, removeGateways } = await import(
+	"./fakeGateway"
+); // the gateway is an extension: this shop uploads a fake one
+afterAll(removeGateways);
 const { ProductRepository: _ProductRepository } = await import(
 	"@repositories/Product.Repository"
 );

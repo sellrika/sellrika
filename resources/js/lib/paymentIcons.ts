@@ -60,6 +60,11 @@ export const PAYMENT_ICONS: Record<PaymentIconName, Component> = {
 	Heart,
 };
 export { PAYMENT_ICON_NAMES };
+/**
+ * The icon of a payment method.
+ * @param name The icon name stored on the method.
+ * @returns The lucide icon. An unknown or empty name gives the wallet.
+ */
 export const paymentIcon = (name: string | null | undefined): Component =>
 	PAYMENT_ICONS[name as PaymentIconName] ?? Wallet;
 

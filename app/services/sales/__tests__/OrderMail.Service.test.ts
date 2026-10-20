@@ -95,10 +95,10 @@ test("order confirmation: quantity first, unit price only above 1, totals, date 
 		(await orderConfirmation(shop(), order({ reference: null }), null)).subject,
 	).toBe("Order #1042 — Rattan & Co"); // pre-0036 rows
 	expect(m.text).toContain("Thanks for your order, Zin Kyaw!");
-	expect(m.text).toContain("2 × Rattan Basket   THB 1,900 (THB 950 each)");
-	expect(m.text).toContain("1 × Teak Board   THB 500"); // a single unit doesn't repeat the price
-	expect(m.text).toContain("Delivery: THB 50");
-	expect(m.text).toContain("Total: THB 2,900");
+	expect(m.text).toContain("2 × Rattan Basket   ฿1,900 (฿950 each)");
+	expect(m.text).toContain("1 × Teak Board   ฿500"); // a single unit doesn't repeat the price
+	expect(m.text).toContain("Delivery: ฿50");
+	expect(m.text).toContain("Total: ฿2,900");
 	expect(m.text).toContain("11:15 AM"); // Asia/Bangkok, not UTC
 	expect(m.html).toContain("2 × Rattan Basket");
 	expect(m.html).toContain("Rattan &amp; Co"); // Edge escapes the shop name
@@ -110,15 +110,15 @@ test("order confirmation: quantity first, unit price only above 1, totals, date 
 		null,
 	);
 	expect(noName.text).toContain("Thanks for your order!");
-	expect(plain(noName.text)).toContain("Discount: − THB 150");
+	expect(plain(noName.text)).toContain("Discount: − ฿150");
 	// the shop's tax line, worded from what the order froze ("Incl." when the prices already hold it)
 	const taxed = await orderConfirmation(
 		shop(),
 		order({ tax: 18645, tax_rate: 700, tax_label: "VAT", tax_included: true }),
 		null,
 	);
-	expect(plain(taxed.text)).toContain("Incl. VAT 7%: THB 186.45");
-	expect(plain(taxed.text)).toContain("Total: THB 2,900"); // included → unchanged
+	expect(plain(taxed.text)).toContain("Incl. VAT 7%: ฿186.45");
+	expect(plain(taxed.text)).toContain("Total: ฿2,900"); // included → unchanged
 });
 
 test("order confirmation: support address falls back to the owner, and it always says not to reply", async () => {

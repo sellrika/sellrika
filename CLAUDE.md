@@ -110,6 +110,7 @@ More: `docs/architecture.md`, `docs/database.md`, `docs/testing.md`.
 **Frontend**
 
 - Every back arrow is `components/BackButton.vue`. Never a plain `<Link>`.
+- Every icon-only button has a tooltip: `components/WithTooltip.vue`. Never a `title` attribute.
 - Every pay dialog draws its method buttons with `components/pos/PaymentMethodPicker.vue`. What all pay dialogs should have goes in that picker.
 - `resources/js/types.ts` mirrors the server's props. Change both.
 - A page prop must not have the name of a shared prop. It would replace it in the layout.

@@ -32,9 +32,6 @@ export const WEEK_BUCKET_DAYS = 31;
 /** When the daily report job looks for shops that are due: every minute. */
 export const REPORT_CRON = "* * * * *";
 
-/** The time a shop's daily report goes out until it picks another. */
-export const REPORT_DEFAULT_TIME = "22:00";
-
 /** A report time must look like this: 24-hour `HH:MM`. */
 export const REPORT_TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -43,12 +40,13 @@ export const REPORT_EXTENSION = "chat-alerts";
 
 /**
  * The channels a daily report may go to.
- * Each one names the Chat alerts setting that must be filled for it.
+ * Each one names the Chat alerts settings that must all be filled for it.
  */
 export const REPORT_CHANNELS = {
-	slack: "slack_url",
-	discord: "discord_url",
-	line: "line_token",
+	slack: ["slack_url"],
+	discord: ["discord_url"],
+	line: ["line_token"],
+	telegram: ["telegram_token", "telegram_chat"],
 } as const;
 
 /** One of the keys of `REPORT_CHANNELS`. */

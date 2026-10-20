@@ -13,7 +13,10 @@ import {
 	MAX_REFUND_ITEMS,
 } from "@constants/Security.Constant";
 import { COUPON_CODE_MAX } from "@constants/Coupon.Constant";
-import { CUSTOM_REQUEST_MAX } from "@constants/Product.Constant";
+import {
+	BUNDLE_ITEMS_MAX,
+	CUSTOM_REQUEST_MAX,
+} from "@constants/Product.Constant";
 import { hexColor } from "@validators/Fields.Validator";
 
 /**
@@ -38,8 +41,12 @@ export function cartItem(maxQty: number) {
 		 * Package lines only.
 		 * Slot id (as a string key) → the variant the customer picked
 		 * for that slot.
+		 * A package has at most `BUNDLE_ITEMS_MAX` slots, so no more keys.
 		 */
-		choices: z.record(z.string(), z.number().int()).optional(),
+		choices: z
+			.record(z.string(), z.number().int())
+			.refine((c) => Object.keys(c).length <= BUNDLE_ITEMS_MAX)
+			.optional(),
 		/**
 		 * A note for this line ("no onions"), kept on the order line.
 		 * Online it is the buyer's custom request,

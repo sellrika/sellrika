@@ -736,6 +736,7 @@ export const en = {
 	"nav.login_signup": "Create an account",
 	"nav.logout": "Log out",
 	"nav.logout_desc": "Action · end this session",
+	"nav.star_us": "Star us on GitHub",
 	"nav.manage_shops": "Manage shops…",
 	"nav.more_pages": "More pages",
 	"nav.new_product": "New product",
@@ -1749,6 +1750,11 @@ export const en = {
 	"products.unit_hint": "How it is counted (pcs, kg, m…).",
 	"products.unit_search": "Search or add…",
 	"products.updated": "Product updated",
+	"products.upload_failed": "Upload failed",
+	"products.upload_offline": "Upload failed — check your connection.",
+	"products.upload_load_failed": "Could not load the image",
+	"products.upload_load_offline":
+		"Could not load the image — check your connection.",
 	"products.uploading": "Uploading…",
 	"products.use_custom": "Use “{value}”",
 	"products.values_placeholder": "Red, Blue, Green",
@@ -1830,7 +1836,7 @@ export const en = {
 		"On the shop's clock ({tz}). The report has the sales of the day up to this time.",
 	"reports.daily_channels": "Send to",
 	"reports.daily_no_channels":
-		"No channel is set up yet. Switch on the Chat alerts extension and fill in Slack, Discord or LINE.",
+		"No channel is set up yet. Switch on the Chat alerts extension and fill in Slack, Discord, LINE or Telegram.",
 	"reports.daily_open_extensions": "Open Extensions",
 	"reports.daily_saved": "Daily report saved",
 	"reports.daily_failed": "Could not save. Try again.",

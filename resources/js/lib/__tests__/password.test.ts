@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { randomPassword } from "./password";
+import { randomPassword } from "../password";
 
 test("randomPassword: 8 readable characters, different every time", () => {
 	const seen = new Set<string>();

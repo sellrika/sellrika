@@ -58,6 +58,7 @@ import { fmtDate, fromCents, money, toCents } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import { taxLabel } from "@helpers/tax";
 import PaymentMethodPicker from "@/components/pos/PaymentMethodPicker.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 import { deliveryHidden, stepLabel, statusBadges } from "@/lib/orders";
 import { methodStyle, paymentIcon } from "@/lib/paymentIcons";
 import type {
@@ -560,7 +561,7 @@ const submitVoid = () =>
               <TableCell class="hidden text-right tabular-nums text-muted-foreground sm:table-cell">{{ money(it.price, currency) }}</TableCell>
               <TableCell class="pr-4 text-right font-medium tabular-nums">{{ money(it.price * it.qty, currency) }}</TableCell>
               <TableCell v-if="canEdit" class="pr-2 text-right">
-                <Button variant="ghost" size="icon" class="size-8 text-muted-foreground hover:text-destructive" :disabled="!canRemove" :aria-label="t('orders.remove_one', { name: it.name })" @click="removeOne(it.id)"><Trash2 class="size-4" /></Button>
+                <WithTooltip :label="t('orders.remove_one', { name: it.name })"><Button variant="ghost" size="icon" class="size-8 text-muted-foreground hover:text-destructive" :disabled="!canRemove" :aria-label="t('orders.remove_one', { name: it.name })" @click="removeOne(it.id)"><Trash2 class="size-4" /></Button></WithTooltip>
               </TableCell>
             </TableRow>
           </TableBody>
@@ -705,9 +706,9 @@ const submitVoid = () =>
               <p class="text-xs text-muted-foreground">{{ money(it.price, currency) }} · {{ t("orders.returnable", { left: returnable(it.id), qty: it.qty }) }}</p>
             </div>
             <div class="inline-flex h-8 items-center rounded-md border">
-              <Button variant="ghost" size="icon" class="size-8 rounded-r-none" :disabled="!(qtys[it.id] ?? 0)" :aria-label="t('orders.return_fewer', { name: it.name })" @click="setQty(it.id, (qtys[it.id] ?? 0) - 1)">−</Button>
+              <WithTooltip :label="t('orders.return_fewer', { name: it.name })"><Button variant="ghost" size="icon" class="size-8 rounded-r-none" :disabled="!(qtys[it.id] ?? 0)" :aria-label="t('orders.return_fewer', { name: it.name })" @click="setQty(it.id, (qtys[it.id] ?? 0) - 1)">−</Button></WithTooltip>
               <span class="min-w-8 border-x text-center tabular-nums leading-8">{{ qtys[it.id] ?? 0 }}</span>
-              <Button variant="ghost" size="icon" class="size-8 rounded-l-none" :disabled="(qtys[it.id] ?? 0) >= returnable(it.id)" :aria-label="t('orders.return_more', { name: it.name })" @click="setQty(it.id, (qtys[it.id] ?? 0) + 1)">+</Button>
+              <WithTooltip :label="t('orders.return_more', { name: it.name })"><Button variant="ghost" size="icon" class="size-8 rounded-l-none" :disabled="(qtys[it.id] ?? 0) >= returnable(it.id)" :aria-label="t('orders.return_more', { name: it.name })" @click="setQty(it.id, (qtys[it.id] ?? 0) + 1)">+</Button></WithTooltip>
             </div>
           </div>
         </div>

@@ -69,9 +69,9 @@ The stock line under the cards shows **Tracked**, **Low stock** and **Out of sto
 
 ## How to get a daily report in your chat
 
-The app can post the sales of the day to Slack, Discord or LINE once a day.
+The app can post the sales of the day to Slack, Discord, LINE or Telegram once a day.
 
-1. First set up the chat. An admin opens **Settings › Extensions**, switches on **Chat alerts** and fills in at least one channel (Slack, Discord or LINE).
+1. First set up the chat. An admin opens **Settings › Extensions**, switches on **Chat alerts** and fills in at least one channel (Slack, Discord, LINE or Telegram). Telegram needs both the bot token and the chat ID.
 2. Open **Sales › Reports**.
 3. Click the gear button next to the page title. The **Daily report** box opens.
 4. Switch on **Send a daily report**.

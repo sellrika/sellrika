@@ -381,6 +381,16 @@ test("search filters the product list", async () => {
 	await expect(row(P2)).toBeVisible();
 });
 
+test("an icon button shows its tooltip on hover", async () => {
+	await page.goto(`/products?q=${encodeURIComponent(P1)}`);
+	const del = row(P1).getByRole("button", { name: `Delete ${P1}` });
+	await expect(del).not.toHaveAttribute("title");
+	await del.hover();
+	await expect(page.getByRole("tooltip")).toHaveText(`Delete ${P1}`);
+	await page.mouse.move(0, 0);
+	await expect(page.getByRole("tooltip")).toHaveCount(0);
+});
+
 test("featuring a product pins it to the top of the list", async () => {
 	await page.goto(`/products?q=${run}`);
 	const toggle = (name: string) =>

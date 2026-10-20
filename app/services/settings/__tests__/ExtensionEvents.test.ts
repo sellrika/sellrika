@@ -43,9 +43,13 @@ const DailyReportService = Container.get(_DailyReportService);
 const { EXTENSION_EVENTS } = await import("@constants/Extension.Constant");
 const { zip } = await import("@helpers/zip");
 const { ExtensionFiles } = await import("@xcore/extensions/ExtensionFiles");
+const { emptyCatalog } = await import("./emptyCatalog");
 
 await migrate(true);
-afterAll(() => ExtensionFiles.remove(process.env.EXTENSION_UPLOAD_DIR!));
+afterAll(async () => {
+	await emptyCatalog(); // so a later test file starts with an empty catalog
+	await ExtensionFiles.remove(process.env.EXTENSION_UPLOAD_DIR!);
+});
 
 // a shop with one recorder extension that listens for every event, and a second shop to prove staff events reach every shop of the account
 const [s] = await Db.insert(

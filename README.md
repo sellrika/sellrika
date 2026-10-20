@@ -2,13 +2,44 @@
   <img src="resources/images/logo.svg" width="96" height="96" alt="Sellrika logo">
 </p>
 
-# Sellrika
+<h1 align="center">Sellrika</h1>
 
-Sellrika is a point of sale and an online store in one app, for shops, cafés and restaurants.
-It has products, stock, orders, customers, discount codes, reports, email marketing, a REST API, an MCP server and extensions.
+<p align="center"><b>A point of sale and an online store in one app. Self-hosted. Ready for AI.</b></p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Shield-blue" alt="License: PolyForm Shield"></a>
+  <a href="https://github.com/sellrika/sellrika/releases/latest"><img src="https://img.shields.io/github/v/release/sellrika/sellrika" alt="Latest release"></a>
+  <a href="Dockerfile"><img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
+  <a href="https://bun.sh"><img src="https://img.shields.io/badge/runtime-Bun-000?logo=bun" alt="Bun"></a>
+</p>
+
+<p align="center">
+  <img src=".github/images/pos.jpg" alt="The sell screen of Sellrika">
+</p>
+
+Sellrika is for shops, cafés and restaurants.
+You sell at the till and online, and both use the same products, stock and orders.
+
+- **POS and online store in one app.** One stock count, one order list, one report.
+- **MCP server built in.** Ask Claude or another AI assistant to add products, check stock or read the sales report.
+- **REST API** with a key per shop and an OpenAPI file.
+- **Stock you can trust.** Every change is a row in a ledger.
+- **Extensions in TypeScript.** Payments (Stripe, PayPal, Omise, 2C2P), themes, new pages and more.
+- **Runs anywhere.** One Docker image or one binary. SQLite, Postgres or MySQL.
 
 Sellrika is source-available. You can read the code and host it yourself.
 The hosted version is at [sellrika.com](https://sellrika.com). It runs this same code.
+
+⭐ **Do you like Sellrika? Please star this repo.** It helps other shop owners find it.
+
+| Online store | Reports |
+|---|---|
+| <img src=".github/images/store.webp" alt="The online store"> | <img src=".github/images/reports.webp" alt="The sales report"> |
+
+## Try it first
+
+- **Try it free at [sellrika.com](https://sellrika.com/register).** Sign up, and you get your own shop with free days. No install.
+- **Watch the [demo video](https://sellrika.com/demo.mp4).** See the app at work before you sign up.
 
 ## Run it
 

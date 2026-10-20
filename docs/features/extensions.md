@@ -136,7 +136,8 @@ What `build.ts` does:
 
 `extensions/chat-alerts/` posts one text for each of these: new orders, paid later, refunds, voids, low stock.
 
-- It posts to Slack and Discord webhooks, and to LINE (Messaging API push or broadcast).
+- It posts to Slack and Discord webhooks, to LINE (Messaging API push or broadcast) and to Telegram (Bot API `sendMessage` to one chat).
+- Telegram needs both the bot token and the chat ID. A token that is not `<digits>:<letters>` is refused before the request, so it can not change the path.
 - Every filled channel gets every ticked event.
 - The daily sales report of `/reports` (`report.daily`) goes to the channels picked there, whatever is ticked.
 - Low stock fires once, when `unit.stock` crosses `low_stock_at`. 0 = out of stock.

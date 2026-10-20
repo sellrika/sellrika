@@ -24,8 +24,8 @@ export const PasswordInput = z
 	.object({
 		/** The password in use now. It proves who is asking. */
 		current_password: z.string().min(1, "validation.current_password_required"),
-		/** The new password, at least 8 characters. */
-		password: z.string().min(8, "validation.password_min_8"),
+		/** The new password: 8 to 200 characters. */
+		password: z.string().min(8, "validation.password_min_8").max(200),
 		/** The new password typed again. It must match. */
 		password_confirmation: z.string(),
 	})

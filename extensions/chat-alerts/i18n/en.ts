@@ -8,7 +8,7 @@
 export default {
 	name: "Chat alerts",
 	description:
-		"Posts new orders, payments, refunds, voids and low-stock warnings to Slack, Discord and LINE. Fill in the channels you use; every filled channel gets every event you tick. The daily sales report of the Reports page is posted here too.",
+		"Posts new orders, payments, refunds, voids and low-stock warnings to Slack, Discord, LINE and Telegram. Fill in the channels you use; every filled channel gets every event you tick. The daily sales report of the Reports page is posted here too.",
 
 	"field.events": "Send",
 	"field.slack_url": "Slack — incoming webhook URL",
@@ -20,6 +20,11 @@ export default {
 		"LINE Official Account › Messaging API › long-lived token",
 	"field.line_to": "LINE — user or group ID",
 	"field.line_to_hint": "Blank = every follower of the account",
+	"field.telegram_token": "Telegram — bot token",
+	"field.telegram_token_hint": "Telegram › @BotFather › /newbot",
+	"field.telegram_chat": "Telegram — chat ID",
+	"field.telegram_chat_hint":
+		"Add the bot to the chat first. A channel can be @name",
 
 	"option.order.online": "New online order",
 	"option.order.pos": "New POS sale",
