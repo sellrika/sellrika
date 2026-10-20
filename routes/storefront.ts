@@ -120,4 +120,9 @@ export function storefrontRoutes() {
 	 * Center, Facebook / Instagram and TikTok. Store hosts only.
 	 */
 	router.get("/feed.xml", [StoreController, "feed"]);
+	/**
+	 * The store as Markdown for AI search tools (the llms.txt
+	 * convention). Store hosts only.
+	 */
+	router.get("/llms.txt", [StoreController, "llms"]);
 }

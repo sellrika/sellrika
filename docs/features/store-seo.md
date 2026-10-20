@@ -12,6 +12,7 @@ How a shop's online store gets into search results, share cards and shopping cat
 | The `<html>` document | `resources/views/store/document.edge` |
 | The head tags | `resources/views/store/partials/head.edge` |
 | The product feed builder | `app/helpers/feed.ts` |
+| The llms.txt builder | `app/helpers/llms.ts` |
 | The product page of a theme | `resources/views/themes/<name>/product.edge` |
 
 ## Server-side rendering
@@ -119,17 +120,33 @@ So a rename moves the page, and the sitemap picks up the new URL.
 - `shippingDetails` on the `Offer`: one per delivery zone that names whole countries (`#shippingLd`).
   Rest-of-world, state and city zones are left out.
 
+The Product node sits in an `@graph` next to a `BreadcrumbList` (`#breadcrumbLd`): Home › Product.
+There is no category step. A category has no page of its own: `?category=` points its canonical at the home page.
+
 Not there yet: return policy, GTIN and review data.
 
 ### Catalog pages
 
 - The description lists the first product names.
 - The JSON-LD is an `ItemList` of the same Product objects.
+- The first page also says who the shop is (`#shopLd`). See [Shop identity](#shop-identity).
 - Product cards in every theme are real `<a href>` links. Crawlers find the pages without JavaScript.
 - A plain click opens the theme's product sheet. A modifier-click or a sold-out card follows the link.
 - The sheet links to the product page, for sharing.
 - A page past the first carries `?page=N` in its canonical.
 - The pager's Previous and Next are real links, so crawlers walk every page.
+
+## Shop identity
+
+The first catalog page (the store's home) prints an `@graph` with three nodes:
+
+| Node | What it holds |
+|---|---|
+| `OnlineStore` | The shop name, the store URL, the page description, the logo. The phone and the address, when the shop filled them in for the footer. |
+| `WebSite` | The name and the URL. A `SearchAction` that searches with `/?q=`. |
+| `ItemList` | The products of the page, as before. Left out when the page is empty. |
+
+It never holds an email, a cost or a key. Only what the store page already shows.
 
 ## Sitemap
 
@@ -143,6 +160,38 @@ Not there yet: return policy, GTIN and review data.
 The answer is cached for one hour: `Cache-Control: public, max-age=3600` (`SEO_CACHE_CONTROL`).
 
 In production, set `APP_URL` (or `TRUST_PROXY=1`). Else the links say `http`.
+
+## llms.txt
+
+`GET /llms.txt` on a store's host is the store as Markdown.
+AI search tools read it, like ChatGPT search, Perplexity and Claude.
+On the main host it answers not found. A host in `Hooks.closedHosts` answers not found too.
+
+It follows the llms.txt convention:
+
+```md
+# Main Shop
+
+> Shop online at Main Shop.
+
+## Products
+
+- [Corner Mug](https://main-shop.example.com/p/corner-mug): $18, in stock
+- [Tea Tin](https://main-shop.example.com/p/tea-tin): $18.23, sold out
+
+## Pages
+
+- [About us](https://main-shop.example.com/pages/about)
+```
+
+- The products come from `StoreService.catalog`, the same cached list the sitemap uses.
+- `llmsTxt()` in `app/helpers/llms.ts` builds the text.
+- The price is in the shop's currency. A whole amount drops `.00`.
+- The Pages section is left out when the shop has no custom pages.
+- It never carries costs.
+- It has the same one-hour cache as the sitemap.
+- robots.txt does not block it.
+- `app/helpers/__tests__/llms.test.ts` checks the text. `e2e/l-store.spec.ts` checks the answer on both hosts.
 
 ## robots.txt
 

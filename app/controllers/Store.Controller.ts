@@ -17,6 +17,7 @@ import { StorePageRepository } from "@repositories/StorePage.Repository";
 import { ExtensionService } from "@services/settings/extensions/Extension.Service";
 import { formatMoney } from "@helpers/currency";
 import { productFeed } from "@helpers/feed";
+import { llmsTxt } from "@helpers/llms";
 import type { HostedPayment } from "@services/settings/extensions/types/Extension.Payments.Types";
 import {
 	StoreAddressQuery,
@@ -204,6 +205,36 @@ export class StoreController {
 				products,
 			),
 		);
+	}
+
+	/**
+	 * GET /llms.txt — the store as Markdown, for AI search tools.
+	 * The shop, its products with price and stock, its custom pages.
+	 * Only on a store's host. A closed host (a demo) answers not found.
+	 * @param req The current request.
+	 * @returns The Markdown text, or the not-found answer.
+	 */
+	async llms(req: BunRequest<"/llms.txt">) {
+		if (Hooks.closedHosts.includes(Url.hostOf(req)))
+			return Inertia.notFound(req);
+		const s = await this.site.open(req);
+		if (s instanceof Response) return s;
+		const text = llmsTxt(
+			{
+				name: s.shop.name,
+				url: s.url,
+				currency: s.shop.currency,
+				description: t("store_server.seo_shop_desc", { name: s.shop.name }),
+			},
+			await this.store.catalog(s.shop.id),
+			await this.pages.links(s.shop.id),
+		);
+		return new Response(text, {
+			headers: {
+				"Content-Type": "text/markdown; charset=utf-8",
+				"Cache-Control": SEO_CACHE_CONTROL,
+			},
+		});
 	}
 
 	/**
@@ -690,10 +721,10 @@ export class StoreController {
 	 * @param shop The selling shop.
 	 * @param storeUrl Absolute URL of the storefront.
 	 * @param catalog The page of products being rendered.
-	 * @returns The ItemList node, or undefined for an empty page.
+	 * @returns The ItemList node, or null for an empty page.
 	 */
 	#catalogLd(shop: Shop, storeUrl: string, catalog: Paged<StoreProduct>) {
-		if (!catalog.data.length) return undefined;
+		if (!catalog.data.length) return null;
 		const first = (catalog.page - 1) * catalog.per_page + 1;
 		const itemListElement = [];
 		for (const [i, p] of catalog.data.entries())
@@ -702,10 +733,73 @@ export class StoreController {
 				position: first + i,
 				item: this.#productLd(shop, storeUrl, p),
 			});
+		return { "@type": "ItemList", itemListElement };
+	}
+
+	/**
+	 * Who the shop is, for search engines and AI search tools.
+	 * An OnlineStore node and a WebSite node with the store search.
+	 * Only public store settings: the logo, the phone and the address
+	 * the footer already shows. Never an email, a cost or a key.
+	 * @param shop The selling shop.
+	 * @param storeUrl Absolute URL of the storefront.
+	 * @param desc The page's description.
+	 * @returns The two nodes.
+	 */
+	#shopLd(shop: Shop, storeUrl: string, desc: string) {
+		const origin = new URL(storeUrl).origin;
+		const logo = shop.logo
+			? shop.logo.startsWith("http")
+				? shop.logo
+				: origin + shop.logo
+			: null;
+		const store = {
+			"@type": "OnlineStore",
+			"@id": `${storeUrl}/#store`,
+			name: shop.name,
+			url: storeUrl,
+			description: desc,
+			...(logo && { logo }),
+			...(shop.phone && { telephone: shop.phone }),
+			...(shop.address && { address: shop.address }),
+		};
+		const site = {
+			"@type": "WebSite",
+			"@id": `${storeUrl}/#website`,
+			name: shop.name,
+			url: storeUrl,
+			publisher: { "@id": store["@id"] },
+			// the catalog at "/" filters by ?q=
+			potentialAction: {
+				"@type": "SearchAction",
+				target: `${storeUrl}/?q={search_term_string}`,
+				"query-input": "required name=search_term_string",
+			},
+		};
+		return [store, site];
+	}
+
+	/**
+	 * The path from the store's home to a product (Google breadcrumbs).
+	 * ponytail: Home › Product. A category has no page of its own:
+	 * `?category=` points its canonical at the home page.
+	 * @param shop The selling shop.
+	 * @param storeUrl Absolute URL of the storefront.
+	 * @param p The product as the storefront sees it.
+	 * @returns The BreadcrumbList node.
+	 */
+	#breadcrumbLd(shop: Shop, storeUrl: string, p: StoreProduct) {
 		return {
-			"@context": "https://schema.org",
-			"@type": "ItemList",
-			itemListElement,
+			"@type": "BreadcrumbList",
+			itemListElement: [
+				{ "@type": "ListItem", position: 1, name: shop.name, item: storeUrl },
+				{
+					"@type": "ListItem",
+					position: 2,
+					name: p.name,
+					item: this.#productUrl(storeUrl, p),
+				},
+			],
 		};
 	}
 
@@ -713,6 +807,7 @@ export class StoreController {
 	 * Head for one catalog page.
 	 * The description names the first products.
 	 * The JSON-LD is an ItemList of that page's products.
+	 * The first page also says who the shop is (`#shopLd`).
 	 * The canonical link carries `?page=N` past the first page.
 	 * @param shop The selling shop.
 	 * @param storeUrl Absolute URL of the storefront.
@@ -726,6 +821,20 @@ export class StoreController {
 		catalog: Paged<StoreProduct>,
 		q: string,
 	) {
+		const desc = catalog.total
+			? t("store_server.seo_catalog_desc", {
+					name: shop.name,
+					total: catalog.total,
+					products: catalog.data
+						.slice(0, 5)
+						.map((p) => p.name)
+						.join(", "),
+				})
+			: t("store_server.seo_shop_desc", { name: shop.name });
+		const graph: object[] =
+			catalog.page > 1 ? [] : this.#shopLd(shop, storeUrl, desc);
+		const list = this.#catalogLd(shop, storeUrl, catalog);
+		if (list) graph.push(list);
 		return StoreViewService.storeSeo(shop, {
 			url: catalog.page > 1 ? `${storeUrl}?page=${catalog.page}` : storeUrl,
 			title:
@@ -735,25 +844,18 @@ export class StoreController {
 							page: catalog.page,
 						})
 					: shop.name,
-			desc: catalog.total
-				? t("store_server.seo_catalog_desc", {
-						name: shop.name,
-						total: catalog.total,
-						products: catalog.data
-							.slice(0, 5)
-							.map((p) => p.name)
-							.join(", "),
-					})
-				: t("store_server.seo_shop_desc", { name: shop.name }),
+			desc,
 			noindex: !!q,
-			ld: this.#catalogLd(shop, storeUrl, catalog),
+			ld: graph.length
+				? { "@context": "https://schema.org", "@graph": graph }
+				: undefined,
 		});
 	}
 
 	/**
 	 * Head for a product page.
 	 * It has og:type product and the price tags Facebook and Pinterest read.
-	 * It also has the Product JSON-LD.
+	 * It also has the Product and the BreadcrumbList JSON-LD.
 	 * @param shop The selling shop.
 	 * @param storeUrl Absolute URL of the storefront.
 	 * @param p The product as the storefront sees it.
@@ -778,7 +880,10 @@ export class StoreController {
 			],
 			ld: {
 				"@context": "https://schema.org",
-				...this.#productLd(shop, storeUrl, p),
+				"@graph": [
+					this.#productLd(shop, storeUrl, p),
+					this.#breadcrumbLd(shop, storeUrl, p),
+				],
 			},
 		});
 	}
