@@ -49,8 +49,11 @@ const { DailyReportService: _DailyReportService } = await import(
 const DailyReportService = Container.get(_DailyReportService);
 const { zip } = await import("@helpers/zip");
 const { ExtensionFiles } = await import("@xcore/extensions/ExtensionFiles");
+const { emptyCatalog } = await import("./emptyCatalog");
 
 await migrate(true);
+// an earlier file may have left its extensions on: start with none
+await emptyCatalog();
 
 const [s] = await Db.insert(
 	sql,
@@ -111,6 +114,7 @@ Bun.dns.lookup = (async (host: string) => [
 afterAll(async () => {
 	globalThis.fetch = realFetch;
 	Bun.dns.lookup = realLookup;
+	await emptyCatalog();
 	await ExtensionFiles.remove(process.env.EXTENSION_UPLOAD_DIR!);
 });
 const calls: { url: string; headers: Record<string, string>; body: string }[] =
