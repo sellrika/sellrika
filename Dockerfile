@@ -1,5 +1,5 @@
 # ---- build: frontend assets + single compiled binary ----
-FROM oven/bun:1.4 AS build
+FROM oven/bun:1.4.4 AS build
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
