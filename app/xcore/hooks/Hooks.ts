@@ -1,6 +1,6 @@
 import { DOCS_URL } from "@constants/Api.Constant";
 import type { User } from "@models/User";
-import type { SQL } from "bun";
+import type { BunRequest, SQL } from "bun";
 
 /**
  * What every app page shows about the account's plan.
@@ -36,6 +36,19 @@ export class Hooks {
 	 * null = there is no front page: `/` goes to the sign-in.
 	 */
 	static frontPage: ((req: Request) => Promise<Response>) | null = null;
+
+	/**
+	 * Answers a request before the app's own route.
+	 * It runs on every request, so it must be cheap:
+	 * look at the host or the path first, and return null fast.
+	 * Its answer still gets the security headers, gzip and the
+	 * request's language. A signed-in change from another host is
+	 * refused before it runs.
+	 * null (the hook) = nothing runs.
+	 * null (its answer) = the app's own route answers.
+	 */
+	static beforeRoute: ((req: BunRequest) => Promise<Response | null>) | null =
+		null;
 
 	/**
 	 * The paths of the app's own public pages, for its sitemap.

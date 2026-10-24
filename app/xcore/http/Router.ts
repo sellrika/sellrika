@@ -1,5 +1,6 @@
 import type { BunRequest } from "bun";
 import { Container, type Constructable } from "@xcore/di";
+import { Hooks } from "@xcore/hooks/Hooks";
 import { Compress } from "@xcore/http/Compress";
 import { SecurityHeaders } from "@xcore/http/Headers";
 import { Url } from "@xcore/http/Url";
@@ -47,6 +48,7 @@ class Router {
 	 * Every handler (and everything it awaits) runs in the request's
 	 * language, so `t()` needs no request passed around.
 	 * A signed-in change from a page of another host is refused here (403).
+	 * Then `Hooks.beforeRoute` may answer before the route does.
 	 * @param action The handler, or `[Controller, "method"]`.
 	 * @param via Middleware for this handler only, outer first.
 	 * @returns The wrapped handler.
@@ -63,7 +65,9 @@ class Router {
 				req,
 				await Compress.gzip(
 					req,
-					await I18n.withLocale(I18n.localeOf(req), () => handler(req)),
+					await I18n.withLocale(I18n.localeOf(req), async function answer() {
+						return (await Hooks.beforeRoute?.(req)) ?? handler(req);
+					}),
 				),
 			);
 		};

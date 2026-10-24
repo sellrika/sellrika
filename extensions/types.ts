@@ -843,6 +843,13 @@ export type RouteContext = {
 	 */
 	storefront?: {
 		/**
+		 * The full address of your store root on this request,
+		 * like `https://shop.example.com/<path>`.
+		 * Build every link from it, not from `/<path>`:
+		 * your pages may be served at another address.
+		 */
+		url: string;
+		/**
 		 * Sends the page you built: the whole HTML document, with its
 		 * own head, header, footer, CSS and scripts. No theme is around it.
 		 * It is not cleaned. Put text a person typed through

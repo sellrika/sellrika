@@ -347,7 +347,7 @@ The open-source app runs with none.
 
 An add-on may change the app only in these places:
 
-- `Hooks` in `app/xcore/hooks/Hooks.ts`: `frontPage`, `docsPage`, `docs`, `plan`, `signedUp`, `signup`, `sitePaths`, `closedHosts`, `ssrPages`, `guides`, `migrations`.
+- `Hooks` in `app/xcore/hooks/Hooks.ts`: `frontPage`, `beforeRoute`, `docsPage`, `docs`, `plan`, `signedUp`, `signup`, `sitePaths`, `closedHosts`, `ssrPages`, `guides`, `migrations`.
 - The DI container. It can put its own class in the place of a service.
 - The router. It can add routes.
 - `JobRegistry.add()`. It can add a background job.
