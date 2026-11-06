@@ -1984,6 +1984,7 @@ export const de = {
 	"server.ext_mail_no_email": "Dieser Kunde hat keine E-Mail-Adresse",
 	"server.ext_mail_unsubscribed": "Dieser Kunde möchte keine E-Mails",
 	"server.ext_field_required": "{label} ist erforderlich",
+	"server.ext_list_max": "Höchstens {max} Zeilen",
 	"server.ext_list_rows": "Senden Sie eine Liste von Zeilen",
 	"server.ext_max": "Darf höchstens {max} sein",
 	"server.ext_min": "Muss mindestens {min} sein",

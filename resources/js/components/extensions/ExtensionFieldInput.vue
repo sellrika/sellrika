@@ -113,7 +113,7 @@ const setCell = (i: number, name: string, v: ExtensionConfigValue) =>
         <ExtensionFieldInput v-for="s in field.fields" :key="s.name" :field="s" :path="`${path}.${i}.${s.name}`" :errors="errors" :model-value="row[s.name]" @update:model-value="(v) => setCell(i, s.name, v)" />
         <Button type="button" variant="ghost" size="sm" class="col-span-full justify-self-end text-destructive" :aria-label="t('extensions.remove_row_aria', { label: field.label, n: i + 1 })" @click="removeRow(i)"><Trash2 /> {{ t("common.remove") }}</Button>
       </div>
-      <Button type="button" variant="outline" size="sm" class="justify-self-start" @click="addRow"><Plus /> {{ field.add_label ?? t("common.add") }}</Button>
+      <Button v-if="rows().length < (field.max ?? Infinity)" type="button" variant="outline" size="sm" class="justify-self-start" @click="addRow"><Plus /> {{ field.add_label ?? t("common.add") }}</Button>
     </div>
     <!-- a swatch the owner clicks, not a hex code they have to know; the text box next to it accepts one all the same -->
     <div v-else-if="field.type === 'color'" class="flex items-center gap-2">

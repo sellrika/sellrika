@@ -4,7 +4,10 @@ import type {
 	ConfigValue,
 	ExtensionField,
 } from "@validators/Extension.Validator";
-import type { ExtensionFieldType } from "@constants/Extension.Constant";
+import {
+	EXTENSION_LIST_ROWS_MAX,
+	type ExtensionFieldType,
+} from "@constants/Extension.Constant";
 
 /**
  * What one field of the settings form came to.
@@ -218,6 +221,7 @@ function parseImage(_field: ExtensionField, value: ConfigValue): ParsedSetting {
  * A list field: rows of sub-fields.
  * Each cell is read like a top-level field.
  * A row that is there must be complete.
+ * There are at most `max` rows (`EXTENSION_LIST_ROWS_MAX` at most).
  * @param field The list field. Its `fields` are the columns.
  * @param value What the form sent.
  * @returns The rows to store, or a message pointing at the cell.
@@ -231,6 +235,9 @@ function parseRows(field: ExtensionField, value: ConfigValue): ParsedSetting {
 		)
 	)
 		return { error: t("server.ext_list_rows") };
+	const most = Math.min(field.max ?? Infinity, EXTENSION_LIST_ROWS_MAX);
+	if (value.length > most)
+		return { error: t("server.ext_list_max", { max: most }) };
 	const rows: Record<string, ConfigPrimitive>[] = [];
 	for (const [index, sent] of (
 		value as Record<string, ConfigPrimitive>[]

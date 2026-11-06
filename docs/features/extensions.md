@@ -438,7 +438,7 @@ Every value is checked against its field's `type` (`EXTENSION_FIELD_TYPES`). `co
 | `url` | Must be http(s) |
 | `color` | Must be `#rrggbb` |
 | `image` | Must be an upload of this site or an https link. Never `javascript:` in a `src`. |
-| `list` | An array of rows. Each row is checked against the manifest's sub-`fields`. No secrets inside rows. |
+| `list` | An array of rows. Each row is checked against the manifest's sub-`fields`. No secrets inside rows. `max` = the most rows (`EXTENSION_LIST_ROWS_MAX`, 50, at most). The form hides **Add** at the limit. |
 
 - List errors come back as `config.<field>.<row>.<sub-field>`.
 - With the switch on, every required field is needed. `filled()` decides: `""` and `[]` do not count, booleans always do.
