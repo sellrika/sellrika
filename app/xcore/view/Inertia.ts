@@ -18,6 +18,7 @@ import { Container } from "@xcore/di";
 import { ShopRepository } from "@repositories/Shop.Repository";
 import { StockRepository } from "@repositories/Stock.Repository";
 import { ExtensionService } from "@services/settings/extensions/Extension.Service";
+import { ReleaseService } from "@services/settings/Release.Service";
 /**
  * Embedded at compile time, so it works inside the single binary.
  */
@@ -37,6 +38,7 @@ export class Inertia {
 	static #shops = Container.get(ShopRepository);
 	static #stockRepo = Container.get(StockRepository);
 	static #extensions = Container.get(ExtensionService);
+	static #release = Container.get(ReleaseService);
 
 	/**
 	 * Render an Inertia page.
@@ -227,6 +229,7 @@ export class Inertia {
 				low_stock: 0,
 				extension_ui: [],
 				plan: null,
+				update: null,
 			};
 		const { id, name, email, role } = c.user;
 		const shopId = c.shop?.id;
@@ -259,6 +262,10 @@ export class Inertia {
 			extension_ui: () => (shopId ? Inertia.#extensions.ui(shopId, role) : []),
 			// what an add-on says about the account's plan; null = nothing
 			plan: c.plan ?? null,
+			// a newer release of the app: only the platform admin can install it
+			update: Account.isPlatformAdmin(c.user)
+				? Inertia.#release.update()
+				: null,
 		};
 	}
 

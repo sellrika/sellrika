@@ -1,9 +1,17 @@
 import { hostname } from "node:os"; // Bun has no equivalent
+import pkg from "../package.json";
 
 const env = process.env;
 
 /** The app's settings, read from the environment. */
 export const app = {
+	/** The running version, from package.json. A release bumps it. */
+	version: pkg.version,
+	/**
+	 * Ask GitHub for a newer release, for the badge in the platform admin's menu.
+	 * `UPDATE_CHECK=0` turns it off: the server then never calls GitHub.
+	 */
+	updateCheck: env.UPDATE_CHECK !== "0",
 	/** The port the server listens on. */
 	port: Number(env.PORT ?? 3000),
 	/**

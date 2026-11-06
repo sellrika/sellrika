@@ -25,6 +25,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
 	ShoppingCart,
 	Package,
@@ -126,6 +127,8 @@ const isManager = computed(
 const isPlatform = computed(() => !!user.value?.platform);
 /** The app's version, shown at the bottom of the user menu. */
 const appVersion = __APP_VERSION__;
+/** A newer release of the app (platform admin only), null = none. */
+const update = computed(() => page.props.update);
 /** The Admin section's tile: the same square as the others, but almost see-through. */
 const ADMIN_TILE = "bg-foreground/10 text-foreground";
 // cashiers see only what they can use; the server enforces the same split (admin middleware)
@@ -511,7 +514,8 @@ const initials = computed(() =>
       <div class="flex items-center gap-1.5 p-2" :class="collapsed ? 'flex-col-reverse' : 'px-3'">
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
-            <button type="button" class="flex items-center gap-2 rounded-full border bg-muted/40 p-1 text-[13px] font-medium transition-colors hover:bg-accent" :class="!collapsed && 'min-w-0 flex-1 pr-3'" :aria-label="user?.name">
+            <button type="button" class="relative flex items-center gap-2 rounded-full border bg-muted/40 p-1 text-[13px] font-medium transition-colors hover:bg-accent" :class="!collapsed && 'min-w-0 flex-1 pr-3'" :aria-label="user?.name">
+              <span v-if="update" class="absolute top-0 left-0 size-2.5 rounded-full bg-primary ring-2 ring-background" />
               <WithTooltip :label="t(`nav.${user?.role ?? 'cashier'}`)" :side="collapsed ? 'right' : 'top'">
                 <span class="flex min-w-0 flex-1 items-center gap-2">
                   <Avatar class="size-6 shrink-0"><AvatarFallback class="text-[11px] font-semibold">{{ initials.slice(0, 1) }}</AvatarFallback></Avatar>
@@ -550,7 +554,14 @@ const initials = computed(() =>
             <DropdownMenuItem as-child><a href="https://github.com/sellrika/sellrika" target="_blank" rel="noopener"><Star class="size-4" /> {{ t("nav.star_us") }}</a></DropdownMenuItem>
             <DropdownMenuItem @select="router.post('/logout')"><LogOut class="size-4" /> {{ t("nav.logout") }}</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel class="text-xs font-normal text-muted-foreground">{{ t("nav.version", { version: appVersion }) }}</DropdownMenuLabel>
+            <!-- a newer release links to its page (platform admin only) -->
+            <DropdownMenuItem v-if="update" as-child>
+              <a :href="update.url" target="_blank" rel="noopener" class="text-xs text-muted-foreground">
+                {{ t("nav.version", { version: appVersion }) }}
+                <Badge class="ml-auto">{{ t("nav.update_available", { version: update.version }) }}</Badge>
+              </a>
+            </DropdownMenuItem>
+            <DropdownMenuLabel v-else class="text-xs font-normal text-muted-foreground">{{ t("nav.version", { version: appVersion }) }}</DropdownMenuLabel>
           </DropdownMenuContent>
         </DropdownMenu>
         <WithTooltip :label="t(collapsed ? 'nav.expand_sidebar' : 'nav.collapse_sidebar')" :side="collapsed ? 'right' : 'top'"><Button variant="ghost" size="icon-sm" class="shrink-0 text-muted-foreground" :aria-label="t(collapsed ? 'nav.expand_sidebar' : 'nav.collapse_sidebar')" @click="collapsed = !collapsed"><PanelLeft /></Button></WithTooltip>
@@ -581,7 +592,8 @@ const initials = computed(() =>
         <!-- Shop switch + logout (the sidebar is hidden here) -->
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
-            <button type="button" class="rounded-full" :aria-label="`${user?.name} · ${shop?.name}`">
+            <button type="button" class="relative rounded-full" :aria-label="`${user?.name} · ${shop?.name}`">
+              <span v-if="update" class="absolute top-0 left-0 size-2.5 rounded-full bg-primary ring-2 ring-background" />
               <Avatar class="size-8"><AvatarFallback class="text-xs">{{ initials }}</AvatarFallback></Avatar>
             </button>
           </DropdownMenuTrigger>
@@ -619,7 +631,14 @@ const initials = computed(() =>
             <DropdownMenuItem as-child><a href="https://github.com/sellrika/sellrika" target="_blank" rel="noopener"><Star class="size-4" /> {{ t("nav.star_us") }}</a></DropdownMenuItem>
             <DropdownMenuItem @select="router.post('/logout')"><LogOut class="size-4" /> {{ t("nav.logout") }}</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel class="text-xs font-normal text-muted-foreground">{{ t("nav.version", { version: appVersion }) }}</DropdownMenuLabel>
+            <!-- a newer release links to its page (platform admin only) -->
+            <DropdownMenuItem v-if="update" as-child>
+              <a :href="update.url" target="_blank" rel="noopener" class="text-xs text-muted-foreground">
+                {{ t("nav.version", { version: appVersion }) }}
+                <Badge class="ml-auto">{{ t("nav.update_available", { version: update.version }) }}</Badge>
+              </a>
+            </DropdownMenuItem>
+            <DropdownMenuLabel v-else class="text-xs font-normal text-muted-foreground">{{ t("nav.version", { version: appVersion }) }}</DropdownMenuLabel>
           </DropdownMenuContent>
         </DropdownMenu>
       </header>

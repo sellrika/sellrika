@@ -866,7 +866,17 @@ export type SharedProps = {
 	extension_ui: ExtensionUi[];
 	/** what an add-on says about the account's plan; null = nothing */
 	plan: PlanNotice | null;
+	/** a newer release of the app; only the platform admin gets it, null = none */
+	update: AppUpdate | null;
 	errors: Record<string, string>;
+};
+
+/** Mirror of `AppUpdate` (app/services/settings/Release.Service.ts): a newer release. */
+export type AppUpdate = {
+	/** its version, like `1.2.0` */
+	version: string;
+	/** its page on GitHub */
+	url: string;
 };
 
 /** Mirror of `PlanNotice` (app/xcore/hooks/Hooks.ts): what an add-on says about the account's plan. */

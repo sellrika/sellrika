@@ -1,5 +1,11 @@
 import { expect, test } from "bun:test";
 import { VITE_CSS_ENTRY, VITE_ENTRY } from "@constants/Inertia.Constant";
+import { app } from "@config/app";
+import type { Shop } from "@models/Shop";
+import type { User } from "@models/User";
+import { ReleaseService } from "@services/settings/Release.Service";
+import { Container } from "@xcore/di";
+import { Context } from "@xcore/http/Context";
 import { inertia } from "@xcore/view/Inertia";
 import { Vite } from "@xcore/view/Vite";
 
@@ -74,4 +80,35 @@ test("inertia: a partial reload sends only the named props (and errors), and cal
 	});
 	const whole = await (await inertia(other, "Keys/Index", props())).json();
 	expect(whole.props.slow).toBe("s");
+});
+
+test("inertia: only the platform admin gets the newer release", async () => {
+	Container.get(ReleaseService).latest = "999.0.0";
+	/**
+	 * The `update` prop as this user sees it.
+	 * @param user Who is signed in.
+	 * @returns The prop.
+	 */
+	async function updateFor(user: Partial<User>) {
+		const req = await visit({
+			"X-Inertia-Partial-Component": "Keys/Index",
+			"X-Inertia-Partial-Data": "update",
+		});
+		Context.set(req, {
+			user: { id: 1, name: "A", owner_id: null, ...user } as User,
+			shop: { id: 1 } as Shop,
+		});
+		return (await (await inertia(req, "Keys/Index", {})).json()).props.update;
+	}
+	expect(await updateFor({ role: "admin", email: app.adminEmail })).toEqual({
+		version: "999.0.0",
+		url: "https://github.com/sellrika/sellrika/releases/tag/v999.0.0",
+	});
+	expect(
+		await updateFor({ role: "admin", email: "owner@shop.test" }),
+	).toBeNull();
+	expect(
+		await updateFor({ role: "manager", email: app.adminEmail }),
+	).toBeNull();
+	Container.get(ReleaseService).latest = null;
 });

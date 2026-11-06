@@ -765,6 +765,7 @@ export const de = {
 	"nav.logout_desc": "Aktion · diese Sitzung beenden",
 	"nav.star_us": "Gib uns einen Stern auf GitHub",
 	"nav.version": "Version {version}",
+	"nav.update_available": "Neu: {version}",
 	"nav.manage_shops": "Shops verwalten…",
 	"nav.more_pages": "Weitere Seiten",
 	"nav.new_product": "Neues Produkt",

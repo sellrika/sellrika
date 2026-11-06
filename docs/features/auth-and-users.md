@@ -374,6 +374,13 @@ It also asks for an owner row (`owner_id` null) with the role `admin`.
 
 They are also a normal owner of their own shops.
 
+Only they see when a newer release of the app is out.
+The user menu shows the running version (`package.json` › `version`) at the bottom.
+`ReleaseService` asks GitHub for the latest release every 6 hours and on boot. It keeps the answer in memory.
+When that release is newer, the shared prop `update` is `{ version, url }`.
+Then the menu button gets a dot and the version line gets a "New" badge that links to the release.
+Everyone else always gets `update: null`. `UPDATE_CHECK=0` turns the check off.
+
 Only they get the `Guard.platform` routes:
 
 | Page | Routes |
