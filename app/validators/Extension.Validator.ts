@@ -128,7 +128,10 @@ const fieldShape = {
 		.optional(),
 	/** Number only: the smallest value allowed. */
 	min: z.number().optional(),
-	/** Number only: the largest value allowed. */
+	/**
+	 * Number: the largest value allowed.
+	 * List: the most rows, at most `EXTENSION_LIST_ROWS_MAX`.
+	 */
 	max: z.number().optional(),
 	/** Number only: the size of one step. Over 0. */
 	step: z.number().positive().optional(),

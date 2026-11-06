@@ -225,10 +225,15 @@ export type ExtensionOwnHandles = {
 	/** The cleaner of HTML a person wrote (`sanitizeHtml`). */
 	html: { clean: (html: string) => Promise<string> };
 	/**
-	 * Pictures the extension no longer uses: each leaves storage when
-	 * nothing else of the app uses it either. Only the shop's own files.
+	 * `save`: store one picture (base64 or an https link) in the shop's
+	 * extension folder.
+	 * `drop`: pictures the extension no longer uses: each leaves storage
+	 * when nothing else of the app uses it either. Only the shop's own files.
 	 */
-	uploads: { drop: (urls: string[]) => Promise<void> };
+	uploads: {
+		save: (picture: string) => Promise<{ url: string } | { error: string }>;
+		drop: (urls: string[]) => Promise<void>;
+	};
 	/**
 	 * Store pages only (manifest `storefront`): the address of the
 	 * extension's store root, and send the whole page it built.

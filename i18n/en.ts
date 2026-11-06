@@ -1919,6 +1919,7 @@ export const en = {
 	"server.ext_mail_no_email": "This customer has no email",
 	"server.ext_mail_unsubscribed": "This customer does not want email",
 	"server.ext_field_required": "{label} is required",
+	"server.ext_list_max": "At most {max} rows",
 	"server.ext_list_rows": "Send a list of rows",
 	"server.ext_max": "Must be at most {max}",
 	"server.ext_min": "Must be at least {min}",

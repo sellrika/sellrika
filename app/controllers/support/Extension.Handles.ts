@@ -14,12 +14,14 @@ import { validate, type Errors } from "@validators/validate";
 import { UploadCleaner } from "@services/Upload.Service";
 import { sanitizeHtml } from "@helpers/html";
 import { EXTENSION_DROP_MAX } from "@constants/Extension.Constant";
+import { Storage } from "@xcore/storage/Storage";
 
 /**
  * The few functions an extension gets that are not API routes.
  * They join the API's own functions under the same area names
  * (`ExtensionService.handle`): `products.idBySku`, `orders.openFor`,
- * `orders.payOptions`, `customers`, `html.clean` and `uploads.drop`.
+ * `orders.payOptions`, `customers`, `html.clean`, `uploads.save` and
+ * `uploads.drop`.
  * Everything else an extension can do is an API route
  * (`ApiCall.functions`), never written here.
  */
@@ -55,8 +57,28 @@ export class ExtensionHandles {
 			},
 			customers: this.customersOf(shopId),
 			html: { clean: (html) => sanitizeHtml(String(html ?? "")) },
-			uploads: { drop: (urls) => this.#drop(shopId, urls) },
+			uploads: {
+				save: (picture) => this.#save(shopId, picture),
+				drop: (urls) => this.#drop(shopId, urls),
+			},
 		};
+	}
+
+	/**
+	 * Save one picture into the shop's extension folder.
+	 * It is base64 or an https link, like a product picture.
+	 * The bytes are checked and compressed by `Storage`.
+	 * @param shopId The shop of the request.
+	 * @param picture A `data:image/…;base64,` URI, plain base64 or an https link.
+	 * @returns `{ url }` with its `/uploads/…` path, or `{ error }`.
+	 */
+	#save(shopId: number, picture: unknown) {
+		const src = typeof picture === "string" ? picture.trim() : "";
+		if (Storage.isHttpsImageUrl(src))
+			return Storage.storeImageFromUrl(src, shopId, "extensions");
+		if (Storage.isImageData(src))
+			return Storage.storeImageFromData(src, shopId, "extensions");
+		return Promise.resolve({ error: t("server.upload_bad_type") });
 	}
 
 	/**

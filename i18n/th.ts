@@ -1833,6 +1833,7 @@ export const th = {
 	"server.ext_mail_no_email": "ลูกค้ารายนี้ไม่มีอีเมล",
 	"server.ext_mail_unsubscribed": "ลูกค้ารายนี้ไม่ต้องการรับอีเมล",
 	"server.ext_field_required": "กรุณากรอก{label}",
+	"server.ext_list_max": "ไม่เกิน {max} แถว",
 	"server.ext_list_rows": "ส่งเป็นรายการแถว",
 	"server.ext_max": "ต้องไม่เกิน {max}",
 	"server.ext_min": "ต้องไม่น้อยกว่า {min}",

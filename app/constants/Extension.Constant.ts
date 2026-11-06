@@ -230,5 +230,11 @@ export const EXTENSION_STORE_PATHS_MAX = 5000;
 /** The longest title of a menu link an extension adds. */
 export const EXTENSION_STORE_LINK_TITLE_MAX = 60;
 
+/**
+ * The most rows a `list` setting may hold.
+ * A list field's own `max` may be lower.
+ */
+export const EXTENSION_LIST_ROWS_MAX = 50;
+
 /** How many pictures one `ctx.uploads.drop()` call looks at. */
 export const EXTENSION_DROP_MAX = 200;
