@@ -737,6 +737,7 @@ export const en = {
 	"nav.logout": "Log out",
 	"nav.logout_desc": "Action · end this session",
 	"nav.star_us": "Star us on GitHub",
+	"nav.version": "Version {version}",
 	"nav.manage_shops": "Manage shops…",
 	"nav.more_pages": "More pages",
 	"nav.new_product": "New product",

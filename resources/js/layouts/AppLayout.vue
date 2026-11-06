@@ -124,6 +124,8 @@ const isManager = computed(
 );
 // the ADMIN_EMAIL user: the only one who sees the platform settings (Addresses)
 const isPlatform = computed(() => !!user.value?.platform);
+/** The app's version, shown at the bottom of the user menu. */
+const appVersion = __APP_VERSION__;
 /** The Admin section's tile: the same square as the others, but almost see-through. */
 const ADMIN_TILE = "bg-foreground/10 text-foreground";
 // cashiers see only what they can use; the server enforces the same split (admin middleware)
@@ -547,6 +549,8 @@ const initials = computed(() =>
             </DropdownMenuSub>
             <DropdownMenuItem as-child><a href="https://github.com/sellrika/sellrika" target="_blank" rel="noopener"><Star class="size-4" /> {{ t("nav.star_us") }}</a></DropdownMenuItem>
             <DropdownMenuItem @select="router.post('/logout')"><LogOut class="size-4" /> {{ t("nav.logout") }}</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel class="text-xs font-normal text-muted-foreground">{{ t("nav.version", { version: appVersion }) }}</DropdownMenuLabel>
           </DropdownMenuContent>
         </DropdownMenu>
         <WithTooltip :label="t(collapsed ? 'nav.expand_sidebar' : 'nav.collapse_sidebar')" :side="collapsed ? 'right' : 'top'"><Button variant="ghost" size="icon-sm" class="shrink-0 text-muted-foreground" :aria-label="t(collapsed ? 'nav.expand_sidebar' : 'nav.collapse_sidebar')" @click="collapsed = !collapsed"><PanelLeft /></Button></WithTooltip>
@@ -614,6 +618,8 @@ const initials = computed(() =>
             </DropdownMenuSub>
             <DropdownMenuItem as-child><a href="https://github.com/sellrika/sellrika" target="_blank" rel="noopener"><Star class="size-4" /> {{ t("nav.star_us") }}</a></DropdownMenuItem>
             <DropdownMenuItem @select="router.post('/logout')"><LogOut class="size-4" /> {{ t("nav.logout") }}</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel class="text-xs font-normal text-muted-foreground">{{ t("nav.version", { version: appVersion }) }}</DropdownMenuLabel>
           </DropdownMenuContent>
         </DropdownMenu>
       </header>

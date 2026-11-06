@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
+import pkg from "./package.json";
 
 /**
  * Every built-in store theme's own stylesheet and script.
@@ -102,6 +103,11 @@ export default defineConfig(function config({ isSsrBuild, mode }) {
 	return {
 		base: "/build/",
 		plugins: [vue(), tailwindcss()],
+		/**
+		 * The app's version from package.json, put into the bundle at build time.
+		 * The user menu shows it.
+		 */
+		define: { __APP_VERSION__: JSON.stringify(pkg.version) },
 		// Mirror of tsconfig.json "paths" — the browser code imports shared server code (validators,
 		// constants) and must resolve the same aliases the Bun side does.
 		resolve: {
