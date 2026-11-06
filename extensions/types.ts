@@ -825,9 +825,19 @@ export type RouteContext = {
 		clean: (html: string) => Promise<string>;
 	};
 	/**
-	 * The pictures your browser code uploaded (`api.upload`).
+	 * The pictures of your extension: save one sent as text, or drop
+	 * the ones you stopped using (also those `api.upload` sent).
 	 */
 	uploads: {
+		/**
+		 * Saves one picture to the shop's own storage, like `api.upload`.
+		 * Use it when a picture comes as text: from an AI tool or the API.
+		 * Tell the app when you stop using it (`drop`).
+		 * @param picture A `data:image/…;base64,` URI, plain base64, or an
+		 * https link to a picture. 5 MB at most.
+		 * @returns `{ url }` with its path (`/uploads/…`), or `{ error }`.
+		 */
+		save: (picture: string) => Promise<{ url: string } | { error: string }>;
 		/**
 		 * Tells the app you stopped using these pictures (a post was
 		 * deleted, a cover was replaced). Call it after you saved.
