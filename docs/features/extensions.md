@@ -651,6 +651,10 @@ An extension may bring pages of its own to the shop's online store, like a blog.
 3. It hands the request to the extension's `publicRoutes`, with the whole path: `"GET /blog"`, `"GET /blog/:slug"`.
 4. A 404 from the extension becomes the theme's not-found page.
 
+Steps 2 to 4 are `ExtensionController.servePage(req, storefront, pathname, mount)`. An add-on may call it to serve the same pages on a host of its own (with `Hooks.beforeRoute`). `pathname` is the path as the extension sees it: it starts with `/<storefront.path>`. `mount` is the public path on this host for the extension's store root: `storePage` passes `/<storefront.path>`, an add-on may pass `""`.
+
+**The address.** `ctx.storefront.url` is the full address of the extension's store root on this request: the store's address plus the mount (`https://shop.example.com/<path>`, or just `https://shop.example.com` on an add-on's host). Build every link from it, never from `/<path>`.
+
 **The page.** The extension builds the whole page by itself. The handler returns `ctx.storefront.page({ html, status })`.
 
 - `html` is the whole document: `<!doctype html>`, the `<head>` (title, head tags for search engines, CSS) and the `<body>` (its own header, footer and scripts). No theme is around it.
@@ -680,7 +684,7 @@ An extension may bring pages of its own to the shop's online store, like a blog.
 - `customers` (`customersOf()`): `create` with the customer form's rules, `get`, `search`
 - `html.clean(html)`: the app's HTML cleaner (`sanitizeHtml`), for text a person typed
 - `uploads.drop(urls)`: pictures the extension stopped using. Each leaves storage when nothing else uses it (`UploadCleaner.dropUnused`). Only paths of the shop's own folder are looked at, `EXTENSION_DROP_MAX` per call.
-- `storefront.page(page)`: store page requests only. See Store pages above.
+- `storefront.page(page)` and `storefront.url`: store page requests only. See Store pages above.
 
 `handle` joins them with the API's functions under the same area names.
 

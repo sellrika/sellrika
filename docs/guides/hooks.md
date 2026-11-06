@@ -51,6 +51,7 @@ All of them are static fields of `Hooks` in `app/xcore/hooks/Hooks.ts`.
 | Hook | Type | What it does | Default |
 |---|---|---|---|
 | `frontPage` | `(req) => Promise<Response>` | The page at `/` of the app's own host | `null`: `/` goes to the sign-in |
+| `beforeRoute` | `(req) => Promise<Response \| null>` | Answers a request before the app's own route. `null` = the route answers. It runs on every request, so keep it cheap: check the host or path first. Its answer still gets the security headers, gzip and the language. | `null`: never runs |
 | `docsPage` | `(req) => Response` | The page at `/` of the docs host (`DEVELOPER_DOMAIN`) | `null`: no page |
 | `docs` | `{ api, extensions }` | Where the app's links to the developer docs lead | The app's own docs address |
 | `sitePaths` | `string[]` | The paths of your public pages, for the main host's sitemap | `[]` |

@@ -21,7 +21,10 @@ import { validate, type Errors } from "@validators/validate";
 import { ExtensionHandles } from "@controllers/support/Extension.Handles";
 import type { User } from "@models/User";
 import { StorefrontSupport } from "@controllers/support/Storefront.Support";
-import { StoreViewService } from "@services/sales/StoreView.Service";
+import {
+	StoreViewService,
+	type Storefront,
+} from "@services/sales/StoreView.Service";
 
 /**
  * Admin › Global Extensions.
@@ -256,6 +259,29 @@ export class ExtensionController {
 		const s = await this.site.find(req);
 		if (!s) return HttpResponse.notFoundText();
 		const { pathname } = new URL(req.url);
+		return this.servePage(req, s, pathname, `/${pathname.split("/")[1] ?? ""}`);
+	}
+
+	/**
+	 * Serve one store page of the extension that owns `pathname`.
+	 * `storePage` calls it for the store's own host.
+	 * An add-on may call it to serve the pages on a host of its own.
+	 * @param req The current request.
+	 * @param s The storefront of the shop.
+	 * @param pathname The path as the extension's routes see it.
+	 *   It starts with `/<storefront.path>`.
+	 * @param mount The public path on this host that maps to the
+	 *   extension's store root: `/<storefront.path>`, or "".
+	 * @returns The extension's page. 404 as plain text when no extension
+	 *   owns the path, the theme's not-found page when the extension
+	 *   has no such page.
+	 */
+	async servePage(
+		req: BunRequest,
+		s: Storefront,
+		pathname: string,
+		mount: string,
+	): Promise<Response> {
 		const key = await this.extensions.storeOwner(
 			s.shop,
 			pathname.split("/")[1] ?? "",
@@ -272,7 +298,10 @@ export class ExtensionController {
 				actor: () => this.#storeActor(shop),
 				handles: {
 					...this.handles.for(shop.id),
-					storefront: { page: (page) => this.#own(page) },
+					storefront: {
+						url: s.url + mount,
+						page: (page) => this.#own(page),
+					},
 				},
 				customer: customer && {
 					id: customer.id,

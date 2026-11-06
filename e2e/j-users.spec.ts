@@ -440,6 +440,8 @@ test("sales staff: added with a commission, picked at checkout, their page adds 
 		.getByRole("alertdialog")
 		.getByRole("button", { name: "Delete" })
 		.click();
+	// the open dialog hides the rows, so wait for the server's answer first
+	await expect(page.getByText(`Deleted “${SELLER}”`)).toBeVisible();
 	await expect(row(SELLER)).toHaveCount(0);
 	await page.goto(sold);
 	await expect(page.getByText(`sold by ${SELLER}`)).toHaveCount(0);

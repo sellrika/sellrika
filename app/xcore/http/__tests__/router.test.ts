@@ -166,3 +166,23 @@ test("a signed-in change from another host is refused, and text/plain is not rea
 	const plain = await send({ "content-type": "text/plain" });
 	expect(await plain.json()).toEqual({});
 });
+
+test("Hooks.beforeRoute answers first, with the security headers; null falls through to the route", async () => {
+	const { Hooks } = await import("@xcore/hooks/Hooks");
+	router.get("/hooked", () => new Response("route"));
+	const get = (router.routes["/hooked"] as any).GET;
+	try {
+		Hooks.beforeRoute = async function hook(req) {
+			return new URL(req.url).hostname === "addon.test"
+				? new Response("hook")
+				: null;
+		};
+		const hooked = await get(new Request("http://addon.test/hooked"));
+		expect(await hooked.text()).toBe("hook");
+		expect(hooked.headers.get("X-Content-Type-Options")).toBe("nosniff");
+		const plain = await get(new Request("http://x/hooked"));
+		expect(await plain.text()).toBe("route");
+	} finally {
+		Hooks.beforeRoute = null;
+	}
+});

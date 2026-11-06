@@ -25,6 +25,9 @@ const UploadRepository = Container.get(_UploadRepository);
 const { ExtensionHandles: _ExtensionHandles } = await import(
 	"@controllers/support/Extension.Handles"
 );
+const { StorefrontSupport: _StorefrontSupport } = await import(
+	"@controllers/support/Storefront.Support"
+);
 const { ExtensionManifest } = await import("@validators/Extension.Validator");
 const { apiDocs } = await import("@xcore/api/OpenApi");
 const { apiRoutes } = await import("@routes/api");
@@ -64,6 +67,7 @@ export const routes = {
 	"POST /note": async (ctx) => { await ctx.data.set("note", await ctx.req.json()); return { ok: true }; },
 };
 export const publicRoutes = {
+	"GET /notes/where": (ctx) => new Response(ctx.storefront.url),
 	"GET /notes": async (ctx) => {
 		const note = await ctx.data.get("note");
 		if (!note) return new Response("", { status: 404 });
@@ -225,4 +229,14 @@ test("a picture an extension's data names counts as used; html.clean cleans", as
 	// a path of another shop is never looked at
 	await handles.uploads.drop([`/uploads/${B}/extensions/z.webp`, url]);
 	expect(await UploadRepository.inUse(url)).toBe(true);
+});
+
+test("ctx.storefront.url is the store's address plus the mount", async () => {
+	const where = await visit("sf-one", "/notes/where");
+	expect(await where.text()).toBe("http://sf-one.localhost/notes");
+	// an add-on serves the same pages at the root of a host of its own
+	const req = new Request("http://sf-one.localhost/where") as any;
+	const s = (await Container.get(_StorefrontSupport).find(req))!;
+	const root = await ExtensionController.servePage(req, s, "/notes/where", "");
+	expect(await root.text()).toBe("http://sf-one.localhost");
 });
