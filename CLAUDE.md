@@ -220,6 +220,7 @@ Guides: `docs/guides/custom-domain.md`, `docs/guides/firebase-setup.md`, `docs/g
 - **An API key is shown once.** Only its SHA-256 is stored.
 - **`PlanLimitService` is the one place that may refuse a new record** for a limit. In this app it never refuses.
 - **Something country-specific is an extension**, not core. Add a general hook to the core first.
+- **A release bumps `package.json` › `version` first.** The user menu shows it. The release build stops when the tag (`v1.2.0`) and the version (`1.2.0`) differ.
 - **A changed screen needs its guide changed**: `resources/guide/<topic>.md`, or the extension's own `guide.md`.
 
 ## Add-ons

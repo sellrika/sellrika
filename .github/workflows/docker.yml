@@ -17,6 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The user menu shows the version in package.json.
+      # So a release tag v1.2.0 needs "version": "1.2.0" there first.
+      - name: Check the version in package.json
+        if: github.event_name == 'release'
+        run: |
+          WANT="${GITHUB_REF_NAME#v}"
+          HAVE=$(jq -r .version package.json)
+          if [ "$WANT" != "$HAVE" ]; then
+            echo "::error::The tag is $GITHUB_REF_NAME, but package.json says $HAVE. Bump package.json to $WANT first."
+            exit 1
+          fi
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:

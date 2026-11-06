@@ -335,6 +335,7 @@ ponytail: `fetch()` resolves the name again. A DNS server that answers different
 
 ### Other outgoing requests
 
+- **The release check** (`ReleaseService`, every 6 hours). It asks only the fixed address `RELEASE_LATEST_URL` on GitHub, so it uses a plain `fetch` with a 10 s timeout. Nothing about the shops is sent. `UPDATE_CHECK=0` turns it off.
 - **Extension install by URL** (`POST /admin/extensions` with `url`, platform admin only). The download goes through `Outbound.fetch()`. It is capped at `MAX_EXTENSION_ZIP_BYTES` (5 MB) and `EXTENSION_FETCH_TIMEOUT_MS` (15 s).
 - **Extension webhooks** go through `Outbound.send()`. Every listener and route gets it as `ctx.outbound`.
   - http or https.

@@ -697,6 +697,8 @@ export const th = {
 	"nav.logout": "ออกจากระบบ",
 	"nav.logout_desc": "การทำงาน · จบเซสชันนี้",
 	"nav.star_us": "กดดาวให้เราบน GitHub",
+	"nav.version": "เวอร์ชัน {version}",
+	"nav.update_available": "ใหม่: {version}",
 	"nav.manage_shops": "จัดการร้านค้า…",
 	"nav.more_pages": "หน้าอื่น ๆ",
 	"nav.new_product": "สินค้าใหม่",
