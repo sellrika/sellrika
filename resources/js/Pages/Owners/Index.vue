@@ -24,34 +24,55 @@ import {
 } from "@/components/ui/table";
 import Pager from "@/components/Pager.vue";
 import SignupSwitch from "@/components/SignupSwitch.vue";
+import SortButton from "@/components/SortButton.vue";
 import WithTooltip from "@/components/WithTooltip.vue";
 import { fmtDate } from "@/lib/format";
 import { t } from "@/lib/i18n";
+import { ariaSort, dirOf, nextSort, type Sort } from "@/lib/sort";
 import type { OwnerRow, Paged } from "@/types";
 
 defineOptions({ layout: AppLayout });
 /** The platform admin's list of shop owners (`/owners`, server-paged and searched). */
 const props = defineProps<{
 	owners: Paged<OwnerRow>;
-	filters: { q: string };
+	filters: { q: string; sort: Sort | null };
 	signup: boolean; // people may create their own account on /register
 }>();
 
 /** The settings dialog (the sign-up switch). */
 const settingsOpen = ref(false);
 
+// search and sort are server-side (?q=&sort=&dir=&page=)
 const search = ref(props.filters.q);
+const sort = ref<Sort | null>(props.filters.sort);
+
+/** Reload the list with the current search and sort. */
+function applyFilters() {
+	router.get(
+		"/owners",
+		{
+			q: search.value.trim() || undefined,
+			sort: sort.value?.by,
+			dir: sort.value?.dir,
+		},
+		{ preserveState: true, preserveScroll: true, replace: true },
+	);
+}
+
 let timer: ReturnType<typeof setTimeout> | undefined;
-watch(search, function find(q) {
+watch(search, function find() {
 	clearTimeout(timer);
-	timer = setTimeout(function visit() {
-		router.get(
-			"/owners",
-			{ q: q.trim() || undefined },
-			{ preserveState: true, replace: true },
-		);
-	}, 300);
+	timer = setTimeout(applyFilters, 300);
 });
+watch(sort, applyFilters);
+
+/**
+ * A click on a column title: sort by it, flip it, or back to the newest first.
+ * @param by The column.
+ */
+function sortBy(by: string) {
+	sort.value = nextSort(sort.value, by);
+}
 
 /**
  * The date as a short day, or a dash.
@@ -102,12 +123,12 @@ function moment(s: string | null) {
       <Table :aria-label="t('owners.title')">
         <TableHeader>
           <TableRow>
-            <TableHead>{{ t("owners.owner") }}</TableHead>
-            <TableHead class="text-right">{{ t("owners.shops") }}</TableHead>
-            <TableHead class="hidden text-right sm:table-cell">{{ t("owners.staff") }}</TableHead>
-            <TableHead class="hidden md:table-cell">{{ t("owners.last_active") }}</TableHead>
-            <TableHead class="hidden md:table-cell">{{ t("owners.last_order") }}</TableHead>
-            <TableHead class="hidden md:table-cell">{{ t("owners.joined") }}</TableHead>
+            <TableHead :aria-sort="ariaSort(sort, 'name')"><SortButton :label="t('owners.owner')" :dir="dirOf(sort, 'name')" @click="sortBy('name')" /></TableHead>
+            <TableHead class="text-right" :aria-sort="ariaSort(sort, 'shops')"><SortButton :label="t('owners.shops')" :dir="dirOf(sort, 'shops')" @click="sortBy('shops')" /></TableHead>
+            <TableHead class="hidden text-right sm:table-cell" :aria-sort="ariaSort(sort, 'staff')"><SortButton :label="t('owners.staff')" :dir="dirOf(sort, 'staff')" @click="sortBy('staff')" /></TableHead>
+            <TableHead class="hidden md:table-cell" :aria-sort="ariaSort(sort, 'last_active')"><SortButton :label="t('owners.last_active')" :dir="dirOf(sort, 'last_active')" @click="sortBy('last_active')" /></TableHead>
+            <TableHead class="hidden md:table-cell" :aria-sort="ariaSort(sort, 'last_order')"><SortButton :label="t('owners.last_order')" :dir="dirOf(sort, 'last_order')" @click="sortBy('last_order')" /></TableHead>
+            <TableHead class="hidden md:table-cell" :aria-sort="ariaSort(sort, 'joined')"><SortButton :label="t('owners.joined')" :dir="dirOf(sort, 'joined')" @click="sortBy('joined')" /></TableHead>
             <TableHead class="w-px" />
           </TableRow>
         </TableHeader>

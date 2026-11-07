@@ -43,6 +43,27 @@ test("the platform admin sees every shop owner and can search them", async () =>
 	await expect(me.getByRole("cell").nth(3)).not.toHaveText("—");
 	await expect(row.getByRole("cell").nth(3)).toHaveText("—");
 
+	// sort: a click on a column title sorts by it, the URL keeps it
+	const lastActive = table.getByRole("columnheader", { name: "Last active" });
+	await table.getByRole("button", { name: "Sort by Last active" }).click();
+	await admin.waitForURL(
+		(u) =>
+			u.searchParams.get("sort") === "last_active" &&
+			u.searchParams.get("dir") === "asc",
+	);
+	await expect(lastActive).toHaveAttribute("aria-sort", "ascending");
+	// never active goes last, both ways
+	await expect(table.getByRole("row").last()).toContainText(OWNER);
+	await table.getByRole("button", { name: "Sort by Last active" }).click();
+	await admin.waitForURL((u) => u.searchParams.get("dir") === "desc");
+	await expect(lastActive).toHaveAttribute("aria-sort", "descending");
+	await expect(table.getByRole("row").last()).toContainText(OWNER);
+	// the third click goes back to newest first
+	await table.getByRole("button", { name: "Sort by Last active" }).click();
+	await admin.waitForURL((u) => !u.searchParams.has("sort"));
+	await expect(lastActive).toHaveAttribute("aria-sort", "none");
+	await expect(table.getByRole("row").nth(1)).toContainText(OWNER);
+
 	await admin.getByLabel("Search by name or email").fill(OWNER);
 	await admin.waitForURL((u) => u.searchParams.get("q") === OWNER);
 	await expect(table.getByText("admin@sellrika.local")).toHaveCount(0);

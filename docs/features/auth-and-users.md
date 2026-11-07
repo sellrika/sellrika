@@ -425,7 +425,7 @@ The chain is `OwnerController` → `OwnerService` → `OwnerRepository`.
 
 | Route | Page | What it shows |
 |---|---|---|
-| `GET /owners?q=&page=` | `Owners/Index.vue` | Every owner (`owner_id` null, never the online-store system user), newest first. Search by name or email. Per owner: the number of shops and staff, the last order in any of their shops, when they were last active, and an **Invited** badge while the invitation is still open. |
+| `GET /owners?q=&sort=&dir=&page=` | `Owners/Index.vue` | Every owner (`owner_id` null, never the online-store system user), newest first. Search by name or email. Every column sorts (`OWNER_SORTS`): a click on its title goes low to high, high to low, then back to newest first. Empty values (never active, no order) always go last. Per owner: the number of shops and staff, the last order in any of their shops, when they were last active, and an **Invited** badge while the invitation is still open. |
 | `GET /owners/:id` | `Owners/Show.vue` | When they were last active. Their shops as cards (products, orders, sales in the shop's own currency, last order, online store on or off) and their staff. A staff member's id is a 404. |
 | `GET /owners/:id/shops/:shop?preset=` | `Owners/Shop.vue` | One shop. See below. A shop of another owner is a 404. |
 | `GET /owners/:id/shops/:shop/products?q=&page=` | `Owners/Products.vue` | Every product of that shop, read-only. Opened by **View all products** on the shop page. |

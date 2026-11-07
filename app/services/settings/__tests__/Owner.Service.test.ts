@@ -169,3 +169,44 @@ test("owners: last active is set on use, at most once per window", async () => {
 		"last_active_at",
 	);
 });
+
+test("owners: the list sorts by a column; empty values go last; no sort = newest first", async () => {
+	const one = await account("sort-one");
+	const two = await account("sort-two");
+	await ShopService.create({ ...form, name: `Shop sort-two b` }, two.owner.id);
+	await UserRepository.seen(one.owner.id, 0, new Date("2026-01-01T10:00:00Z"));
+	/**
+	 * The two test owners in the order the list gives them.
+	 * @param sort The sort to ask for.
+	 * @returns Their ids, in list order.
+	 */
+	async function ids(sort: Parameters<typeof OwnerService.list>[3]) {
+		const page = await OwnerService.list("sort-", 1, 50, sort);
+		const out: number[] = [];
+		for (const o of page.data)
+			if (o.id === one.owner.id || o.id === two.owner.id) out.push(o.id);
+		return out;
+	}
+	expect(await ids({ by: "shops", dir: "desc" })).toEqual([
+		two.owner.id,
+		one.owner.id,
+	]);
+	expect(await ids({ by: "shops", dir: "asc" })).toEqual([
+		one.owner.id,
+		two.owner.id,
+	]);
+	// never active: last both ways
+	expect(await ids({ by: "last_active", dir: "asc" })).toEqual([
+		one.owner.id,
+		two.owner.id,
+	]);
+	expect(await ids({ by: "last_active", dir: "desc" })).toEqual([
+		one.owner.id,
+		two.owner.id,
+	]);
+	expect(await ids({ by: "name", dir: "desc" })).toEqual([
+		two.owner.id,
+		one.owner.id,
+	]);
+	expect(await ids(null)).toEqual([two.owner.id, one.owner.id]);
+});
