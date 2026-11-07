@@ -685,6 +685,7 @@ Steps 2 to 4 are `ExtensionController.servePage(req, storefront, pathname, mount
 - `html.clean(html)`: the app's HTML cleaner (`sanitizeHtml`), for text a person typed
 - `uploads.save(picture)`: store one picture sent as text: a `data:image/…;base64,` URI, plain base64 or an https link, 5 MB at most. It goes to `/uploads/<shop id>/extensions/` through `Storage.storeImageFromData` / `storeImageFromUrl`. It answers `{ url }` or `{ error }`. For pictures from an AI tool or the API (the blogger's cover and body).
 - `uploads.drop(urls)`: pictures the extension stopped using. Each leaves storage when nothing else uses it (`UploadCleaner.dropUnused`). Only paths of the shop's own folder are looked at, `EXTENSION_DROP_MAX` per call.
+- `uploads.url(path)`: the full address of a picture on the app's own host (`Url.upload`). Never the shop's domain: the CDN in front of the app's host caches it for every store. For full picture links an extension builds itself (`og:image`, structured data, a feed).
 - `storefront.page(page)` and `storefront.url`: store page requests only. See Store pages above.
 
 `handle` joins them with the API's functions under the same area names.
