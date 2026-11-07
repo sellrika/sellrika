@@ -14,6 +14,8 @@ The **Products** page holds everything your shop sells. The **Categories** page 
 To put a picture inside the **Description**, click the picture button in its toolbar, or paste or drop a picture.
 Click the picture to change its width (drag a corner of the picture), to put it left, in the middle or right, to move it up or down, to describe it, to add a caption or to delete it.
 
+To show code (a script, a setup command), click the code button in the **Description** toolbar. Type or paste the code. Pick its language in the **Code** row under the toolbar, for example **Python** or **Bash**. The code gets colours.
+
 ## How to set the prices
 
 All three prices are in the **Pricing** box of the **General** tab.

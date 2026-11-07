@@ -352,6 +352,48 @@ test("the description editor stores rich text, and every product view renders it
 	await page.keyboard.press("Escape");
 });
 
+test("a code block gets the colours of the language picked for it", async () => {
+	await page.goto("/products");
+	await search(page, "Search products", P2);
+	await page.getByRole("link", { name: P2, exact: true }).click();
+	await page.waitForURL("**/edit");
+
+	const editor = page.getByRole("textbox", { name: "Description" });
+	await editor.click();
+	await page.getByRole("button", { name: "Insert code block" }).click();
+	await page.keyboard.type("def greet(name):");
+	// Enter is a new line inside the code, not a new paragraph
+	await page.keyboard.press("Enter");
+	await page.keyboard.type('    return "hi"');
+	const code = editor.locator("pre code");
+	await expect(code).toHaveText('def greet(name):\n    return "hi"\n');
+	await expect(code.locator("span[style]")).toHaveCount(0); // plain text: no colours
+
+	await page.getByLabel("Code language").selectOption("python");
+	await expect(code).toHaveClass("language-python");
+	await expect(code.locator("span", { hasText: "def" })).toHaveAttribute(
+		"style",
+		/color:/,
+	);
+	await submitProduct(page);
+
+	// the colours are inline, so they survive the sanitiser and a reload
+	await page.reload();
+	const saved = page
+		.getByRole("textbox", { name: "Description" })
+		.locator("pre code.language-python");
+	await expect(saved.locator("span", { hasText: "def" })).toHaveAttribute(
+		"style",
+		/color:/,
+	);
+	await saved.click();
+	await expect(page.getByLabel("Code language")).toHaveValue("python");
+	await page.getByRole("button", { name: "Delete code block" }).click();
+	await expect(
+		page.getByRole("textbox", { name: "Description" }).locator("pre"),
+	).toHaveCount(0);
+});
+
 test("search filters the product list", async () => {
 	await page.goto("/products");
 	await search(page, "Search products", P1);
