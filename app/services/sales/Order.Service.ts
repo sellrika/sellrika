@@ -14,7 +14,11 @@ import { SalesStaffRepository } from "@repositories/SalesStaff.Repository";
 import type { Order, OrderDetail, OrderFull, OrderItem } from "@models/Order";
 import { oneAtATime } from "@helpers/lock";
 import { formatMoney } from "@helpers/currency";
-import type { FulfillmentStep, PaymentStatus } from "@constants/Order.Constant";
+import type {
+	FulfillmentStep,
+	OrderSort,
+	PaymentStatus,
+} from "@constants/Order.Constant";
 import type { Shop } from "@models/Shop";
 import type { Key } from "@i18n";
 import type {
@@ -89,10 +93,17 @@ export class OrderService {
 	 * @param f Search text, payment method, status and customer filters.
 	 * @param page 1-based page number.
 	 * @param perPage Rows per page.
+	 * @param sort A column and direction, or null for newest first.
 	 * @returns A page of orders with their lines.
 	 */
-	page(shopId: number, f: OrderFilters, page: number, perPage: number) {
-		return this.orders.pageForShop(shopId, f, page, perPage);
+	page(
+		shopId: number,
+		f: OrderFilters,
+		page: number,
+		perPage: number,
+		sort: OrderSort | null = null,
+	) {
+		return this.orders.pageForShop(shopId, f, page, perPage, sort);
 	}
 
 	/**

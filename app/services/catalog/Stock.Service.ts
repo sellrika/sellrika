@@ -6,7 +6,7 @@ import { ExtensionService } from "@services/settings/extensions/Extension.Servic
 import { StockRepository } from "@repositories/Stock.Repository";
 import type { StockAdjustInput } from "@validators/Stock.Validator";
 import type { Errors } from "@validators/validate";
-import { ADJUST_REASON_LABEL } from "@constants/Stock.Constant";
+import { ADJUST_REASON_LABEL, type StockSort } from "@constants/Stock.Constant";
 
 /**
  * The /stock screen: read the ledger, and write to it by hand.
@@ -25,6 +25,7 @@ export class StockService {
 	 * @param q Matches product/variant name or barcode.
 	 * @param page 1-based page number.
 	 * @param perPage Rows per page.
+	 * @param sort A column and direction, or null = by product name.
 	 * @returns A page of stock units.
 	 */
 	page(
@@ -33,8 +34,9 @@ export class StockService {
 		q: string,
 		page: number,
 		perPage: number,
+		sort: StockSort | null = null,
 	) {
-		return this.stock.pageForShop(shopId, filter, q, page, perPage);
+		return this.stock.pageForShop(shopId, filter, q, page, perPage, sort);
 	}
 
 	/**

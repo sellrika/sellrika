@@ -11,6 +11,7 @@ import type {
 } from "@models/Campaign";
 import {
 	CAMPAIGN_QUEUE_BATCH,
+	type CampaignSort,
 	type CampaignStatus,
 } from "@constants/Marketing.Constant";
 import { isUnsubscribed } from "./Customer.Repository";
@@ -58,23 +59,50 @@ export class CampaignRepository {
 	constructor(private queue: EmailQueueRepository) {}
 
 	/**
-	 * One page of the shop's campaigns, newest first.
+	 * One page of the shop's campaigns, newest first unless `sort` says otherwise.
 	 * @param shopId The shop.
 	 * @param page 1-based page number.
 	 * @param perPage Rows per page.
+	 * @param sort A column and direction, or null.
 	 * @returns A page of campaigns.
 	 */
-	async page(shopId: number, page: number, perPage: number) {
+	async page(
+		shopId: number,
+		page: number,
+		perPage: number,
+		sort: CampaignSort | null = null,
+	) {
 		const [{ n }] =
 			await sql`select count(*) as n from campaigns where shop_id = ${shopId}`;
 		const rows: CampaignRow[] =
-			await sql`select * from campaigns where shop_id = ${shopId} order by id desc ${Paginate.limit(page, perPage)}`;
+			await sql`select * from campaigns where shop_id = ${shopId} order by ${this.#sortBy(sort)} id desc ${Paginate.limit(page, perPage)}`;
 		return Paginate.of<Campaign>(
 			rows.map((r) => this.#row(r)),
 			Number(n),
 			page,
 			perPage,
 		);
+	}
+
+	/**
+	 * The ORDER BY start for a sort of the campaign list.
+	 * Only fixed SQL from this list is used, never the request's text.
+	 * Empty values (no send time yet) always go last.
+	 * @param sort The column and direction, or none.
+	 * @returns A fragment ending in a comma, or an empty one.
+	 */
+	#sortBy(sort: CampaignSort | null) {
+		if (!sort) return sql``;
+		const value = {
+			subject: sql`lower(subject)`,
+			status: sql`status`,
+			// ponytail: `customer_ids` is JSON text ("[1,2,3]", no spaces),
+			// so the count is commas + 1; a real column if it ever gets slow
+			recipients: sql`case when customer_ids = '[]' then 0 else length(customer_ids) - length(replace(customer_ids, ',', '')) + 1 end`,
+			sent: sql`sent`,
+			date: sql`send_at`,
+		}[sort.by];
+		return Db.nullsLast(value, sort.dir);
 	}
 
 	/**

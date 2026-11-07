@@ -2,6 +2,7 @@ import { tmpdir } from "node:os"; // Bun has no equivalent
 import { afterAll, expect, test } from "bun:test";
 import { Container } from "@xcore/di";
 import type { MarketingCustomer } from "@models/Campaign";
+import type { CampaignSort } from "@constants/Marketing.Constant";
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`; // before any app import
 process.env.APP_KEY ??= "unit-test-key"; // the unsubscribe links are signed with it
 const { Db, sql } = await import("@xcore/database/Database");
@@ -545,4 +546,56 @@ test("campaign pictures travel inside the email by cid; one that can't be read i
 	const email = await new CampaignEmail("a@x.io", row, parts, "u").build();
 	expect(email.inline).toBe(parts.inline);
 	expect(email.html).toContain("cid:product-0@pos");
+});
+
+test("campaigns: the list sorts by subject and by the number of recipients", async () => {
+	const [own] = await Db.insert(
+		sql,
+		"shops",
+		sql`insert into shops (name, currency, timezone) values ('Sort Shop', 'USD', 'UTC')`,
+		sql`id`,
+	);
+	const shopId = Number(own.id);
+	/**
+	 * A campaign of the sort shop.
+	 * @param subject Its subject.
+	 * @param customer_ids Who it goes to.
+	 */
+	async function make(subject: string, customer_ids: number[]) {
+		await Campaigns.create(
+			shopId,
+			{ subject, body: "", product_ids: [], customer_ids },
+			1,
+		);
+	}
+	await make("Bravo", [1, 2, 3]);
+	await make("alpha", []);
+	await make("Charlie", [7]);
+	/**
+	 * The subjects in list order.
+	 * @param sort The sort.
+	 * @returns The subjects.
+	 */
+	async function subjects(sort: CampaignSort | null) {
+		const out: string[] = [];
+		for (const c of (await Campaigns.page(shopId, 1, 10, sort)).data)
+			out.push(c.subject);
+		return out;
+	}
+	expect(await subjects(null)).toEqual(["Charlie", "alpha", "Bravo"]);
+	expect(await subjects({ by: "subject", dir: "asc" })).toEqual([
+		"alpha",
+		"Bravo",
+		"Charlie",
+	]);
+	expect(await subjects({ by: "recipients", dir: "desc" })).toEqual([
+		"Bravo",
+		"Charlie",
+		"alpha",
+	]);
+	expect(await subjects({ by: "recipients", dir: "asc" })).toEqual([
+		"alpha",
+		"Charlie",
+		"Bravo",
+	]);
 });

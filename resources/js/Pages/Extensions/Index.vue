@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { Head } from "@inertiajs/vue3";
 import { Puzzle, Settings } from "@lucide/vue";
 import AppLayout from "@/layouts/AppLayout.vue";
@@ -22,10 +22,46 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { t } from "@/lib/i18n";
+import SortButton from "@/components/SortButton.vue";
+import {
+	ariaSort,
+	dirOf,
+	nextSort,
+	sortRows,
+	type Sort,
+	type SortValue,
+} from "@/lib/sort";
 import type { ExtensionRow } from "@/types";
 
 defineOptions({ layout: AppLayout });
-defineProps<{ extensions: ExtensionRow[] }>();
+const props = defineProps<{ extensions: ExtensionRow[] }>();
+
+// the list is whole, so it sorts here, not on the server
+const sort = ref<Sort | null>(null);
+
+/**
+ * The value an extension row is sorted by.
+ * @param e The extension.
+ * @param by The column.
+ * @returns The value; the status sorts ready, then needs setup, then a problem.
+ */
+function extensionValue(e: ExtensionRow, by: string): SortValue {
+	if (by === "status") return e.problem ? 2 : e.ready ? 0 : 1;
+	if (by === "enabled") return e.enabled;
+	return e.name;
+}
+
+const shown = computed(function sorted() {
+	return sortRows(props.extensions, sort.value, extensionValue);
+});
+
+/**
+ * A click on a column title: sort by it, flip it, or back.
+ * @param by The column.
+ */
+function sortBy(by: string) {
+	sort.value = nextSort(sort.value, by);
+}
 
 /** The extension whose Configure dialog is open (null = closed). */
 const open = ref<string | null>(null);
@@ -63,9 +99,9 @@ function adds(e: ExtensionRow) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead class="pl-6">{{ t("extensions.extension") }}</TableHead>
-              <TableHead class="text-center">{{ t("common.status") }}</TableHead>
-              <TableHead class="w-24 text-center">{{ t("extensions.enabled") }}</TableHead>
+              <TableHead class="pl-6" :aria-sort="ariaSort(sort, 'name')"><SortButton :label="t('extensions.extension')" :dir="dirOf(sort, 'name')" @click="sortBy('name')" /></TableHead>
+              <TableHead class="text-center" :aria-sort="ariaSort(sort, 'status')"><SortButton :label="t('common.status')" :dir="dirOf(sort, 'status')" @click="sortBy('status')" /></TableHead>
+              <TableHead class="w-24 text-center" :aria-sort="ariaSort(sort, 'enabled')"><SortButton :label="t('extensions.enabled')" :dir="dirOf(sort, 'enabled')" @click="sortBy('enabled')" /></TableHead>
               <TableHead class="w-44 pr-6 text-right">{{ t("common.actions") }}</TableHead>
             </TableRow>
           </TableHeader>
@@ -73,7 +109,7 @@ function adds(e: ExtensionRow) {
             <TableRow v-if="!extensions.length">
               <TableCell colspan="4" class="py-8 text-center text-muted-foreground">{{ t("extensions.empty") }}</TableCell>
             </TableRow>
-            <TableRow v-for="e in extensions" :key="e.key">
+            <TableRow v-for="e in shown" :key="e.key">
               <TableCell class="pl-6 align-top">
                 <p class="flex flex-wrap items-center gap-2 font-medium">
                   <img v-if="e.icon" :src="e.icon" alt="" class="size-6 rounded-md object-contain" />

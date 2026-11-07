@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { Head, router, useForm } from "@inertiajs/vue3";
 import { toast } from "vue-sonner";
 import {
@@ -44,14 +44,51 @@ import {
 } from "@/components/ui/dropdown-menu";
 import ChipPicker from "@/components/ChipPicker.vue";
 import { t } from "@/lib/i18n";
+import SortButton from "@/components/SortButton.vue";
+import {
+	ariaSort,
+	dirOf,
+	nextSort,
+	sortRows,
+	type Sort,
+	type SortValue,
+} from "@/lib/sort";
 import type { PlatformExtensionRow } from "@/types";
 
 defineOptions({ layout: AppLayout });
-defineProps<{
+const props = defineProps<{
 	extensions: PlatformExtensionRow[];
 	/** The guide for extension authors. */
 	guide_url: string;
 }>();
+
+// the list is whole, so it sorts here, not on the server
+const sort = ref<Sort | null>(null);
+
+/**
+ * The value an extension row is sorted by.
+ * @param e The extension.
+ * @param by The column.
+ * @returns The value; "every user" counts as the most users.
+ */
+function extensionValue(e: PlatformExtensionRow, by: string): SortValue {
+	if (by === "enabled") return e.enabled;
+	if (by === "users")
+		return e.users.length ? e.users.length : Number.MAX_SAFE_INTEGER;
+	return e.name;
+}
+
+const shown = computed(function sorted() {
+	return sortRows(props.extensions, sort.value, extensionValue);
+});
+
+/**
+ * A click on a column title: sort by it, flip it, or back.
+ * @param by The column.
+ */
+function sortBy(by: string) {
+	sort.value = nextSort(sort.value, by);
+}
 
 /** Where every form of this page goes. */
 const BASE = "/admin/extensions";
@@ -256,9 +293,9 @@ function remove(e: PlatformExtensionRow) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead class="pl-6">{{ t("extensions.extension") }}</TableHead>
-              <TableHead class="w-40 text-center">{{ t("global_extensions.enabled_all") }}</TableHead>
-              <TableHead class="w-48">{{ t("global_extensions.available_to") }}</TableHead>
+              <TableHead class="pl-6" :aria-sort="ariaSort(sort, 'name')"><SortButton :label="t('extensions.extension')" :dir="dirOf(sort, 'name')" @click="sortBy('name')" /></TableHead>
+              <TableHead class="w-40 text-center" :aria-sort="ariaSort(sort, 'enabled')"><SortButton :label="t('global_extensions.enabled_all')" :dir="dirOf(sort, 'enabled')" @click="sortBy('enabled')" /></TableHead>
+              <TableHead class="w-48" :aria-sort="ariaSort(sort, 'users')"><SortButton :label="t('global_extensions.available_to')" :dir="dirOf(sort, 'users')" @click="sortBy('users')" /></TableHead>
               <TableHead class="w-32 pr-6 text-right">{{ t("common.actions") }}</TableHead>
             </TableRow>
           </TableHeader>
@@ -266,7 +303,7 @@ function remove(e: PlatformExtensionRow) {
             <TableRow v-if="!extensions.length">
               <TableCell colspan="4" class="py-8 text-center text-muted-foreground">{{ t("global_extensions.empty") }}</TableCell>
             </TableRow>
-            <TableRow v-for="e in extensions" :key="e.key">
+            <TableRow v-for="e in shown" :key="e.key">
               <TableCell class="pl-6 align-top">
                 <p class="flex flex-wrap items-center gap-2 font-medium">
                   <img v-if="e.icon" :src="e.icon" alt="" class="size-6 rounded-md object-contain" />

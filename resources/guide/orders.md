@@ -18,6 +18,12 @@ At the top you see three numbers: **Today's revenue**, **Today's orders** and **
 
 **Unpaid** shows every order that is not paid in full, also the partly paid ones. **Refunded** shows fully and partly refunded orders. If nothing matches, click **Clear filters**.
 
+## How to sort the list
+
+1. Click a column title: **Order**, **Items**, **Customer**, **Payment**, **Status** or **Date**.
+2. Click the same title again to sort the other way.
+3. Click it a third time to go back to the normal order, newest first.
+
 ## How to read the order page
 
 - The title is the order code, for example "Order # P8J4-MJSQ-4Z8T". Your customer sees the same code.

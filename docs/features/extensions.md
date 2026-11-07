@@ -72,6 +72,8 @@ An extension can be **for some users only** (`platform_extensions.users`, migrat
 
 `/admin/extensions`. Platform admin only (`Guard.platform` route group).
 
+The columns sort in the browser (`sortRows()` in `resources/js/lib/sort.ts`). **Available to** counts the users. Every user counts as the most.
+
 Every extension shows with:
 
 - its name, version, icon and description
@@ -96,6 +98,7 @@ The **Available to** dialog:
 - It lists only the globally enabled extensions.
 - Each has the shop's **Enable** switch and **Configure** (the settings dialog).
 - There is no upload and no delete here.
+- The columns sort in the browser (`sortRows()`), like Global Extensions. The status sorts Ready, Needs setup, then a problem.
 
 ## Where the code is
 

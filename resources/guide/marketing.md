@@ -73,6 +73,12 @@ The time must be in the future.
 
 The statuses are **Draft**, **Scheduled**, **Sending** and **Sent**.
 
+## How to sort the list
+
+1. Click a column title: **Subject**, **Status**, **Recipients**, **Sent / failed** or **Date**.
+2. Click the same title again to sort the other way.
+3. Click it a third time to go back to the normal order, newest first.
+
 ## How to delete a campaign
 
 1. Open the campaign.

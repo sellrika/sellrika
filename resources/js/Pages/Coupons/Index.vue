@@ -4,7 +4,6 @@ import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import { watchDebounced } from "@vueuse/core";
 import { toast } from "vue-sonner";
 import {
-	ArrowDown,
 	Copy,
 	Hash,
 	History,
@@ -61,6 +60,8 @@ import {
 import CategoryPicker from "@/components/products/CategoryPicker.vue";
 import Pager from "@/components/Pager.vue";
 import WithTooltip from "@/components/WithTooltip.vue";
+import SortButton from "@/components/SortButton.vue";
+import { ariaSort, dirOf, nextSort, type Sort } from "@/lib/sort";
 import { useFitPage } from "@/lib/fitPage";
 import { couponLabel } from "@/lib/coupons";
 import {
@@ -86,7 +87,7 @@ defineOptions({ layout: AppLayout });
 const props = defineProps<{
 	coupons: Paged<CouponWithStats>;
 	summary: CouponSummary;
-	filters: { q: string; sort: "" | "used" };
+	filters: { q: string; sort: Sort | null };
 	products: { id: number; name: string }[];
 	categories: Category[];
 }>();
@@ -118,18 +119,18 @@ const stats = computed(() => {
 	];
 });
 
-// Search (?q=) over code / description and the sort (?sort=used) are server-side
+// Search (?q=) over code / description and the sort (?sort=&dir=) are server-side
 const search = ref(props.filters.q);
 
 /**
  * Reload the list with these filters, back on page 1.
  * @param q Search text.
- * @param sort "used" = most used first, "" = newest first.
+ * @param sort The column and direction, or null = newest first.
  */
-function reload(q: string, sort: string) {
+function reload(q: string, sort: Sort | null) {
 	router.get(
 		"/coupons",
-		{ q: q.trim() || undefined, sort: sort || undefined },
+		{ q: q.trim() || undefined, sort: sort?.by, dir: sort?.dir },
 		{ preserveState: true, preserveScroll: true, replace: true },
 	);
 }
@@ -143,9 +144,12 @@ function onSearch(q: string) {
 }
 watchDebounced(search, onSearch, { debounce: 300 });
 
-/** The Used header: switch between most used first and newest first. */
-function toggleSort() {
-	reload(search.value, props.filters.sort === "used" ? "" : "used");
+/**
+ * A click on a column title: sort by it, flip it, or back to the newest first.
+ * @param by The column.
+ */
+function sortBy(by: string) {
+	reload(search.value, nextSort(props.filters.sort, by));
 }
 useFitPage(
 	"coupons",
@@ -154,7 +158,8 @@ useFitPage(
 	() => props.coupons.per_page,
 	() => ({
 		q: props.filters.q || undefined,
-		sort: props.filters.sort || undefined,
+		sort: props.filters.sort?.by,
+		dir: props.filters.sort?.dir,
 	}),
 );
 
@@ -431,14 +436,12 @@ watch(open, (v) => !v && (productQuery.value = ""));
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead class="pl-4">{{ t("coupons.code") }}</TableHead>
-            <TableHead>{{ t("coupons.discount") }}</TableHead>
-            <TableHead class="hidden lg:table-cell">{{ t("coupons.conditions") }}</TableHead>
-            <TableHead class="hidden md:table-cell">{{ t("coupons.valid") }}</TableHead>
-            <TableHead class="hidden w-28 text-right sm:table-cell" :aria-sort="filters.sort === 'used' ? 'descending' : 'none'">
-              <WithTooltip :label="t('coupons.sort_used')"><Button variant="ghost" size="sm" class="-mr-2" @click="toggleSort">{{ t("coupons.used") }}<ArrowDown :class="filters.sort === 'used' ? '' : 'opacity-30'" /></Button></WithTooltip>
-            </TableHead>
-            <TableHead class="w-24">{{ t("common.status") }}</TableHead>
+            <TableHead class="pl-4" :aria-sort="ariaSort(filters.sort, 'code')"><SortButton :label="t('coupons.code')" :dir="dirOf(filters.sort, 'code')" @click="sortBy('code')" /></TableHead>
+            <TableHead :aria-sort="ariaSort(filters.sort, 'discount')"><SortButton :label="t('coupons.discount')" :dir="dirOf(filters.sort, 'discount')" @click="sortBy('discount')" /></TableHead>
+            <TableHead class="hidden lg:table-cell" :aria-sort="ariaSort(filters.sort, 'conditions')"><SortButton :label="t('coupons.conditions')" :dir="dirOf(filters.sort, 'conditions')" @click="sortBy('conditions')" /></TableHead>
+            <TableHead class="hidden md:table-cell" :aria-sort="ariaSort(filters.sort, 'valid')"><SortButton :label="t('coupons.valid')" :dir="dirOf(filters.sort, 'valid')" @click="sortBy('valid')" /></TableHead>
+            <TableHead class="hidden w-28 text-right sm:table-cell" :aria-sort="ariaSort(filters.sort, 'used')"><SortButton :label="t('coupons.used')" :dir="dirOf(filters.sort, 'used')" @click="sortBy('used')" /></TableHead>
+            <TableHead class="w-24" :aria-sort="ariaSort(filters.sort, 'status')"><SortButton :label="t('common.status')" :dir="dirOf(filters.sort, 'status')" @click="sortBy('status')" /></TableHead>
             <TableHead class="w-12 pr-4" />
           </TableRow>
         </TableHeader>

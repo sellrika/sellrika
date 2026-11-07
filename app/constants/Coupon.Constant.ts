@@ -2,6 +2,7 @@
  * Coupons / discount codes at the online checkout.
  * See docs/features/coupons.md.
  */
+import type { ListSort } from "@xcore/http/Paginate";
 
 /**
  * What a code takes off.
@@ -33,8 +34,18 @@ export const COUPON_CODE_MAX = 30;
  */
 export const COUPON_HOLD_MS = 60 * 60_000;
 
+/** The columns the /coupons list can be sorted by (`?sort=&dir=`). */
+export const COUPON_SORTS = [
+	"code",
+	"discount",
+	"conditions",
+	"valid",
+	"used",
+	"status",
+] as const;
+
 /**
- * How the /coupons list is sorted.
- * "" = newest first, "used" = most used first.
+ * A sort of the /coupons list: the column and the direction.
+ * null = newest first.
  */
-export type CouponSort = "" | "used";
+export type CouponSort = ListSort<(typeof COUPON_SORTS)[number]> | null;

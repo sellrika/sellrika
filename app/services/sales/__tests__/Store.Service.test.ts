@@ -2122,12 +2122,12 @@ test("coupons: applied at the checkout, frozen on the snapshot, written on the o
 		order.total,
 		order.coupon_code,
 	]).toEqual([4000, "percent", 10, 400, 300, 3900, "TEN"]);
-	expect((await CouponService.page(C, "TEN", "", 1, 10)).data[0]).toMatchObject(
-		{
-			used_count: 1,
-			saved_total: 400,
-		},
-	);
+	expect(
+		(await CouponService.page(C, "TEN", null, 1, 10)).data[0],
+	).toMatchObject({
+		used_count: 1,
+		saved_total: 400,
+	});
 	// …and the same buyer can't use it again (per-customer limit), while a free-delivery code zeroes the fee
 	expect(
 		(
@@ -2157,7 +2157,7 @@ test("coupons: applied at the checkout, frozen on the snapshot, written on the o
 		order2.coupon_code,
 	]).toEqual([null, 0, 0, 4000, "SHIP"]);
 	expect(
-		(await CouponService.page(C, "SHIP", "", 1, 10)).data[0],
+		(await CouponService.page(C, "SHIP", null, 1, 10)).data[0],
 	).toMatchObject({
 		used_count: 1,
 		saved_total: 300,
@@ -2186,11 +2186,11 @@ test("coupons: applied at the checkout, frozen on the snapshot, written on the o
 			reason: "test",
 		} as any),
 	).toBeNull();
-	expect((await CouponService.page(C, "TEN", "", 1, 10)).data[0]).toMatchObject(
-		{
-			used_count: 0,
-		},
-	);
+	expect(
+		(await CouponService.page(C, "TEN", null, 1, 10)).data[0],
+	).toMatchObject({
+		used_count: 0,
+	});
 });
 
 test("tax: an added-on-top tax is a gateway line and lands on the order; an included one changes nothing but the order's tax fields", async () => {

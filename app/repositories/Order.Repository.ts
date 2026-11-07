@@ -19,6 +19,7 @@ import type {
 } from "@models/Order";
 import type {
 	FulfillmentStatus,
+	OrderSort,
 	PaymentStatus,
 } from "@constants/Order.Constant";
 import type { LineComponent } from "./Product.Repository";
@@ -358,7 +359,7 @@ export class OrderRepository {
 	}
 
 	/**
-	 * One page of orders, newest first.
+	 * One page of orders, newest first unless `sort` says otherwise.
 	 * @param shopId Owning shop.
 	 * @param f Filters.
 	 *   Payment method name ("all" = any).
@@ -373,6 +374,7 @@ export class OrderRepository {
 	 *   or an item-name / customer-name substring.
 	 * @param page 1-based page number.
 	 * @param perPage Rows per page.
+	 * @param sort A column and direction, or null.
 	 * @returns A page of orders with their lines.
 	 */
 	async pageForShop(
@@ -380,18 +382,41 @@ export class OrderRepository {
 		f: OrderFilters,
 		page: number,
 		perPage: number,
+		sort: OrderSort | null = null,
 	) {
 		const where = this.#where(shopId, f);
 		const [{ n }] = await sql`select count(*) as n from orders o ${where}`;
 		const orders: OrderRow[] =
 			await sql`select o.*, u.name as cashier, ${salesStaffOf}, ${customerOf} from orders o left join users u on u.id = o.user_id ${where}
-      order by o.id desc ${Paginate.limit(page, perPage)}`;
+      order by ${this.#sortBy(sort)} o.id desc ${Paginate.limit(page, perPage)}`;
 		return Paginate.of<OrderFull>(
 			await this.#withItems(orders.map((x) => this.#shape(x))),
 			Number(n),
 			page,
 			perPage,
 		);
+	}
+
+	/**
+	 * The ORDER BY start for a sort of the Orders list.
+	 * Only fixed SQL from this list is used, never the request's text.
+	 * Postgres takes no column alias inside an expression,
+	 * so the customer and the item count are subqueries here.
+	 * Empty values (no customer) always go last.
+	 * @param sort The column and direction, or none.
+	 * @returns A fragment ending in a comma, or an empty one.
+	 */
+	#sortBy(sort: OrderSort | null) {
+		if (!sort) return sql``;
+		const value = {
+			order: sql`o.id`,
+			items: sql`(select coalesce(sum(i.qty), 0) from order_items i where i.order_id = o.id)`,
+			customer: sql`(select lower(c.name) from customers c where c.id = o.customer_id)`,
+			payment: sql`o.total`,
+			status: sql`o.status`,
+			date: sql`o.created_at`,
+		}[sort.by];
+		return Db.nullsLast(value, sort.dir);
 	}
 
 	/**

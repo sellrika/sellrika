@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import { watchDebounced } from "@vueuse/core";
 import { toast } from "vue-sonner";
@@ -20,6 +20,8 @@ import AppLayout from "@/layouts/AppLayout.vue";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import StatCard from "@/components/StatCard.vue";
+import SortButton from "@/components/SortButton.vue";
+import { ariaSort, dirOf, nextSort, type Sort } from "@/lib/sort";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,18 +68,21 @@ defineOptions({ layout: AppLayout });
 const props = defineProps<{
 	items: Paged<StockItem>;
 	summary: { tracked: number; low: number; out: number };
-	filters: { q: string; filter: "all" | "low" | "out" };
+	filters: { q: string; filter: "all" | "low" | "out"; sort: Sort | null };
 }>();
 
-// Filters (server-side: ?filter=&q=&page=) ------------------------------------
+// Filters (server-side: ?filter=&q=&sort=&dir=&page=) ------------------------
 const search = ref(props.filters.q);
 const filter = ref<"all" | "low" | "out">(props.filters.filter);
+const sort = ref<Sort | null>(props.filters.sort);
 const filtering = computed(
 	() => !!props.filters.q || props.filters.filter !== "all",
 );
 const params = () => ({
 	filter: filter.value === "all" ? undefined : filter.value,
 	q: search.value.trim() || undefined,
+	sort: sort.value?.by,
+	dir: sort.value?.dir,
 });
 const apply = () =>
 	router.get("/stock", params(), {
@@ -86,6 +91,15 @@ const apply = () =>
 		replace: true,
 	});
 watchDebounced(search, apply, { debounce: 300 });
+watch(sort, apply);
+
+/**
+ * A click on a column title: sort by it, flip it, or back to the normal order.
+ * @param by The column.
+ */
+function sortBy(by: string) {
+	sort.value = nextSort(sort.value, by);
+}
 const setFilter = (v: "all" | "low" | "out") => {
 	filter.value = v;
 	apply();
@@ -93,7 +107,8 @@ const setFilter = (v: "all" | "low" | "out") => {
 const clearFilters = () => {
 	search.value = "";
 	filter.value = "all";
-	router.get("/stock", {}, { preserveState: true, replace: true });
+	// the sort stays: it is not a filter
+	router.get("/stock", params(), { preserveState: true, replace: true });
 };
 // page size follows the screen height (header + stats + tabs + table head + pager ≈ 420px around the rows)
 useFitPage("stock", "/stock", 420, () => props.items.per_page, params);
@@ -251,9 +266,9 @@ function startHistory(i: StockItem) {
         <TableHeader>
           <TableRow>
             <TableHead class="w-14"><span class="sr-only">{{ t("stock.image") }}</span></TableHead>
-            <TableHead>{{ t("stock.item") }}</TableHead>
-            <TableHead class="w-28 text-right">{{ t("stock.in_stock") }}</TableHead>
-            <TableHead class="hidden w-24 text-right sm:table-cell">{{ t("stock.alert_at") }}</TableHead>
+            <TableHead :aria-sort="ariaSort(sort, 'item')"><SortButton :label="t('stock.item')" :dir="dirOf(sort, 'item')" @click="sortBy('item')" /></TableHead>
+            <TableHead class="w-28 text-right" :aria-sort="ariaSort(sort, 'in_stock')"><SortButton :label="t('stock.in_stock')" :dir="dirOf(sort, 'in_stock')" @click="sortBy('in_stock')" /></TableHead>
+            <TableHead class="hidden w-24 text-right sm:table-cell" :aria-sort="ariaSort(sort, 'alert_at')"><SortButton :label="t('stock.alert_at')" :dir="dirOf(sort, 'alert_at')" @click="sortBy('alert_at')" /></TableHead>
             <TableHead class="w-56 text-right"><span class="sr-only">{{ t("common.actions") }}</span></TableHead>
           </TableRow>
         </TableHeader>

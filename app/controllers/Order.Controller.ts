@@ -20,6 +20,7 @@ import {
 import { validate, type Errors } from "@validators/validate";
 import type { OrderFilters } from "@repositories/Order.Repository";
 import {
+	ORDER_SORTS,
 	ORDER_SOURCE_FILTERS,
 	ORDER_STATUS_FILTERS,
 } from "@constants/Order.Constant";
@@ -39,6 +40,7 @@ export class OrderController {
 
 	/**
 	 * GET /orders — the order list with its headline stats.
+	 * `?sort=` = one of ORDER_SORTS, `dir` = asc | desc.
 	 * The filters are in the query string: `q`, `method`, `cashier`,
 	 * `sales`, `status`, `source`, `fulfillment`, `customer`, `page`.
 	 * @param req The current request.
@@ -67,9 +69,10 @@ export class OrderController {
 				: "all",
 		};
 		const { page, perPage } = Paginate.params(req, "orders");
+		const sort = Paginate.sort(req, ORDER_SORTS);
 		return inertia(req, "Orders/Index", {
 			// functions: Inertia runs them side by side
-			orders: () => this.orders.page(shop.id, filters, page, perPage),
+			orders: () => this.orders.page(shop.id, filters, page, perPage, sort),
 			stats: () => this.orders.stats(shop.id, shop.timezone),
 			payment_methods: () => this.methods.list(shop.id),
 			order_methods: () => this.orders.methodNames(shop.id),
@@ -84,6 +87,7 @@ export class OrderController {
 				customer: filters.customerId,
 				source: filters.source,
 				fulfillment: filters.fulfillment,
+				sort,
 			},
 		});
 	}

@@ -219,7 +219,6 @@ export const th = {
 	"coupons.search_placeholder": "ค้นหาโค้ดหรือคำอธิบาย",
 	"coupons.show_title": "{code} · คูปอง",
 	"coupons.some_products": "สินค้าหรือหมวดหมู่ที่เลือก",
-	"coupons.sort_used": "ใช้มากที่สุดก่อน",
 	"coupons.starts_on": "เริ่มวันที่",
 	"coupons.status_active": "ใช้งาน",
 	"coupons.status_expired": "หมดอายุ",

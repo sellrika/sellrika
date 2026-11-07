@@ -25,6 +25,7 @@ import { workers } from "@helpers/workers";
 import {
 	CAMPAIGN_MAX_RECIPIENTS,
 	CAMPAIGN_PICKER_PER_PAGE,
+	type CampaignSort,
 } from "@constants/Marketing.Constant";
 import { MARKETING_SHOP_BUDGET_MS } from "@constants/Marketing.Constant";
 import { EMAIL_WORKERS } from "@constants/Mail.Constant";
@@ -50,10 +51,16 @@ export class CampaignService {
 	 * @param shopId The shop.
 	 * @param page 1-based page number.
 	 * @param perPage Rows per page.
+	 * @param sort A column and direction, or null for newest first.
 	 * @returns A page of campaigns.
 	 */
-	page(shopId: number, page: number, perPage: number) {
-		return this.campaigns.page(shopId, page, perPage);
+	page(
+		shopId: number,
+		page: number,
+		perPage: number,
+		sort: CampaignSort | null = null,
+	) {
+		return this.campaigns.page(shopId, page, perPage, sort);
 	}
 
 	/**
