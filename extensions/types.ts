@@ -846,6 +846,18 @@ export type RouteContext = {
 		 * @param urls The `/uploads/…` paths.
 		 */
 		drop: (urls: string[]) => Promise<void>;
+		/**
+		 * The full address to load one of the app's pictures from.
+		 * It is always the app's own host, never the shop's domain:
+		 * a CDN in front of the app's host then caches it for every store.
+		 * Use it for every full picture link you build: `og:image`,
+		 * structured data, a feed. An `<img src="/uploads/…">` in your
+		 * store page is moved to the app's host for you.
+		 * @param path A `/uploads/…` path.
+		 * @returns The full address. The path as it is when it is not an
+		 *   upload, or when the app has no address of its own (APP_URL).
+		 */
+		url: (path: string) => string;
 	};
 	/**
 	 * Store pages only: a request for a page below your manifest's

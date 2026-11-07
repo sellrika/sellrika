@@ -15,13 +15,14 @@ import { UploadCleaner } from "@services/Upload.Service";
 import { sanitizeHtml } from "@helpers/html";
 import { EXTENSION_DROP_MAX } from "@constants/Extension.Constant";
 import { Storage } from "@xcore/storage/Storage";
+import { Url } from "@xcore/http/Url";
 
 /**
  * The few functions an extension gets that are not API routes.
  * They join the API's own functions under the same area names
  * (`ExtensionService.handle`): `products.idBySku`, `orders.openFor`,
- * `orders.payOptions`, `customers`, `html.clean`, `uploads.save` and
- * `uploads.drop`.
+ * `orders.payOptions`, `customers`, `html.clean`, `uploads.save`,
+ * `uploads.drop` and `uploads.url`.
  * Everything else an extension can do is an API route
  * (`ApiCall.functions`), never written here.
  */
@@ -60,6 +61,7 @@ export class ExtensionHandles {
 			uploads: {
 				save: (picture) => this.#save(shopId, picture),
 				drop: (urls) => this.#drop(shopId, urls),
+				url: (path) => Url.upload(String(path ?? "")),
 			},
 		};
 	}

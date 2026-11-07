@@ -1,5 +1,6 @@
 import { tmpdir } from "node:os"; // Bun has no equivalent
 import { expect, test } from "bun:test";
+import { Url } from "@xcore/http/Url";
 
 // a temp upload folder, never the real one
 process.env.UPLOAD_DIR ??= `${tmpdir()}/pos-handles-test-${process.pid}-uploads`;
@@ -30,4 +31,15 @@ test("uploads.save refuses text that is no picture", async () => {
 		"error",
 	);
 	expect(await handles.uploads.save(42 as never)).toHaveProperty("error");
+});
+
+test("uploads.url gives a picture's address on the app's own host", () => {
+	const url = handles.uploads.url("/uploads/7/extensions/a.webp");
+	// APP_URL set: the app's host in front; not set: the path as it is
+	expect(url.endsWith("/uploads/7/extensions/a.webp")).toBe(true);
+	expect(url).toBe(Url.upload("/uploads/7/extensions/a.webp"));
+	// a link that is no upload stays as it is
+	expect(handles.uploads.url("https://cdn.test/a.png")).toBe(
+		"https://cdn.test/a.png",
+	);
 });
