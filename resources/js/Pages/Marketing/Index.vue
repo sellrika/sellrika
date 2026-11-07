@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { toast } from "vue-sonner";
 import {
@@ -59,24 +59,26 @@ const props = defineProps<{
 	filters: { sort: Sort | null };
 }>();
 
-const sort = ref<Sort | null>(props.filters.sort);
-
-/** Reload the campaign list with the current sort, back on page 1. */
-function applySort() {
-	router.get(
-		"/marketing",
-		{ sort: sort.value?.by, dir: sort.value?.dir },
-		{ preserveState: true, preserveScroll: true, replace: true },
-	);
-}
-watch(sort, applySort);
+/**
+ * The sort of the list, as the server sent it.
+ * Not a local copy: a save of the settings comes back newest first.
+ */
+const sort = computed(function currentSort() {
+	return props.filters.sort;
+});
 
 /**
  * A click on a column title: sort by it, flip it, or back to the newest first.
+ * Reloads the list back on page 1.
  * @param by The column.
  */
 function sortBy(by: string) {
-	sort.value = nextSort(sort.value, by);
+	const next = nextSort(sort.value, by);
+	router.get(
+		"/marketing",
+		{ sort: next?.by, dir: next?.dir },
+		{ preserveState: true, preserveScroll: true, replace: true },
+	);
 }
 
 const page = usePage<SharedProps>();
