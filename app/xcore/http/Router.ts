@@ -220,6 +220,7 @@ class Router {
 		const entry = (this.routes[path] ??= {});
 		if (entry instanceof Response)
 			throw new Error(`${path} is already a redirect`);
+		if (entry[method]) throw new Error(`${method} ${path} is already a route`);
 		entry[method] = this.handler(action, via);
 		return this;
 	}

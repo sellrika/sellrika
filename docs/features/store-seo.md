@@ -165,7 +165,7 @@ In production, set `APP_URL` (or `TRUST_PROXY=1`). Else the links say `http`.
 
 `GET /llms.txt` on a store's host is the store as Markdown.
 AI search tools read it, like ChatGPT search, Perplexity and Claude.
-On the main host it answers not found. A host in `Hooks.closedHosts` answers not found too.
+On the main host it answers what an add-on gives (`Hooks.siteLlms`), or not found when none does. A host in `Hooks.closedHosts` answers not found too.
 
 It follows the llms.txt convention:
 

@@ -1369,7 +1369,8 @@ test("MCP: a list is capped, and every tool call after the first costs one hit o
 
 test("build files: a path with an empty part is not served", async () => {
 	const { fileRoutes } = await import("@routes/files");
-	fileRoutes();
+	// a second registration throws: another test file may have loaded the routes
+	if (!router.routes["/build/*"]) fileRoutes();
 	const entry = router.routes["/build/*"] as Record<string, any>;
 	const res = await entry.GET(
 		new Request("http://pos.test/build//manifest.json"),

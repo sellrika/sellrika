@@ -215,15 +215,16 @@ export class StoreController {
 	/**
 	 * GET /llms.txt — the store as Markdown, for AI search tools.
 	 * The shop, its products with price and stock, its custom pages.
-	 * Only on a store's host. A closed host (a demo) answers not found.
+	 * A closed host (a demo) answers not found.
+	 * The app's own host gets what an add-on gives (`Hooks.siteLlms`).
 	 * @param req The current request.
 	 * @returns The Markdown text, or the not-found answer.
 	 */
 	async llms(req: BunRequest<"/llms.txt">) {
 		if (Hooks.closedHosts.includes(Url.hostOf(req)))
 			return Inertia.notFound(req);
-		const s = await this.site.open(req);
-		if (s instanceof Response) return s;
+		const s = await this.site.find(req);
+		if (!s) return Hooks.siteLlms ? Hooks.siteLlms(req) : Inertia.notFound(req);
 		const text = llmsTxt(
 			{
 				name: s.shop.name,
