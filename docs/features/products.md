@@ -208,9 +208,20 @@ A file is only deleted when nothing else uses it. `UploadRepository.inUse(url)` 
 The product form edits the description with `components/RichText.vue`.
 
 - It is a `contenteditable` box plus a toolbar.
-- The toolbar has: text style (Normal, H1, H2, H3), bold, italic, underline, strike, bullet and numbered list, indent and outdent, insert table.
+- The toolbar has: text style (Normal, H1, H2, H3), bold, italic, underline, strike, bullet and numbered list, indent and outdent, insert table, insert section, insert code block.
 - It is built on `document.execCommand`. It uses formatting commands only. Nothing touches the clipboard or `designMode`.
-- There is no editor dependency.
+- There is no editor dependency. Code blocks use `highlight.js` for the colours only.
+
+Code blocks:
+
+- A code block is `<pre><code class="language-…">`. The caret in one shows the **Code** row: a language list (Plain text, Bash, C / C++, C#, CSS, Go, HTML, Java, JavaScript, JSON, PHP, Python, Ruby, Rust, SQL, TypeScript, YAML) and delete.
+- The colours are written as inline `style` on `<span>`s (`resources/js/lib/codeBlock.ts`), not as classes. So every store theme, an extension's page and an email show them with no style sheet. The block brings its own dark look on the `<pre>`.
+- Each colour is a CSS variable with the dark colour as its fallback: `--code-bg`, `--code-text`, `--code-keyword`, `--code-type`, `--code-title`, `--code-string`, `--code-number`, `--code-tag`, `--code-comment`, `--code-addition`, `--code-deletion`. A page sets them to fit its own background. The Blogger extension sets a light set.
+- Painting a block again (a keystroke, a new language) also writes the `<pre>` look again. So an older block gets today's look once it is edited.
+- An email app that does not know CSS variables shows the code with no colours.
+- Inside a block the editor keeps the text itself. Each keystroke paints it again and puts the caret back. Enter is a new line in the code. A paste goes in as plain text.
+- So typing in a code block is outside the browser's own undo.
+- A code block sent through the API or the CSV import without the colour spans shows as plain text in the theme's own `pre` style.
 
 Pictures (prop `images`, the upload folder):
 

@@ -14,6 +14,7 @@ import {
 	List,
 	ListCollapse,
 	ListOrdered,
+	SquareCode,
 	Strikethrough,
 	Table,
 	Underline,
@@ -24,6 +25,13 @@ import WithTooltip from "./WithTooltip.vue";
 import { t } from "@/lib/i18n";
 import { toast } from "vue-sonner";
 import { uploadImage, type UploadFolder } from "@/lib/upload";
+import {
+	CODE_LANGUAGES,
+	CODE_STYLE,
+	languageOf,
+	PRE_STYLE,
+	paintCode,
+} from "@/lib/codeBlock";
 
 /**
  * Small rich-text editor for product descriptions.
@@ -35,6 +43,9 @@ import { uploadImage, type UploadFolder } from "@/lib/upload";
  * Tables are the exception: execCommand has no table commands, so the row/column operations
  * below are plain DOM edits on the cell the caret sits in.
  * Add a real editor (tiptap) only if merged cells or collaborative editing show up.
+ * Code blocks: `<pre><code class="language-…">`. The colours come from highlight.js and are
+ * written inline (lib/codeBlock.ts), so the store and emails need no style sheet for them.
+ * Inside a code block the editor keeps the text itself: each keystroke paints it again.
  * Pictures (prop `images`): a picked, pasted or dropped file is uploaded first and the text
  * keeps only its `/uploads/…` path. A picture pasted as base64 is taken out again: the text
  * never holds picture data, only a path of ours or an https link.
@@ -56,6 +67,8 @@ const block = ref("p");
 const active = ref<Record<string, boolean>>({});
 const inTable = ref(false);
 const inSection = ref(false);
+/** The language of the code block the caret is in; null when it is in none. */
+const codeLang = ref<string | null>(null);
 const sectionOpen = ref(false);
 /** The picture the person clicked, for the picture tools. */
 const picked = ref<HTMLImageElement | null>(null);
@@ -143,6 +156,8 @@ function refresh() {
 	const d = section();
 	inSection.value = !!d;
 	sectionOpen.value = !!d?.open;
+	const code = codeBlock();
+	codeLang.value = code ? languageOf(code.className) : null;
 	if (picked.value && !el.value?.contains(picked.value)) picked.value = null;
 	place();
 }
@@ -369,6 +384,12 @@ function plainLook(html: string) {
 /** A pasted picture file is uploaded, never kept as data in the text. Pasted text keeps its structure
  *  (headings, lists, links) and loses the look of the page it came from. */
 function onPaste(e: ClipboardEvent) {
+	const code = codeBlock();
+	if (code) {
+		e.preventDefault();
+		typeCode(code, e.clipboardData?.getData("text/plain") ?? "");
+		return;
+	}
 	const files = imageFiles(e.clipboardData?.files);
 	if (props.images && files.length) {
 		e.preventDefault();
@@ -495,6 +516,150 @@ function section() {
 		"details",
 	);
 	return d && el.value?.contains(d) ? (d as HTMLDetailsElement) : null;
+}
+
+/**
+ * The code of the code block the caret is in.
+ * @returns The `<code>` inside one of our `<pre>`s, or null.
+ */
+function codeBlock() {
+	const n = window.getSelection()?.anchorNode ?? null;
+	const pre = (n instanceof Element ? n : (n?.parentElement ?? null))?.closest(
+		"pre",
+	);
+	if (!pre || !el.value?.contains(pre)) return null;
+	return pre.querySelector("code");
+}
+
+/**
+ * Where the caret is in a code block, counted in letters.
+ * @param code The `<code>` element.
+ * @returns The start and the end of the selection.
+ */
+function codeCaret(code: HTMLElement) {
+	const sel = window.getSelection();
+	if (!sel?.rangeCount) return { start: 0, end: 0 };
+	const r = sel.getRangeAt(0);
+	const before = document.createRange();
+	before.selectNodeContents(code);
+	before.setEnd(r.startContainer, r.startOffset);
+	const start = before.toString().length;
+	return { start, end: start + r.toString().length };
+}
+
+/**
+ * Put the caret at a letter of a code block.
+ * @param code The `<code>` element.
+ * @param at The number of letters before the caret.
+ */
+function codeCaretTo(code: HTMLElement, at: number) {
+	const walk = document.createTreeWalker(code, NodeFilter.SHOW_TEXT);
+	let left = at;
+	let node = walk.nextNode();
+	while (node && left > (node.textContent?.length ?? 0)) {
+		left -= node.textContent?.length ?? 0;
+		node = walk.nextNode();
+	}
+	const r = document.createRange();
+	if (node) r.setStart(node, left);
+	else r.selectNodeContents(code);
+	r.collapse(true);
+	const sel = window.getSelection();
+	sel?.removeAllRanges();
+	sel?.addRange(r);
+}
+
+/**
+ * Colour a code block again and keep the caret where it was.
+ * @param code The `<code>` element.
+ * @param text The new text. Its current text when left out.
+ * @param at The caret after the paint. Where it is now when left out.
+ */
+function paint(code: HTMLElement, text?: string, at?: number) {
+	const caret = at ?? codeCaret(code).start;
+	// the block's own look is written again too: an older block gets today's
+	code.closest("pre")?.setAttribute("style", PRE_STYLE);
+	code.setAttribute("style", CODE_STYLE);
+	code.innerHTML = paintCode(
+		text ?? code.textContent ?? "",
+		languageOf(code.className),
+	);
+	codeCaretTo(code, caret);
+}
+
+/**
+ * Type text into the code block at the caret, over what is selected.
+ * Used for Enter and for a paste: the browser would add tags there.
+ * @param code The `<code>` element.
+ * @param typed The text to put in.
+ */
+function typeCode(code: HTMLElement, typed: string) {
+	const text = code.textContent ?? "";
+	const { start, end } = codeCaret(code);
+	paint(
+		code,
+		text.slice(0, start) + typed + text.slice(end),
+		start + typed.length,
+	);
+	sync();
+}
+
+/** Each change in the text. A code block the caret is in is painted again. */
+function onInput() {
+	const code = codeBlock();
+	if (code) paint(code);
+	sync();
+}
+
+/**
+ * Enter in a code block is a new line in the code, not a new paragraph.
+ * @param e The key event.
+ */
+function onKeydown(e: KeyboardEvent) {
+	if (e.key !== "Enter" || e.isComposing) return;
+	const code = codeBlock();
+	if (!code) return;
+	e.preventDefault();
+	typeCode(code, "\n");
+}
+
+/**
+ * Same rule as tables: a code block goes after the block the caret is in.
+ * The trailing paragraph is the way out of it.
+ */
+function insertCode() {
+	const root = el.value;
+	if (!root) return;
+	root.focus();
+	const tpl = document.createElement("template");
+	tpl.innerHTML = `<pre style="${PRE_STYLE}"><code class="language-plaintext" style="${CODE_STYLE}">${paintCode("", "plaintext")}</code></pre><p><br></p>`;
+	const code = tpl.content.querySelector("code")!;
+	const n = window.getSelection()?.anchorNode ?? null;
+	let e = (
+		n instanceof Element ? n : (n?.parentElement ?? null)
+	) as Element | null;
+	while (e && e.parentElement !== root) e = e.parentElement;
+	if (e) e.after(tpl.content);
+	else root.append(tpl.content);
+	codeCaretTo(code, 0);
+	sync();
+}
+
+/**
+ * Colour the code block the caret is in as another language.
+ * @param id A language id from `CODE_LANGUAGES`.
+ */
+function setLanguage(id: string) {
+	const code = codeBlock();
+	if (!code) return;
+	code.className = `language-${id}`;
+	paint(code);
+	sync();
+}
+
+function delCode() {
+	codeBlock()?.closest("pre")?.remove();
+	sync();
 }
 
 const blank = (tag: string) => `<${tag}><br></${tag}>`;
@@ -645,7 +810,7 @@ const fill = () => {
 	// A table or section at the very start/end (an extension's leaflet, a saved product) leaves the caret nowhere to
 	// go above/below it — the same trailing-paragraph rule the insert tools follow, applied to content from outside.
 	const boxed = (n: Element | null) =>
-		!!n && /^(DETAILS|TABLE)$/.test(n.tagName);
+		!!n && /^(DETAILS|TABLE|PRE)$/.test(n.tagName);
 	if (boxed(el.value.firstElementChild))
 		el.value.insertAdjacentHTML("afterbegin", "<p><br></p>");
 	if (boxed(el.value.lastElementChild))
@@ -718,6 +883,7 @@ function removeListeners() {
       <span class="mx-0.5 h-5 w-px bg-border" />
       <WithTooltip :label="t('shared.insert_table')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_table')" @mousedown.prevent @click="insertTable"><Table /></Button></WithTooltip>
       <WithTooltip :label="t('shared.insert_section_title')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_section')" @mousedown.prevent @click="insertSection"><ListCollapse /></Button></WithTooltip>
+      <WithTooltip :label="t('shared.insert_code')"><Button type="button" variant="ghost" size="icon" class="size-8" :aria-label="t('shared.insert_code')" @mousedown.prevent @click="insertCode"><SquareCode /></Button></WithTooltip>
       <template v-if="images">
         <WithTooltip :label="t('shared.insert_image')"><span class="inline-flex"><Button type="button" variant="ghost" size="icon" class="size-8" :disabled="uploading" :aria-label="t('shared.insert_image')" @mousedown.prevent @click="pickFiles"><ImagePlus /></Button></span></WithTooltip>
       </template>
@@ -741,6 +907,20 @@ function removeListeners() {
       <Button type="button" variant="ghost" size="sm" class="h-7 px-2 text-xs" @mousedown.prevent @click="toggleSection">{{ sectionOpen ? t("shared.open_by_default_on") : t("shared.open_by_default") }}</Button>
       <Button type="button" variant="ghost" size="sm" class="h-7 px-2 text-xs text-destructive" @mousedown.prevent @click="delSection">{{ t("shared.delete_section") }}</Button>
     </div>
+    <!-- Code tools: only while the caret is in a code block. -->
+    <div v-if="codeLang" class="flex flex-wrap items-center gap-1 border-b bg-muted/20 px-1 py-1 text-xs">
+      <span class="px-1.5 text-muted-foreground">{{ t("shared.code") }}</span>
+      <select
+        :value="codeLang"
+        class="h-7 rounded-sm border bg-background px-1.5 text-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        data-slot="code-language"
+        :aria-label="t('shared.code_language')"
+        @change="setLanguage(($event.target as HTMLSelectElement).value)"
+      >
+        <option v-for="l in CODE_LANGUAGES" :key="l.id" :value="l.id">{{ l.name || t("shared.code_plain") }}</option>
+      </select>
+      <Button type="button" variant="ghost" size="sm" class="h-7 px-2 text-xs text-destructive" @mousedown.prevent @click="delCode">{{ t("shared.delete_code") }}</Button>
+    </div>
     <!-- Table row/column tools: only while the caret is in a cell, so they never sit there dead. -->
     <div v-if="inTable" class="flex flex-wrap items-center gap-1 border-b bg-muted/20 px-1 py-1 text-xs">
       <span class="px-1.5 text-muted-foreground">{{ t("shared.table") }}</span>
@@ -760,7 +940,8 @@ function removeListeners() {
       :aria-label="label ?? t('shared.description')"
       data-slot="description-editor"
       class="rich-html min-h-48 resize-y overflow-y-auto bg-transparent px-3 py-2 text-sm outline-none"
-      @input="sync"
+      @input="onInput"
+      @keydown="onKeydown"
       @keyup="refresh"
       @mouseup="refresh"
       @focus="refresh"
