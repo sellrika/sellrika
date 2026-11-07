@@ -162,7 +162,7 @@ What `build.ts` does:
 | `ExtensionFiles.unpack` | Zip → files, with safety checks |
 | `ExtensionFiles.write`, `.move`, `.remove` | File work |
 | `ExtensionLoader.load` | `import()` once per file → `{ on, routes, publicRoutes, payment }` |
-| `ExtensionLoader.matchRoute` | Matches `"METHOD /path/:id"` tables |
+| `ExtensionLoader.matchRoute` | Matches `"METHOD /path/:id"` tables. A HEAD request fits a GET route. |
 | `ExtensionLoader.asset` | Serves `assets/…` files |
 
 About `ExtensionLoader.asset`:
