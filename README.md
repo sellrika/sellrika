@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src=".github/images/pos.jpg" alt="The sell screen of Sellrika">
+  <img src=".github/images/demo.gif" alt="Sell an item at the till, then see the same product in the online store">
 </p>
 
 Sellrika is for shops, cafés and restaurants.
@@ -35,6 +35,17 @@ The hosted version is at [sellrika.com](https://sellrika.com). It runs this same
 | Online store | Reports |
 |---|---|
 | <img src=".github/images/store.webp" alt="The online store"> | <img src=".github/images/reports.webp" alt="The sales report"> |
+
+## Start it in one line
+
+You need Docker.
+
+```sh
+docker run -d -p 3000:3000 -e ADMIN_EMAIL=admin@example.com -e ADMIN_PASSWORD=change-me -e APP_KEY=$(openssl rand -hex 32) -v sellrika-data:/app/data -v sellrika-storage:/app/storage ghcr.io/sellrika/sellrika:latest
+```
+
+Open http://localhost:3000 and sign in with `admin@example.com` and `change-me`.
+Change the password after you sign in.
 
 ## Try it first
 
@@ -57,9 +68,11 @@ Sign in with `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 ## Run it in production
 
 ```sh
-docker build -t sellrika .
-docker run -p 3000:3000 -v sellrika-data:/app/data -v sellrika-storage:/app/storage --env-file .env sellrika
+docker run -d -p 3000:3000 -v sellrika-data:/app/data -v sellrika-storage:/app/storage --env-file .env ghcr.io/sellrika/sellrika:latest
 ```
+
+The image runs on amd64 and arm64, so also on an Apple Silicon Mac or a Raspberry Pi.
+To build it yourself: `docker build -t sellrika .`
 
 The default database is SQLite. Set `DB_CONNECTION=postgres` to use Postgres, or `DB_CONNECTION=mysql` to use MySQL 8 or MariaDB.
 `.env.example` lists every setting.
