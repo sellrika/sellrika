@@ -1,11 +1,15 @@
 # ---- build: frontend assets + single compiled binary ----
-FROM oven/bun:1.4 AS build
+# This stage runs on the builder's own CPU. Bun compiles the binary for the
+# image's CPU (amd64 or arm64), so an arm64 image needs no slow emulation.
+FROM --platform=$BUILDPLATFORM oven/bun:1.4 AS build
+ARG TARGETARCH
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 COPY . .
 RUN bun run build \
-&& NODE_ENV=production bun build ./app/server.ts --outfile=compiled-server --compile --minify --sourcemap
+&& NODE_ENV=production bun build ./app/server.ts --outfile=compiled-server --compile --minify --sourcemap \
+  --target=bun-linux-$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64)
 
 # ---- runtime: no Bun, just the binary + built assets ----
 FROM debian:bookworm-slim
