@@ -2,7 +2,7 @@ import { Service } from "@xcore/di";
 import { Db, sql } from "@xcore/database/Database";
 import { Paginate } from "@xcore/http/Paginate";
 import { STORE_SYSTEM_EMAIL } from "@constants/Store.Constant";
-import type { Role } from "@constants/User.Constant";
+import type { OwnerSort, Role } from "@constants/User.Constant";
 
 /** A shop owner on the platform admin's list, with how big their account is. */
 export type OwnerRow = {
@@ -115,20 +115,28 @@ type RawShopRow = Pick<
 @Service()
 export class OwnerRepository {
 	/**
-	 * The shop owners, newest first, searched by name or email.
+	 * The shop owners, newest first unless `sort` says otherwise.
+	 * Searched by name or email.
 	 * The online store's system user is never on it.
 	 * @param q Search text ("" = everyone).
 	 * @param page Page number, from 1.
 	 * @param perPage Rows per page.
+	 * @param sort A column and direction, or null.
 	 * @returns One page of owners.
 	 */
-	async page(q: string, page: number, perPage: number) {
+	async page(
+		q: string,
+		page: number,
+		perPage: number,
+		sort: OwnerSort | null = null,
+	) {
 		const like = `%${q.toLowerCase()}%`;
 		const where = sql`where ${isOwner}
       and (${q} = '' or lower(u.name) like ${like} or lower(u.email) like ${like})`;
 		const [{ n }] = await sql`select count(*) as n from users u ${where}`;
-		const rows: RawRow[] = await sql`select ${ownerColumns}
-        from users u ${where} order by u.id desc ${Paginate.limit(page, perPage)}`;
+		const rows: RawRow[] =
+			await sql`select * from (select ${ownerColumns} from users u ${where}) x
+        order by ${this.#sortBy(sort)} x.id desc ${Paginate.limit(page, perPage)}`;
 		return Paginate.of<OwnerRow>(
 			rows.map((r) => this.#owner(r)),
 			Number(n),
@@ -232,6 +240,27 @@ export class OwnerRepository {
 			last_order_at: this.#dateText(r.last_order_at),
 		};
 	}
+	/**
+	 * The ORDER BY start for a sort of the owners list.
+	 * It sorts over the `x` subquery with the counts.
+	 * Only fixed SQL from this list is used, never the request's text.
+	 * Empty values (never active, no order yet) always go last.
+	 * @param sort The column and direction, or none.
+	 * @returns A fragment ending in a comma, or an empty one.
+	 */
+	#sortBy(sort: OwnerSort | null) {
+		if (!sort) return sql``;
+		const value = {
+			name: sql`lower(x.name)`,
+			shops: sql`x.shops`,
+			staff: sql`x.staff`,
+			last_active: sql`x.last_active_at`,
+			last_order: sql`x.last_order_at`,
+			joined: sql`x.created_at`,
+		}[sort.by];
+		return Db.nullsLast(value, sort.dir);
+	}
+
 	/**
 	 * A row's date column as text.
 	 * SQLite gives a string, Postgres a Date.

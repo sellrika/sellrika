@@ -5,6 +5,7 @@ import { ProductRepository } from "@repositories/Product.Repository";
 import { ReportService } from "@services/sales/Report.Service";
 import { PlanLimitService } from "@services/settings/PlanLimit.Service";
 import { CAMPAIGN_EMAILS_PER_MONTH } from "@constants/Marketing.Constant";
+import type { OwnerSort } from "@constants/User.Constant";
 
 /**
  * The platform admin's view of the shop owners.
@@ -26,10 +27,16 @@ export class OwnerService {
 	 * @param q Search text over name and email.
 	 * @param page Page number, from 1.
 	 * @param perPage Rows per page.
+	 * @param sort A column and direction, or null for newest first.
 	 * @returns The page.
 	 */
-	list(q: string, page: number, perPage: number) {
-		return this.owners.page(q, page, perPage);
+	list(
+		q: string,
+		page: number,
+		perPage: number,
+		sort: OwnerSort | null = null,
+	) {
+		return this.owners.page(q, page, perPage, sort);
 	}
 
 	/**

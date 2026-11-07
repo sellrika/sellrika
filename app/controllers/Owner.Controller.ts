@@ -8,6 +8,7 @@ import { validate, type Errors } from "@validators/validate";
 import { CampaignLimitInput } from "@validators/User.Validator";
 import { OwnerService } from "@services/settings/Owner.Service";
 import { SignupService } from "@services/settings/Signup.Service";
+import { OWNER_SORTS } from "@constants/User.Constant";
 
 /**
  * The platform admin's shop owner pages (`/owners`).
@@ -21,17 +22,21 @@ export class OwnerController {
 	) {}
 
 	/**
-	 * GET /owners?q=&page= — every shop owner, with their counts.
+	 * GET /owners?q=&sort=&dir=&page= — every shop owner, with their counts.
+	 * `sort` = one of OWNER_SORTS, `dir` = asc | desc.
 	 * Also the self sign-up switch.
 	 * @param req The current request.
 	 * @returns The Owners/Index page.
 	 */
 	async index(req: Request) {
-		const q = new Query(req).text("q");
+		const filters = {
+			q: new Query(req).text("q"),
+			sort: Paginate.sort(req, OWNER_SORTS),
+		};
 		const { page, perPage } = Paginate.params(req, "owners");
 		return inertia(req, "Owners/Index", {
-			owners: await this.owners.list(q, page, perPage),
-			filters: { q },
+			owners: await this.owners.list(filters.q, page, perPage, filters.sort),
+			filters,
 			signup: await this.signup.enabled(),
 		});
 	}
