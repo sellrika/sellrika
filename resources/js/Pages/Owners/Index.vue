@@ -61,6 +61,15 @@ watch(search, function find(q) {
 function day(s: string | null) {
 	return s ? fmtDate(s, { dateStyle: "medium" }) : "—";
 }
+
+/**
+ * The date and time, or a dash.
+ * @param s The moment, or null.
+ * @returns What to show.
+ */
+function moment(s: string | null) {
+	return s ? fmtDate(s) : "—";
+}
 </script>
 
 <template>
@@ -96,6 +105,7 @@ function day(s: string | null) {
             <TableHead>{{ t("owners.owner") }}</TableHead>
             <TableHead class="text-right">{{ t("owners.shops") }}</TableHead>
             <TableHead class="hidden text-right sm:table-cell">{{ t("owners.staff") }}</TableHead>
+            <TableHead class="hidden md:table-cell">{{ t("owners.last_active") }}</TableHead>
             <TableHead class="hidden md:table-cell">{{ t("owners.last_order") }}</TableHead>
             <TableHead class="hidden md:table-cell">{{ t("owners.joined") }}</TableHead>
             <TableHead class="w-px" />
@@ -111,12 +121,13 @@ function day(s: string | null) {
             </TableCell>
             <TableCell class="text-right tabular-nums">{{ o.shops }}</TableCell>
             <TableCell class="hidden text-right tabular-nums sm:table-cell">{{ o.staff }}</TableCell>
+            <TableCell class="hidden text-muted-foreground md:table-cell">{{ moment(o.last_active_at) }}</TableCell>
             <TableCell class="hidden text-muted-foreground md:table-cell">{{ day(o.last_order_at) }}</TableCell>
             <TableCell class="hidden text-muted-foreground md:table-cell">{{ day(o.created_at) }}</TableCell>
             <TableCell><ChevronRight class="size-4 text-muted-foreground" /></TableCell>
           </TableRow>
           <TableRow v-if="!owners.data.length">
-            <TableCell colspan="6" class="py-10 text-center text-muted-foreground">{{ t("owners.none") }}</TableCell>
+            <TableCell colspan="7" class="py-10 text-center text-muted-foreground">{{ t("owners.none") }}</TableCell>
           </TableRow>
         </TableBody>
       </Table>

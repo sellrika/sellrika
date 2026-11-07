@@ -1322,6 +1322,7 @@ export const en = {
 	"owners.joined": "Joined",
 	"owners.joined_on": "joined {date}",
 	"owners.last_order": "Last order",
+	"owners.last_active": "Last active",
 	"owners.no_products": "No products found.",
 	"owners.no_shops": "This owner has no shops.",
 	"owners.no_staff": "No staff yet.",

@@ -135,3 +135,37 @@ test("owners: a shop's product list, searchable, only through its own owner", as
 		await OwnerService.shopProducts(e.owner.id, other.shop.id, "", 1, 20),
 	).toBeNull();
 });
+
+test("owners: last active is set on use, at most once per window", async () => {
+	const a = await account("seen");
+	expect(
+		(await OwnerService.list(`seen-${run}`, 1, 20)).data[0]!.last_active_at,
+	).toBeNull();
+	const t0 = new Date("2026-01-01T10:00:00Z");
+	await UserRepository.seen(a.owner.id, 60_000, t0);
+	const first = (await OwnerService.list(`seen-${run}`, 1, 20)).data[0]!
+		.last_active_at;
+	expect(first).not.toBeNull();
+	// inside the window: no write
+	await UserRepository.seen(
+		a.owner.id,
+		60_000,
+		new Date(t0.getTime() + 30_000),
+	);
+	expect(
+		(await OwnerService.list(`seen-${run}`, 1, 20)).data[0]!.last_active_at,
+	).toBe(first);
+	// after the window: written again
+	await UserRepository.seen(
+		a.owner.id,
+		60_000,
+		new Date(t0.getTime() + 120_000),
+	);
+	expect(
+		(await OwnerService.list(`seen-${run}`, 1, 20)).data[0]!.last_active_at,
+	).not.toBe(first);
+	// a `User` never carries the column
+	expect(await UserRepository.find(a.owner.id)).not.toHaveProperty(
+		"last_active_at",
+	);
+});

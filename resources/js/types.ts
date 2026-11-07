@@ -902,6 +902,7 @@ export type OwnerRow = {
 	staff: number;
 	invited: boolean; // the invitation is still open: they never set a password
 	last_order_at: string | null;
+	last_active_at: string | null; // the last signed-in request, null = never seen
 };
 /** One shop of an owner with its all-time totals; `sales` is in the shop's own currency. */
 export type OwnerShopRow = {

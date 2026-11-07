@@ -15,6 +15,9 @@ import { Hooks } from "@xcore/hooks/Hooks";
 import { responseWithoutCosts } from "@helpers/costs";
 
 import { Auth } from "@xcore/auth/Auth";
+import { Container } from "@xcore/di";
+import { UserRepository } from "@repositories/User.Repository";
+import { USER_SEEN_EVERY_MS } from "@constants/User.Constant";
 
 /**
  * The route middleware that decides who may open a route.
@@ -100,16 +103,40 @@ export class Guard {
 	 * Nobody is locked out over a plan.
 	 * What an add-on says about the plan (`Hooks.plan`) rides
 	 * on the context, for the banner on every page.
+	 * It also marks the user as active now (`users.last_active_at`).
 	 * @param next The handler to wrap.
 	 * @returns The wrapped handler.
 	 */
 	static auth(next: Handler): Handler {
 		return Guard.confirmed(async function check(req) {
 			const c = ctx(req);
+			Guard.#seen(c.user.id);
 			const plan = await Hooks.plan(c.user);
 			if (plan) Context.set(req, { ...c, plan });
 			return Guard.#answer(req, next);
 		});
+	}
+
+	/**
+	 * When each user was last marked active by this process, in milliseconds.
+	 * It skips the UPDATE inside the window, so a busy user costs no query.
+	 * The SQL keeps the window too, for other server processes.
+	 * ponytail: one entry per user who signed in since boot; fine for a shop-sized app.
+	 */
+	static #lastSeen = new Map<number, number>();
+
+	/**
+	 * Mark a user as active now.
+	 * It is never awaited and never throws: a failed write must not stop the request.
+	 * @param userId The signed-in user.
+	 */
+	static #seen(userId: number) {
+		const now = Date.now();
+		if (now - (Guard.#lastSeen.get(userId) ?? 0) < USER_SEEN_EVERY_MS) return;
+		Guard.#lastSeen.set(userId, now);
+		Container.get(UserRepository)
+			.seen(userId, USER_SEEN_EVERY_MS, new Date(now))
+			.catch(function ignore() {});
 	}
 
 	/**

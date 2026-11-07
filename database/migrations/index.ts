@@ -90,3 +90,4 @@ export { up as m0084_shop_daily_report } from "./0084_shop_daily_report";
 export { up as m0085_shop_theme_config } from "./0085_shop_theme_config";
 export { up as m0086_category_image } from "./0086_category_image";
 export { up as m0087_user_firebase_uid } from "./0087_user_firebase_uid";
+export { up as m0088_user_last_active } from "./0088_user_last_active";

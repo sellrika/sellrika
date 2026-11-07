@@ -1267,6 +1267,7 @@ export const th = {
 	"owners.joined": "เข้าร่วมแล้ว",
 	"owners.joined_on": "เข้าร่วมเมื่อ {date}",
 	"owners.last_order": "คำสั่งซื้อล่าสุด",
+	"owners.last_active": "ใช้งานล่าสุด",
 	"owners.no_products": "ไม่พบสินค้า",
 	"owners.no_shops": "เจ้าของรายนี้ยังไม่มีร้าน",
 	"owners.no_staff": "ยังไม่มีพนักงาน",

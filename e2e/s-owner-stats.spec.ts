@@ -35,6 +35,13 @@ test("the platform admin sees every shop owner and can search them", async () =>
 	await expect(table.getByText("admin@sellrika.local")).toBeVisible();
 	const row = table.getByRole("row").filter({ hasText: OWNER });
 	await expect(row.getByText("Invited")).toBeVisible();
+	// last active: the admin has used the app, the invited owner never has
+	await expect(
+		table.getByRole("columnheader", { name: "Last active" }),
+	).toBeVisible();
+	const me = table.getByRole("row").filter({ hasText: "admin@sellrika.local" });
+	await expect(me.getByRole("cell").nth(3)).not.toHaveText("—");
+	await expect(row.getByRole("cell").nth(3)).toHaveText("—");
 
 	await admin.getByLabel("Search by name or email").fill(OWNER);
 	await admin.waitForURL((u) => u.searchParams.get("q") === OWNER);
