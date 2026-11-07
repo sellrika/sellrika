@@ -38,6 +38,13 @@ export class Hooks {
 	static frontPage: ((req: Request) => Promise<Response>) | null = null;
 
 	/**
+	 * The `/llms.txt` of the app's own host.
+	 * A store's host always has the store's own.
+	 * null = the app's own host has none (not found).
+	 */
+	static siteLlms: ((req: Request) => Promise<Response>) | null = null;
+
+	/**
 	 * Answers a request before the app's own route.
 	 * It runs on every request, so it must be cheap:
 	 * look at the host or the path first, and return null fast.

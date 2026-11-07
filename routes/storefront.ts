@@ -123,7 +123,7 @@ export function storefrontRoutes() {
 
 	/**
 	 * The store as Markdown for AI search tools (the llms.txt
-	 * convention). Store hosts only.
+	 * convention). On the main host, what an add-on gives (`Hooks.siteLlms`).
 	 */
 	router.get("/llms.txt", [StoreController, "llms"]);
 
