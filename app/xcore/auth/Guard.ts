@@ -118,13 +118,24 @@ export class Guard {
 	}
 
 	/**
+	 * When each user was last marked active by this process, in milliseconds.
+	 * It skips the UPDATE inside the window, so a busy user costs no query.
+	 * The SQL keeps the window too, for other server processes.
+	 * ponytail: one entry per user who signed in since boot; fine for a shop-sized app.
+	 */
+	static #lastSeen = new Map<number, number>();
+
+	/**
 	 * Mark a user as active now.
 	 * It is never awaited and never throws: a failed write must not stop the request.
 	 * @param userId The signed-in user.
 	 */
 	static #seen(userId: number) {
+		const now = Date.now();
+		if (now - (Guard.#lastSeen.get(userId) ?? 0) < USER_SEEN_EVERY_MS) return;
+		Guard.#lastSeen.set(userId, now);
 		Container.get(UserRepository)
-			.seen(userId, USER_SEEN_EVERY_MS)
+			.seen(userId, USER_SEEN_EVERY_MS, new Date(now))
 			.catch(function ignore() {});
 	}
 

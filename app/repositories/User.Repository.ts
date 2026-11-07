@@ -146,7 +146,7 @@ export class UserRepository {
 	/**
 	 * Note that the user just used the app.
 	 * The row is written only when the last mark is older than `every`.
-	 * So a busy user costs no write per request.
+	 * `Guard.auth` also skips the call inside that window.
 	 * @param id User id.
 	 * @param every How often to write, in milliseconds.
 	 * @param now The moment.
