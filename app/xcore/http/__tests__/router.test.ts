@@ -186,3 +186,18 @@ test("Hooks.beforeRoute answers first, with the security headers; null falls thr
 		Hooks.beforeRoute = null;
 	}
 });
+
+test("the same method and path twice throws; another method on it is fine", () => {
+	const path = `/twice-${Date.now()}`;
+	router.get(path, function first() {
+		return new Response("1");
+	});
+	router.post(path, function other() {
+		return new Response("2");
+	});
+	expect(function again() {
+		router.get(path, function second() {
+			return new Response("3");
+		});
+	}).toThrow(`GET ${path} is already a route`);
+});

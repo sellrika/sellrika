@@ -589,10 +589,10 @@ test("visitor: every product has its own page — shareable, with product meta, 
 	const llmsText = await llms.text();
 	expect(llmsText).toContain("# Main Shop");
 	expect(llmsText).toMatch(new RegExp(`- \\[${P}\\]\\(http://[^)]+${href}\\)`));
-	// the main host never has the store's file (an add-on may give its own)
-	expect(await (await visitor.request.get("/llms.txt")).text()).not.toContain(
-		"# Main Shop",
-	);
+	// the main host never has the store's file: not found, or an add-on's own
+	const mainLlms = await visitor.request.get("/llms.txt");
+	expect([200, 404]).toContain(mainLlms.status());
+	expect(await mainLlms.text()).not.toContain("# Main Shop");
 	// the home page says who the shop is
 	const home = await (await visitor.request.get(STORE)).text();
 	expect(home).toContain('"@type":"OnlineStore"');
