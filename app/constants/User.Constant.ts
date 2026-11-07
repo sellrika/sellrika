@@ -9,3 +9,9 @@ export const ROLES = ["admin", "manager", "cashier"] as const;
 
 /** One of `ROLES`. */
 export type Role = (typeof ROLES)[number];
+
+/**
+ * `users.last_active_at` is written at most this often per user.
+ * So a busy user costs no write per request.
+ */
+export const USER_SEEN_EVERY_MS = 5 * 60_000;

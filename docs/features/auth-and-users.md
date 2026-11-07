@@ -425,14 +425,15 @@ The chain is `OwnerController` → `OwnerService` → `OwnerRepository`.
 
 | Route | Page | What it shows |
 |---|---|---|
-| `GET /owners?q=&page=` | `Owners/Index.vue` | Every owner (`owner_id` null, never the online-store system user), newest first. Search by name or email. Per owner: the number of shops and staff, the last order in any of their shops, and an **Invited** badge while the invitation is still open. |
-| `GET /owners/:id` | `Owners/Show.vue` | Their shops as cards (products, orders, sales in the shop's own currency, last order, online store on or off) and their staff. A staff member's id is a 404. |
+| `GET /owners?q=&page=` | `Owners/Index.vue` | Every owner (`owner_id` null, never the online-store system user), newest first. Search by name or email. Per owner: the number of shops and staff, the last order in any of their shops, when they were last active, and an **Invited** badge while the invitation is still open. |
+| `GET /owners/:id` | `Owners/Show.vue` | When they were last active. Their shops as cards (products, orders, sales in the shop's own currency, last order, online store on or off) and their staff. A staff member's id is a 404. |
 | `GET /owners/:id/shops/:shop?preset=` | `Owners/Shop.vue` | One shop. See below. A shop of another owner is a 404. |
 | `GET /owners/:id/shops/:shop/products?q=&page=` | `Owners/Products.vue` | Every product of that shop, read-only. Opened by **View all products** on the shop page. |
 
 The **Campaign emails** card on `Owners/Show.vue`:
 
 - It shows this month's campaign emails sent through the platform's email, and the owner's monthly limit.
+- **Last active** is `users.last_active_at`. `Guard.auth` sets it on a signed-in request, without waiting for it. The write happens at most once per `USER_SEEN_EVERY_MS` (5 minutes) per user. API key calls do not count. Every user gets it; the owners pages show the owner's own.
 - `PUT /owners/:id/campaign-limit {limit}` sets the limit. Empty = the default, `CAMPAIGN_EMAILS_PER_MONTH` = 1000. It is stored in `users.campaign_email_limit`.
 - It is the only thing the admin changes on these pages.
 

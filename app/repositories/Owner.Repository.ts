@@ -19,6 +19,8 @@ export type OwnerRow = {
 	 */
 	invited: boolean;
 	last_order_at: string | null;
+	/** The last signed-in request, null = never seen. */
+	last_active_at: string | null;
 };
 
 /**
@@ -66,7 +68,7 @@ const ownerStats = sql`
   (select max(o.created_at) from orders o join shops s on s.id = o.shop_id where s.owner_id = u.id) as last_order_at`;
 
 /** The columns of an `OwnerRow`, over `users u`. */
-const ownerColumns = sql`u.id, u.name, u.email, u.active, u.created_at, ${ownerStats}`;
+const ownerColumns = sql`u.id, u.name, u.email, u.active, u.created_at, u.last_active_at, ${ownerStats}`;
 
 /**
  * Is `users u` a shop owner?
@@ -257,6 +259,7 @@ export class OwnerRepository {
 			staff: Number(r.staff),
 			invited: Number(r.invited) > 0,
 			last_order_at: this.#dateText(r.last_order_at),
+			last_active_at: this.#dateText(r.last_active_at),
 		};
 	}
 

@@ -144,6 +144,20 @@ export class UserRepository {
 	}
 
 	/**
+	 * Note that the user just used the app.
+	 * The row is written only when the last mark is older than `every`.
+	 * So a busy user costs no write per request.
+	 * @param id User id.
+	 * @param every How often to write, in milliseconds.
+	 * @param now The moment.
+	 */
+	async seen(id: number, every: number, now = new Date()) {
+		const before = sqlStamp(new Date(now.getTime() - every));
+		await sql`update users set last_active_at = ${sqlStamp(now)}
+      where id = ${id} and (last_active_at is null or last_active_at < ${before})`;
+	}
+
+	/**
 	 * Edit a staff account.
 	 * @param id User id.
 	 * @param d Validated name, email, role and active flag.
@@ -234,8 +248,13 @@ export class UserRepository {
 	 */
 	#row(r: RawUser): User {
 		// the sign-in account stays in the repository: a `User` travels far
-		const { firebase_uid: _, ...user } = r as RawUser & {
+		const {
+			firebase_uid: _,
+			last_active_at: __,
+			...user
+		} = r as RawUser & {
 			firebase_uid?: string | null;
+			last_active_at?: unknown;
 		};
 		return {
 			...user,

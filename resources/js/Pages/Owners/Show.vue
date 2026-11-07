@@ -77,7 +77,7 @@ function day(s: string | null) {
           <Badge v-if="owner.invited" variant="secondary">{{ t("owners.invited") }}</Badge>
           <Badge v-else-if="!owner.active" variant="outline">{{ t("owners.inactive") }}</Badge>
         </h1>
-        <p class="text-sm text-muted-foreground">{{ owner.email }} · {{ t("owners.joined_on", { date: day(owner.created_at) }) }}</p>
+        <p class="text-sm text-muted-foreground">{{ owner.email }} · {{ t("owners.joined_on", { date: day(owner.created_at) }) }} · {{ t("owners.last_active") }}: {{ owner.last_active_at ? fmtDate(owner.last_active_at) : "—" }}</p>
       </div>
     </header>
 

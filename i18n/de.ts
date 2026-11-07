@@ -1364,6 +1364,7 @@ export const de = {
 	"owners.joined": "Dabei seit",
 	"owners.joined_on": "dabei seit {date}",
 	"owners.last_order": "Letzte Bestellung",
+	"owners.last_active": "Zuletzt aktiv",
 	"owners.no_products": "Keine Produkte gefunden.",
 	"owners.no_shops": "Dieser Inhaber hat keine Shops.",
 	"owners.no_staff": "Noch keine Mitarbeiter.",
