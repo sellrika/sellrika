@@ -229,10 +229,12 @@ export type ExtensionOwnHandles = {
 	 * extension folder.
 	 * `drop`: pictures the extension no longer uses: each leaves storage
 	 * when nothing else of the app uses it either. Only the shop's own files.
+	 * `url`: the full address to load a picture from: the app's own host.
 	 */
 	uploads: {
 		save: (picture: string) => Promise<{ url: string } | { error: string }>;
 		drop: (urls: string[]) => Promise<void>;
+		url: (path: string) => string;
 	};
 	/**
 	 * Store pages only (manifest `storefront`): the address of the
