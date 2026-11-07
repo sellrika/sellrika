@@ -97,7 +97,8 @@ export class ExtensionLoader {
 	 * Keys are `"METHOD /path"`.
 	 * `:name` segments are captured:
 	 * `"GET /items/:id"` + `/items/7` → `{ id: "7" }`.
-	 * The first key that fits wins.
+	 * The first key that fits wins. A HEAD request fits a GET route:
+	 * Bun sends its headers without the body.
 	 * @param table The exported route table.
 	 * @param method The request method.
 	 * @param path The path below the extension's mount (`/items/7`).
@@ -114,8 +115,8 @@ export class ExtensionLoader {
 		const want = path.replace(/\/+$/, "").split("/").slice(1);
 		for (const [key, fn] of Object.entries(table)) {
 			const [m, pattern] = key.split(/\s+/, 2);
-			if (m?.toUpperCase() !== method || !pattern || typeof fn !== "function")
-				continue;
+			if (!ExtensionLoader.#methodFits(m, method)) continue;
+			if (!pattern || typeof fn !== "function") continue;
 			const parts = pattern.replace(/\/+$/, "").split("/").slice(1);
 			if (parts.length !== want.length) continue;
 			const params: Record<string, string> = {};
@@ -135,6 +136,19 @@ export class ExtensionLoader {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Does a route's method fit the request's method?
+	 * A HEAD request fits a GET route, like the app's own routes.
+	 * Link checkers and uptime monitors send HEAD.
+	 * @param route The method of the route key, like "GET".
+	 * @param method The request method.
+	 * @returns True when the route may answer.
+	 */
+	static #methodFits(route: string | undefined, method: string): boolean {
+		const m = route?.toUpperCase();
+		return m === method || (method === "HEAD" && m === "GET");
 	}
 
 	/**
