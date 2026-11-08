@@ -22,6 +22,12 @@ A product with variants has one line for each variant. Each variant has its own 
 4. Use the search box (**Search by name or barcode**) to find one item.
 5. In the list, **In stock** is the count now. **Alert at** is the low-stock number of the product.
 
+## How to sort the list
+
+1. Click a column title: **Item**, **In stock** or **Alert at**.
+2. Click the same title again to sort the other way.
+3. Click it a third time to go back to the normal order, by product name.
+
 ## How to find low stock
 
 1. Open **Catalog › Stock**.

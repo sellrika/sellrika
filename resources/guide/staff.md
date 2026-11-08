@@ -112,6 +112,12 @@ The list on the **Sales staff** tab also shows **Due** and **Last paid** for eac
 
 Their payment history is deleted. Their sales stay, but no longer show their name. This can not be undone. To keep the history, switch them off instead.
 
+## How to sort the list
+
+1. Click a column title: **Person**, **Role**, **Active** or **Added** in the staff list. In the sales staff list: **Person**, **Commission**, **Due**, **Last paid** or **Active**.
+2. Click the same title again to sort the other way.
+3. Click it a third time to go back to the normal order, as the page first showed it.
+
 ## Good to know
 
 - Managers and admins can open the Staff page. Cashiers can not.

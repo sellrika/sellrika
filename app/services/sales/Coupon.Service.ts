@@ -47,9 +47,10 @@ export class CouponService {
 	 * One page of a shop's codes.
 	 * @param shopId Owning shop.
 	 * @param q Search text ("" = all).
-	 * @param sort "used" = most used first, else newest first.
+	 * @param sort A column and direction, or null = newest first.
 	 * @param page 1-based page number.
 	 * @param perPage Rows per page.
+	 * @param timezone The shop's time zone, for the status sort ("today").
 	 * @returns A page of coupons with their usage.
 	 */
 	page(
@@ -58,8 +59,10 @@ export class CouponService {
 		sort: CouponSort,
 		page: number,
 		perPage: number,
+		timezone = "UTC",
 	) {
-		return this.coupons.pageForShop(shopId, q, sort, page, perPage);
+		const today = ymd(new Date(), timezone);
+		return this.coupons.pageForShop(shopId, q, sort, page, perPage, today);
 	}
 
 	/**

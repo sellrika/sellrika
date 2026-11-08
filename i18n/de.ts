@@ -235,7 +235,6 @@ export const de = {
 	"coupons.search_placeholder": "Code oder Beschreibung suchen",
 	"coupons.show_title": "{code} · Gutscheine",
 	"coupons.some_products": "Bestimmte Produkte oder Kategorien",
-	"coupons.sort_used": "Meistgenutzte zuerst",
 	"coupons.starts_on": "Beginnt am",
 	"coupons.status_active": "Aktiv",
 	"coupons.status_expired": "Abgelaufen",

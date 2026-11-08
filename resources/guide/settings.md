@@ -90,6 +90,12 @@ Extensions are add-ons for a shop, for example a payment provider for the online
 5. To change the settings later, press **Configure** on its row, change the fields and press **Save**.
 6. To switch it off, turn the same switch off.
 
+## How to sort the extensions
+
+1. On **Settings › Extensions**, click a column title: **Extension**, **Status** or **Enabled**.
+2. Click the same title again to sort the other way.
+3. Click it a third time to go back to the normal order.
+
 ## Where an extension's own guide is
 
 An extension can bring its own guide. It is a topic of this guide, named like the extension (for example `restaurant`).

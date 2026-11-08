@@ -94,7 +94,10 @@ The cards are hidden while the shop has no codes.
 ### The list
 
 - The list is newest first.
-- A click on the **Used** header sorts it by times used, most first (`?sort=used`). Click again for newest first.
+- Every column sorts (`?sort=&dir=`, `COUPON_SORTS`): `code`, `discount`, `conditions` (the minimum order), `valid` (the end day; no end goes last), `used`, `status`. A click on a column title sorts by it: low to high, then high to low, then back to the normal order.
+  - `discount` sorts by the type first, then the value: a percent and an amount are not comparable.
+  - `status` ranks Active, Scheduled, Used up, Expired, Off, with the shop's "today".
+  - The REST API keeps its one sort: `?sort=used` = most used first.
 - Each row shows the discount in words, the conditions, the validity, and **used / limit** with the money it took off in total.
 - Each row has a status: Active / Scheduled / Expired / Used up / Off.
 - The status uses today on the shop's clock (`shops.timezone`), the same as the checkout. Not the browser's clock.

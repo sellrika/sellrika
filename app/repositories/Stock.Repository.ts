@@ -11,7 +11,7 @@ import type {
 import { parseJson } from "@helpers/json";
 import { catalogChanged } from "@helpers/catalogVersion";
 import { TtlCache } from "@helpers/TtlCache";
-import { LOW_STOCK_CACHE_MS } from "@constants/Stock.Constant";
+import { LOW_STOCK_CACHE_MS, type StockSort } from "@constants/Stock.Constant";
 
 /** One change of a unit's stock. */
 export type Move = {
@@ -184,6 +184,7 @@ export class StockRepository {
 	 * @param q Matches product/variant name or barcode ("" = no filter).
 	 * @param page 1-based page number.
 	 * @param perPage Rows per page.
+	 * @param sort A column and direction, or null = by product name.
 	 * @returns A page of stock units.
 	 */
 	async pageForShop(
@@ -192,6 +193,7 @@ export class StockRepository {
 		q: string,
 		page: number,
 		perPage: number,
+		sort: StockSort | null = null,
 	) {
 		const like = `%${q.toLowerCase()}%`;
 		// one row per unit; variants inherit the product's threshold
@@ -204,9 +206,26 @@ export class StockRepository {
       and (${q} = '' or lower(u.name) like ${like} or lower(coalesce(u.variant_name, '')) like ${like} or lower(coalesce(u.barcode, '')) like ${like})`;
 		const [{ n }] = await sql`select count(*) as n from (${units}) u ${where}`;
 		const rows: StockItemRow[] =
-			await sql`select * from (${units}) u ${where} order by u.sort_name, u.product_id, u.sort_pos, u.variant_id ${Paginate.limit(page, perPage)}`;
+			await sql`select * from (${units}) u ${where} order by ${this.#sortBy(sort)} u.sort_name, u.product_id, u.sort_pos, u.variant_id ${Paginate.limit(page, perPage)}`;
 		const items = rows.map((r) => this.#item(r));
 		return Paginate.of(items, Number(n), page, perPage);
+	}
+
+	/**
+	 * The ORDER BY start for a sort of the /stock list.
+	 * It sorts over the `u` subquery of units.
+	 * Only fixed SQL from this list is used, never the request's text.
+	 * @param sort The column and direction, or none.
+	 * @returns A fragment ending in a comma, or an empty one.
+	 */
+	#sortBy(sort: StockSort | null) {
+		if (!sort) return sql``;
+		const value = {
+			item: sql`lower(u.name)`,
+			in_stock: sql`u.stock`,
+			alert_at: sql`u.low_stock_at`,
+		}[sort.by];
+		return Db.nullsLast(value, sort.dir);
 	}
 
 	/**

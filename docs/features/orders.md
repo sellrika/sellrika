@@ -200,6 +200,8 @@ What cannot be removed:
 
 `GET /orders`, for every role. Paged, newest first.
 
+- `?sort=&dir=`: `sort` is one of `ORDER_SORTS`: `order` (the id), `items` (pieces), `customer` (name), `payment` (the total), `status`, `date`. A click on a column title sorts by it: low to high, then high to low, then back to the normal order. Orders with no customer always go last. Clear filters keeps the sort.
+
 ### Filters
 
 All filters run on the server.

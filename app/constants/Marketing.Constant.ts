@@ -1,3 +1,4 @@
+import type { ListSort } from "@xcore/http/Paginate";
 import { DAY_MS } from "@constants/Time.Constant";
 
 /**
@@ -72,3 +73,15 @@ export const REMINDER_COUNT_KEY = "reminders";
  * (`users.campaign_email_limit`, on `/owners/:id`).
  */
 export const CAMPAIGN_EMAILS_PER_MONTH = 1000;
+
+/** The columns the campaign list on /marketing can be sorted by (`?sort=&dir=`). */
+export const CAMPAIGN_SORTS = [
+	"subject",
+	"status",
+	"recipients",
+	"sent",
+	"date",
+] as const;
+
+/** A sort of the campaign list: the column and the direction. */
+export type CampaignSort = ListSort<(typeof CAMPAIGN_SORTS)[number]>;

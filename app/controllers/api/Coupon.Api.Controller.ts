@@ -32,9 +32,11 @@ export class CouponApiController extends ApiController<object> {
 			await this.coupons.page(
 				ctx(req).shop.id,
 				f.q,
-				f.sort,
+				// the API keeps its one sort: `used` = most used first
+				f.sort === "used" ? { by: "used", dir: "desc" } : null,
 				f.page,
 				f.per_page,
+				ctx(req).shop.timezone,
 			),
 		);
 	}

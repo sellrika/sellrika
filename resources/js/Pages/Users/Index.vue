@@ -48,7 +48,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import WithTooltip from "@/components/WithTooltip.vue";
 import { useAuth } from "@/lib/auth";
-import { fmtDate, money } from "@/lib/format";
+import { fmtDate, money, toDate } from "@/lib/format";
+import SortButton from "@/components/SortButton.vue";
+import {
+	ariaSort,
+	dirOf,
+	nextSort,
+	sortRows,
+	type Sort,
+	type SortValue,
+} from "@/lib/sort";
 import { t } from "@/lib/i18n";
 import type { Role, SalesStaff, SharedProps, StaffUser } from "@/types";
 
@@ -60,6 +69,62 @@ const props = defineProps<{
 
 const page = usePage<SharedProps>();
 const { user: me, isAdmin } = useAuth();
+
+// both lists are whole, so they sort here, not on the server
+const ROLE_RANK: Record<Role, number> = { admin: 0, manager: 1, cashier: 2 };
+const staffSort = ref<Sort | null>(null);
+const salesSort = ref<Sort | null>(null);
+
+/**
+ * The value a staff row is sorted by.
+ * @param u The staff member.
+ * @param by The column.
+ * @returns The value; the role sorts by its power, admin first.
+ */
+function staffValue(u: StaffUser, by: string): SortValue {
+	if (by === "role") return ROLE_RANK[u.role];
+	if (by === "active") return u.active;
+	if (by === "added") return toDate(u.created_at).getTime();
+	return u.name;
+}
+
+/**
+ * The value a sales staff row is sorted by.
+ * @param s The sales person.
+ * @param by The column.
+ * @returns The value; never paid is empty (last).
+ */
+function salesValue(s: SalesStaff, by: string): SortValue {
+	if (by === "commission") return s.commission;
+	if (by === "due") return s.due;
+	if (by === "last_paid")
+		return s.last_paid_at ? toDate(s.last_paid_at).getTime() : null;
+	if (by === "active") return s.active;
+	return s.name;
+}
+
+const shownStaff = computed(function sortedStaff() {
+	return sortRows(props.users, staffSort.value, staffValue);
+});
+const shownSales = computed(function sortedSales() {
+	return sortRows(props.sales_staff, salesSort.value, salesValue);
+});
+
+/**
+ * A click on a staff column title: sort by it, flip it, or back.
+ * @param by The column.
+ */
+function sortStaff(by: string) {
+	staffSort.value = nextSort(staffSort.value, by);
+}
+
+/**
+ * A click on a sales staff column title: sort by it, flip it, or back.
+ * @param by The column.
+ */
+function sortSales(by: string) {
+	salesSort.value = nextSort(salesSort.value, by);
+}
 const currency = computed(() => page.props.shop?.currency ?? "USD");
 
 // a manager may only give out the cashier role (the server refuses the rest)
@@ -378,15 +443,15 @@ function removeSales(s: SalesStaff) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead class="pl-4">{{ t("users.person") }}</TableHead>
-            <TableHead class="w-24">{{ t("users.role") }}</TableHead>
-            <TableHead class="w-20">{{ t("users.active") }}</TableHead>
-            <TableHead class="hidden w-36 md:table-cell">{{ t("users.added") }}</TableHead>
+            <TableHead class="pl-4" :aria-sort="ariaSort(staffSort, 'name')"><SortButton :label="t('users.person')" :dir="dirOf(staffSort, 'name')" @click="sortStaff('name')" /></TableHead>
+            <TableHead class="w-24" :aria-sort="ariaSort(staffSort, 'role')"><SortButton :label="t('users.role')" :dir="dirOf(staffSort, 'role')" @click="sortStaff('role')" /></TableHead>
+            <TableHead class="w-20" :aria-sort="ariaSort(staffSort, 'active')"><SortButton :label="t('users.active')" :dir="dirOf(staffSort, 'active')" @click="sortStaff('active')" /></TableHead>
+            <TableHead class="hidden w-36 md:table-cell" :aria-sort="ariaSort(staffSort, 'added')"><SortButton :label="t('users.added')" :dir="dirOf(staffSort, 'added')" @click="sortStaff('added')" /></TableHead>
             <TableHead class="pr-4 text-right sm:w-40">{{ t("common.actions") }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow v-for="u in users" :key="u.id">
+          <TableRow v-for="u in shownStaff" :key="u.id">
             <TableCell class="pl-4">
               <div class="flex items-center gap-3" :class="!u.active && 'opacity-60'">
                 <Avatar class="size-8 shrink-0"><AvatarFallback class="text-xs">{{ initials(u.name) }}</AvatarFallback></Avatar>
@@ -456,16 +521,16 @@ function removeSales(s: SalesStaff) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead class="pl-4">{{ t("users.person") }}</TableHead>
-              <TableHead class="w-28">{{ t("users.sales_commission") }}</TableHead>
-              <TableHead class="w-28">{{ t("users.sales_due") }}</TableHead>
-              <TableHead class="hidden w-32 md:table-cell">{{ t("users.sales_last_paid") }}</TableHead>
-              <TableHead class="w-20">{{ t("users.active") }}</TableHead>
+              <TableHead class="pl-4" :aria-sort="ariaSort(salesSort, 'name')"><SortButton :label="t('users.person')" :dir="dirOf(salesSort, 'name')" @click="sortSales('name')" /></TableHead>
+              <TableHead class="w-28" :aria-sort="ariaSort(salesSort, 'commission')"><SortButton :label="t('users.sales_commission')" :dir="dirOf(salesSort, 'commission')" @click="sortSales('commission')" /></TableHead>
+              <TableHead class="w-28" :aria-sort="ariaSort(salesSort, 'due')"><SortButton :label="t('users.sales_due')" :dir="dirOf(salesSort, 'due')" @click="sortSales('due')" /></TableHead>
+              <TableHead class="hidden w-32 md:table-cell" :aria-sort="ariaSort(salesSort, 'last_paid')"><SortButton :label="t('users.sales_last_paid')" :dir="dirOf(salesSort, 'last_paid')" @click="sortSales('last_paid')" /></TableHead>
+              <TableHead class="w-20" :aria-sort="ariaSort(salesSort, 'active')"><SortButton :label="t('users.active')" :dir="dirOf(salesSort, 'active')" @click="sortSales('active')" /></TableHead>
               <TableHead class="pr-4 text-right sm:w-64">{{ t("common.actions") }}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow v-for="s in sales_staff" :key="s.id">
+            <TableRow v-for="s in shownSales" :key="s.id">
               <TableCell class="pl-4">
                 <div class="flex items-center gap-3" :class="!s.active && 'opacity-60'">
                   <Avatar class="size-8 shrink-0"><AvatarFallback class="text-xs">{{ initials(s.name) }}</AvatarFallback></Avatar>

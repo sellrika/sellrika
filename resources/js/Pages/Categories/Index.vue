@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import { toast } from "vue-sonner";
 import { Plus, Pencil, Trash2, Tags } from "@lucide/vue";
@@ -41,10 +41,45 @@ import {
 } from "@/components/ui/alert-dialog";
 import WithTooltip from "@/components/WithTooltip.vue";
 import { t } from "@/lib/i18n";
+import SortButton from "@/components/SortButton.vue";
+import {
+	ariaSort,
+	dirOf,
+	nextSort,
+	sortRows,
+	type Sort,
+	type SortValue,
+} from "@/lib/sort";
 import type { Category, SharedProps } from "@/types";
 
 defineOptions({ layout: AppLayout });
-defineProps<{ categories: Category[] }>();
+const props = defineProps<{ categories: Category[] }>();
+
+// the list is whole, so it sorts here, not on the server
+const sort = ref<Sort | null>(null);
+
+/**
+ * The value a category row is sorted by.
+ * @param c The category.
+ * @param by The column.
+ * @returns The value.
+ */
+function categoryValue(c: Category, by: string): SortValue {
+	if (by === "products") return c.product_count ?? 0;
+	return c.name;
+}
+
+const shown = computed(function sorted() {
+	return sortRows(props.categories, sort.value, categoryValue);
+});
+
+/**
+ * A click on a column title: sort by it, flip it, or back.
+ * @param by The column.
+ */
+function sortBy(by: string) {
+	sort.value = nextSort(sort.value, by);
+}
 
 const page = usePage<SharedProps>();
 
@@ -130,13 +165,13 @@ const remove = (c: Category) =>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead class="pl-4">{{ t("common.name") }}</TableHead>
-            <TableHead class="hidden w-32 sm:table-cell">{{ t("common.products") }}</TableHead>
+            <TableHead class="pl-4" :aria-sort="ariaSort(sort, 'name')"><SortButton :label="t('common.name')" :dir="dirOf(sort, 'name')" @click="sortBy('name')" /></TableHead>
+            <TableHead class="hidden w-32 sm:table-cell" :aria-sort="ariaSort(sort, 'products')"><SortButton :label="t('common.products')" :dir="dirOf(sort, 'products')" @click="sortBy('products')" /></TableHead>
             <TableHead class="pr-4 text-right sm:w-40">{{ t("common.actions") }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow v-for="c in categories" :key="c.id">
+          <TableRow v-for="c in shown" :key="c.id">
             <TableCell class="pl-4 font-medium">
               <span class="inline-flex items-center gap-2">
                 <img v-if="c.image" :src="c.image" alt="" class="size-8 rounded-md border bg-muted object-cover" data-category-image />

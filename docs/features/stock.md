@@ -103,9 +103,11 @@ One place writes ledger rows without `move`:
 
 All of these are for managers and admins.
 
-### `GET /stock?filter=all|low|out&q=&page=`
+### `GET /stock?filter=all|low|out&q=&sort=&dir=&page=`
 
 The list. There is one row per tracked unit.
+
+- `sort` is one of `STOCK_SORTS`: `item`, `in_stock`, `alert_at`. A click on a column title sorts by it: low to high, then high to low, then back to the normal order. The normal order is by product name. Ties keep it.
 
 - Untracked products and packages do not appear.
 - A tracked product with variants shows each variant.

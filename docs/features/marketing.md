@@ -161,6 +161,7 @@ Recipients are existing customers of the shop who have an email.
 - `/marketing` = the campaign list.
   - A **Settings** button, in front of New campaign, opens the abandoned-cart switch and delay in a dialog.
   - The list shows subject, status, recipients, sent / failed and date. A sent campaign's row is greyed.
+  - Every column sorts (`?sort=&dir=`, `CAMPAIGN_SORTS`). A click on a column title sorts by it: low to high, then high to low, then back to the normal order. Recipients are counted from the `customer_ids` JSON text (commas + 1). No send time goes last.
 - `/marketing/campaigns/create` and `/marketing/campaigns/:id` = the form.
   - A draft or scheduled campaign can be edited.
   - A sending or sent one is read-only. It lists its recipients with sent / failed.

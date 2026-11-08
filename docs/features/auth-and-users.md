@@ -573,6 +573,8 @@ A section is deep-linkable with `?section=`. This is the same pattern as `/onlin
 The page `Users/Index.vue` lists the account's owner and staff, without password hashes.
 Each row has `activity` = orders rung up + voids + refunds + stock movements signed by the user.
 
+Both tables on the page (staff and sales staff) sort in the browser, with `sortRows()` in `resources/js/lib/sort.ts`. The page has every row, so there is no server sort. A click on a column title sorts by it: low to high, then high to low, then back to the normal order. The role sorts by its power: admin, manager, cashier. A sales person never paid goes last on **Last paid**.
+
 ### Add staff
 
 - The form fills the password with a random 8-character one (`randomPassword()` in `resources/js/lib/password.ts`).

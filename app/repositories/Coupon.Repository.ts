@@ -44,12 +44,14 @@ const stats = sql`(select count(*) from coupon_redemptions r where r.coupon_id =
 @Service()
 export class CouponRepository {
 	/**
-	 * One page of a shop's codes, newest first; `q` matches the code or the description.
+	 * One page of a shop's codes, newest first unless `sort` says otherwise.
+	 * `q` matches the code or the description.
 	 * @param shopId Owning shop.
 	 * @param q Search text ("" = all).
-	 * @param sort "used" = most used first, else newest first.
+	 * @param sort A column and direction, or null = newest first.
 	 * @param page 1-based page number.
 	 * @param perPage Rows per page.
+	 * @param today The shop's day (YYYY-MM-DD), for the status sort.
 	 * @returns A page of coupons with their usage.
 	 */
 	async pageForShop(
@@ -58,18 +60,53 @@ export class CouponRepository {
 		sort: CouponSort,
 		page: number,
 		perPage: number,
+		today = "",
 	) {
 		const like = `%${q.toLowerCase()}%`;
 		const where = sql`where c.shop_id = ${shopId} and (${q} = '' or lower(c.code) like ${like} or lower(c.description) like ${like})`;
 		const [{ n }] = await sql`select count(*) as n from coupons c ${where}`;
 		const rows: CouponStatsRow[] =
-			await sql`select c.*, ${stats} from coupons c ${where} order by ${sort === "used" ? sql`used_count desc,` : sql``} c.id desc ${Paginate.limit(page, perPage)}`;
+			await sql`select * from (select c.*, ${stats} from coupons c ${where}) x
+        order by ${this.#sortBy(sort, today)} x.id desc ${Paginate.limit(page, perPage)}`;
 		return Paginate.of<CouponWithStats>(
 			rows.map((r) => this.#withStats(r)),
 			Number(n),
 			page,
 			perPage,
 		);
+	}
+
+	/**
+	 * The ORDER BY start for a sort of the coupon list.
+	 * It sorts over the `x` subquery with the usage.
+	 * Only fixed SQL from this list is used, never the request's text.
+	 * Empty values (no end day = forever) always go last.
+	 * @param sort The column and direction, or none.
+	 * @param today The shop's day (YYYY-MM-DD).
+	 * @returns A fragment ending in a comma, or an empty one.
+	 */
+	#sortBy(sort: CouponSort, today: string) {
+		if (!sort) return sql``;
+		const asc = sort.dir === "asc";
+		// a percent and an amount are not comparable: by type first, then the value
+		if (sort.by === "discount")
+			return asc
+				? sql`x.type asc, x.value asc,`
+				: sql`x.type desc, x.value desc,`;
+		const value = {
+			code: sql`lower(x.code)`,
+			conditions: sql`x.min_subtotal`,
+			valid: sql`x.ends_at`,
+			used: sql`x.used_count`,
+			// the badge on the page: active, scheduled, used up, expired, off
+			status: sql`case
+        when x.active <> ${true} then 4
+        when x.starts_at is not null and ${today} < x.starts_at then 1
+        when x.ends_at is not null and ${today} > x.ends_at then 3
+        when x.usage_limit is not null and x.used_count >= x.usage_limit then 2
+        else 0 end`,
+		}[sort.by];
+		return Db.nullsLast(value, sort.dir);
 	}
 
 	/**

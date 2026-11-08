@@ -32,6 +32,8 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import Pager from "@/components/Pager.vue";
+import SortButton from "@/components/SortButton.vue";
+import { ariaSort, dirOf, nextSort, type Sort } from "@/lib/sort";
 import WithTooltip from "@/components/WithTooltip.vue";
 import { fmtDate } from "@/lib/format";
 import { campaignStatus } from "@/lib/marketing";
@@ -53,7 +55,31 @@ const props = defineProps<{
 	store_ready: boolean;
 	/** Why this shop may send no campaigns, null when it may. */
 	campaign_blocked: string | null;
+	/** The sort of the campaign list (`?sort=&dir=`), null = newest first. */
+	filters: { sort: Sort | null };
 }>();
+
+/**
+ * The sort of the list, as the server sent it.
+ * Not a local copy: a save of the settings comes back newest first.
+ */
+const sort = computed(function currentSort() {
+	return props.filters.sort;
+});
+
+/**
+ * A click on a column title: sort by it, flip it, or back to the newest first.
+ * Reloads the list back on page 1.
+ * @param by The column.
+ */
+function sortBy(by: string) {
+	const next = nextSort(sort.value, by);
+	router.get(
+		"/marketing",
+		{ sort: next?.by, dir: next?.dir },
+		{ preserveState: true, preserveScroll: true, replace: true },
+	);
+}
 
 const page = usePage<SharedProps>();
 const timezone = computed(() => page.props.shop?.timezone);
@@ -161,11 +187,11 @@ function open(c: Campaign) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead class="pl-4">{{ t("marketing.subject") }}</TableHead>
-            <TableHead class="w-28">{{ t("common.status") }}</TableHead>
-            <TableHead class="w-28 text-right">{{ t("marketing.recipients") }}</TableHead>
-            <TableHead class="hidden w-32 text-right md:table-cell">{{ t("marketing.sent_failed") }}</TableHead>
-            <TableHead class="hidden w-44 pr-4 sm:table-cell">{{ t("marketing.date") }}</TableHead>
+            <TableHead class="pl-4" :aria-sort="ariaSort(sort, 'subject')"><SortButton :label="t('marketing.subject')" :dir="dirOf(sort, 'subject')" @click="sortBy('subject')" /></TableHead>
+            <TableHead class="w-28" :aria-sort="ariaSort(sort, 'status')"><SortButton :label="t('common.status')" :dir="dirOf(sort, 'status')" @click="sortBy('status')" /></TableHead>
+            <TableHead class="w-28 text-right" :aria-sort="ariaSort(sort, 'recipients')"><SortButton :label="t('marketing.recipients')" :dir="dirOf(sort, 'recipients')" @click="sortBy('recipients')" /></TableHead>
+            <TableHead class="hidden w-32 text-right md:table-cell" :aria-sort="ariaSort(sort, 'sent')"><SortButton :label="t('marketing.sent_failed')" :dir="dirOf(sort, 'sent')" @click="sortBy('sent')" /></TableHead>
+            <TableHead class="hidden w-44 pr-4 sm:table-cell" :aria-sort="ariaSort(sort, 'date')"><SortButton :label="t('marketing.date')" :dir="dirOf(sort, 'date')" @click="sortBy('date')" /></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

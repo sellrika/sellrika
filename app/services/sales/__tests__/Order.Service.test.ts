@@ -1,6 +1,7 @@
 import { tmpdir } from "node:os"; // Bun has no equivalent
 import { afterAll, expect, test } from "bun:test";
 import { Container } from "@xcore/di";
+import type { OrderSort } from "@constants/Order.Constant";
 // Temp SQLite DB (never the real data/pos.db); db.ts reads DB_FILE at import, hence the dynamic imports.
 // The module cache is shared across test files, so never `sql.close()` here.
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
@@ -395,6 +396,23 @@ test("stock adjust + page + summary", async () => {
 		),
 	).toEqual(["S", "M"]);
 	expect((await StockService.page(S, "low", "mug", 1, 20)).total).toBe(0);
+	// sorted by the count: ties keep the name order (S before M)
+	expect(
+		(
+			await StockService.page(S, "all", "", 1, 20, {
+				by: "in_stock",
+				dir: "asc",
+			})
+		).data.map((i) => i.variant_name),
+	).toEqual(["S", "M", null]);
+	expect(
+		(
+			await StockService.page(S, "all", "", 1, 20, {
+				by: "item",
+				dir: "desc",
+			})
+		).data.map((i) => i.name),
+	).toEqual(["Tee", "Tee", "Mug"]);
 	expect(await StockService.summary(S)).toEqual({ tracked: 3, low: 2, out: 2 }); // low_stock_at = 1 → S (0) and M (0)
 });
 
@@ -2084,4 +2102,52 @@ test("open orders move to another customer and join into one: lines, totals and 
 	await OrderService.void(c.id, B, U, { reason: "test" } as any);
 	expect(await stock()).toBe(10);
 	expect((await OrderService.join(c.id, c.id + 1, B, U)).errors).toBeTruthy();
+});
+
+test("orders: the list sorts by a column; no customer goes last", async () => {
+	const f = {
+		q: "",
+		method: "all",
+		status: "all",
+		customerId: null,
+		source: "all",
+		fulfillment: "all",
+	} as const;
+	/**
+	 * Every order of the shop in the order of one sort.
+	 * @param sort The sort.
+	 * @returns The orders.
+	 */
+	async function list(sort: OrderSort) {
+		return (await OrderService.page(S, f, 1, 500, sort)).data;
+	}
+	const byTotal = await list({ by: "payment", dir: "desc" });
+	expect(byTotal.length).toBeGreaterThan(2);
+	for (let i = 1; i < byTotal.length; i++)
+		expect(byTotal[i - 1]!.total).toBeGreaterThanOrEqual(byTotal[i]!.total);
+	const byId = await list({ by: "order", dir: "asc" });
+	for (let i = 1; i < byId.length; i++)
+		expect(byId[i - 1]!.id).toBeLessThan(byId[i]!.id);
+	const byItems = await list({ by: "items", dir: "asc" });
+	/**
+	 * How many pieces an order has.
+	 * @param o The order.
+	 * @returns The sum of its line quantities.
+	 */
+	function pieces(o: (typeof byItems)[number]) {
+		let n = 0;
+		for (const i of o.items) n += i.qty;
+		return n;
+	}
+	for (let i = 1; i < byItems.length; i++)
+		expect(pieces(byItems[i - 1]!)).toBeLessThanOrEqual(pieces(byItems[i]!));
+	// both ways, the orders with no customer come after every named one
+	for (const dir of ["asc", "desc"] as const) {
+		const rows = await list({ by: "customer", dir });
+		const firstEmpty = rows.findIndex(function empty(o) {
+			return !o.customer;
+		});
+		if (firstEmpty >= 0)
+			for (const o of rows.slice(firstEmpty)) expect(o.customer).toBeFalsy();
+	}
 });

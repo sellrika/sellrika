@@ -10,7 +10,7 @@ import { CategoryService } from "@services/catalog/Category.Service";
 import { ProductRepository } from "@repositories/Product.Repository";
 import { CouponInput } from "@validators/Coupon.Validator";
 import { validate, type Errors } from "@validators/validate";
-import type { CouponSort } from "@constants/Coupon.Constant";
+import { COUPON_SORTS } from "@constants/Coupon.Constant";
 
 /**
  * Discount codes of the active shop (admin only).
@@ -24,7 +24,8 @@ export class CouponController {
 	) {}
 
 	/**
-	 * GET /coupons?q=&sort=&page= — the totals and the list.
+	 * GET /coupons?q=&sort=&dir=&page= — the totals and the list.
+	 * `sort` = one of COUPON_SORTS, `dir` = asc | desc.
 	 * It also has the products and categories the scope picker offers.
 	 * @param req The current request.
 	 * @param errors Inertia errors to show (a failed save re-renders
@@ -36,7 +37,7 @@ export class CouponController {
 		const q = new Query(req);
 		const filters = {
 			q: q.text("q"),
-			sort: (q.raw("sort") === "used" ? "used" : "") as CouponSort,
+			sort: Paginate.sort(req, COUPON_SORTS),
 		};
 		const { page, perPage } = Paginate.params(req, "coupons");
 		return inertia(req, "Coupons/Index", {
@@ -46,6 +47,7 @@ export class CouponController {
 				filters.sort,
 				page,
 				perPage,
+				shop.timezone,
 			),
 			summary: await this.coupons.summary(shop.id),
 			filters,

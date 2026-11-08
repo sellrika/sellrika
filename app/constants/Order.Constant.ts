@@ -1,4 +1,5 @@
 /** Discounts and the status filter of the Orders screen. */
+import type { ListSort } from "@xcore/http/Paginate";
 
 /**
  * How a checkout discount is expressed.
@@ -115,3 +116,16 @@ export const ORDER_TOTALS_CACHE_MS = 60_000;
  * the short text an extension gave when it approved the payment.
  */
 export const PAYMENT_REF_MAX = 200;
+
+/** The columns the Orders list can be sorted by (`/orders?sort=&dir=`). */
+export const ORDER_SORTS = [
+	"order",
+	"items",
+	"customer",
+	"payment",
+	"status",
+	"date",
+] as const;
+
+/** A sort of the Orders list: the column and the direction. */
+export type OrderSort = ListSort<(typeof ORDER_SORTS)[number]>;

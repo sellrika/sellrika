@@ -123,6 +123,7 @@ The online store then asks every buyer of this product to write a note. The note
 5. To delete one, click its bin icon, then **Delete**. Its products stay. They only lose this category.
 6. To put a product in categories, open the product and click the category names under **Categories**. A product can be in many categories.
 7. To add categories to many products at once, tick the products on the **Products** list, click **Add to categories**, tick the categories and click **Add**. The products keep the categories they already have.
+8. To sort the list, click **Name** or **Products**. Click again to sort the other way, and a third time to go back to the normal order.
 
 ## How to export and import products (CSV)
 

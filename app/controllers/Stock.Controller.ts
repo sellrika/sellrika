@@ -8,7 +8,7 @@ import { Service } from "@xcore/di";
 import { StockService } from "@services/catalog/Stock.Service";
 import { StockAdjustInput } from "@validators/Stock.Validator";
 import { validate, type Errors } from "@validators/validate";
-import { STOCK_FILTERS } from "@constants/Stock.Constant";
+import { STOCK_FILTERS, STOCK_SORTS } from "@constants/Stock.Constant";
 
 /**
  * Admin-only inventory screen.
@@ -18,7 +18,8 @@ export class StockController {
 	constructor(private stock: StockService) {}
 
 	/**
-	 * GET /stock?filter=&q=&page= — the tracked units of the active shop.
+	 * GET /stock?filter=&q=&sort=&dir=&page= — the tracked units of the active shop.
+	 * `sort` = one of STOCK_SORTS, `dir` = asc | desc.
 	 * @param req The current request.
 	 * @param errors Inertia errors to show on the page.
 	 *   A failed adjustment re-renders through here.
@@ -31,6 +32,7 @@ export class StockController {
 		const filters = {
 			q: q.text("q"),
 			filter: (STOCK_FILTERS.has(f) ? f : "all") as "all" | "low" | "out",
+			sort: Paginate.sort(req, STOCK_SORTS),
 		};
 		const { page, perPage } = Paginate.params(req, "stock");
 		return inertia(req, "Stock/Index", {
@@ -40,6 +42,7 @@ export class StockController {
 				filters.q,
 				page,
 				perPage,
+				filters.sort,
 			),
 			summary: await this.stock.summary(shop.id),
 			filters,

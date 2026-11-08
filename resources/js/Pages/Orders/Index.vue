@@ -35,6 +35,8 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import Pager from "@/components/Pager.vue";
+import SortButton from "@/components/SortButton.vue";
+import { ariaSort, dirOf, nextSort, type Sort } from "@/lib/sort";
 import PaymentState from "@/components/PaymentState.vue";
 import StepsDialog from "@/components/orders/StepsDialog.vue";
 import WithTooltip from "@/components/WithTooltip.vue";
@@ -63,6 +65,7 @@ const props = defineProps<{
 		customer: number | null;
 		source: string;
 		fulfillment: string;
+		sort: Sort | null;
 	};
 }>();
 
@@ -85,6 +88,7 @@ const sales = ref(props.filters.sales ? String(props.filters.sales) : "all");
 const status = ref(props.filters.status);
 const source = ref(props.filters.source);
 const fulfillment = ref(props.filters.fulfillment);
+const sort = ref<Sort | null>(props.filters.sort);
 const filtering = computed(
 	() =>
 		!!props.filters.q ||
@@ -108,6 +112,8 @@ const params = () => ({
 			? fulfillment.value
 			: undefined,
 	customer: props.filters.customer || undefined,
+	sort: sort.value?.by,
+	dir: sort.value?.dir,
 });
 const applyFilters = () =>
 	router.get("/orders", params(), {
@@ -116,7 +122,18 @@ const applyFilters = () =>
 		replace: true,
 	});
 watchDebounced(search, applyFilters, { debounce: 300 });
-watch([method, cashier, sales, status, source, fulfillment], applyFilters);
+watch(
+	[method, cashier, sales, status, source, fulfillment, sort],
+	applyFilters,
+);
+
+/**
+ * A click on a column title: sort by it, flip it, or back to the newest first.
+ * @param by The column.
+ */
+function sortBy(by: string) {
+	sort.value = nextSort(sort.value, by);
+}
 const clearFilters = () => {
 	search.value = "";
 	method.value = "all";
@@ -125,7 +142,12 @@ const clearFilters = () => {
 	status.value = "all";
 	source.value = "all";
 	fulfillment.value = "all";
-	router.get("/orders", {}, { preserveState: true, replace: true });
+	// the sort stays: it is not a filter
+	router.get(
+		"/orders",
+		{ sort: sort.value?.by, dir: sort.value?.dir },
+		{ preserveState: true, replace: true },
+	);
 };
 // page size follows the screen height (header + stats + tabs + table head + pager ≈ 420px around the rows)
 useFitPage("orders", "/orders", 420, () => props.orders.per_page, params);
@@ -263,12 +285,12 @@ const open = (o: Order) => router.visit(`/orders/${o.id}`);
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead class="w-44 pl-4">{{ t("orders.order") }}</TableHead>
-            <TableHead class="hidden min-w-48 md:table-cell">{{ t("orders.items") }}</TableHead>
-            <TableHead class="hidden w-36 xl:table-cell">{{ t("common.customer") }}</TableHead>
-            <TableHead class="w-36">{{ t("orders.payment") }}</TableHead>
-            <TableHead class="hidden w-44 md:table-cell">{{ t("common.status") }}</TableHead>
-            <TableHead class="w-36">{{ t("common.date") }}</TableHead>
+            <TableHead class="w-44 pl-4" :aria-sort="ariaSort(sort, 'order')"><SortButton :label="t('orders.order')" :dir="dirOf(sort, 'order')" @click="sortBy('order')" /></TableHead>
+            <TableHead class="hidden min-w-48 md:table-cell" :aria-sort="ariaSort(sort, 'items')"><SortButton :label="t('orders.items')" :dir="dirOf(sort, 'items')" @click="sortBy('items')" /></TableHead>
+            <TableHead class="hidden w-36 xl:table-cell" :aria-sort="ariaSort(sort, 'customer')"><SortButton :label="t('common.customer')" :dir="dirOf(sort, 'customer')" @click="sortBy('customer')" /></TableHead>
+            <TableHead class="w-36" :aria-sort="ariaSort(sort, 'payment')"><SortButton :label="t('orders.payment')" :dir="dirOf(sort, 'payment')" @click="sortBy('payment')" /></TableHead>
+            <TableHead class="hidden w-44 md:table-cell" :aria-sort="ariaSort(sort, 'status')"><SortButton :label="t('common.status')" :dir="dirOf(sort, 'status')" @click="sortBy('status')" /></TableHead>
+            <TableHead class="w-36" :aria-sort="ariaSort(sort, 'date')"><SortButton :label="t('common.date')" :dir="dirOf(sort, 'date')" @click="sortBy('date')" /></TableHead>
             <TableHead class="w-10 pr-4" />
           </TableRow>
         </TableHeader>

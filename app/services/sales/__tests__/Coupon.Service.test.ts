@@ -1,6 +1,7 @@
 import { tmpdir } from "node:os"; // Bun has no equivalent
 import { expect, test } from "bun:test";
 import { Container } from "@xcore/di";
+import type { CouponSort } from "@constants/Coupon.Constant";
 // Temp SQLite DB (never the real data/pos.db); db.ts reads DB_FILE at import, hence the dynamic imports.
 process.env.DB_FILE = `${tmpdir()}/pos-test-${process.pid}.db`;
 const { Db, sql } = await import("@xcore/database/Database");
@@ -248,7 +249,7 @@ test("resolve: total and per-customer limits count redemptions; a void gives the
 	expect(await apply("LIMITED", { email: "cat@example.com" })).toMatchObject({
 		discount: 250,
 	});
-	const list = await CouponService.page(S, "limited", "", 1, 10);
+	const list = await CouponService.page(S, "limited", null, 1, 10);
 	expect(list.data[0]).toMatchObject({
 		code: "LIMITED",
 		used_count: 1,
@@ -399,9 +400,9 @@ test("summary: uses, discount given and order totals over every code of the shop
 		99998,
 		"c@example.com",
 	);
-	const codes = async (sort: "" | "used") =>
+	const codes = async (sort: CouponSort) =>
 		(await CouponService.page(own.id, "", sort, 1, 10)).data.map((c) => c.code);
-	expect(await codes("")).toEqual(["SUMB", "SUMA"]); // newest first
+	expect(await codes(null)).toEqual(["SUMB", "SUMA"]); // newest first
 	await CouponService.redeem(
 		{ id: a.id, saved: 1 },
 		own.id,
@@ -414,7 +415,9 @@ test("summary: uses, discount given and order totals over every code of the shop
 		99996,
 		"e@example.com",
 	);
-	expect(await codes("used")).toEqual(["SUMA", "SUMB"]); // 3 uses before 2
+	expect(await codes({ by: "used", dir: "desc" })).toEqual(["SUMA", "SUMB"]); // 3 uses before 2
+	expect(await codes({ by: "used", dir: "asc" })).toEqual(["SUMB", "SUMA"]);
+	expect(await codes({ by: "code", dir: "asc" })).toEqual(["SUMA", "SUMB"]);
 });
 
 test("remove: the coupon and its usage rows go; a code can then be created again", async () => {

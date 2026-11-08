@@ -228,7 +228,6 @@ export const en = {
 	"coupons.search_placeholder": "Search code or description",
 	"coupons.show_title": "{code} · Coupons",
 	"coupons.some_products": "Specific products or categories",
-	"coupons.sort_used": "Most used first",
 	"coupons.starts_on": "Starts on",
 	"coupons.status_active": "Active",
 	"coupons.status_expired": "Expired",

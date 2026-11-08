@@ -90,6 +90,12 @@ To see every order that used one code:
 3. Below is the list of orders: date, order, customer, **Order total** and the discount.
 4. Press an order to open it.
 
+## How to sort the list
+
+1. Click a column title: **Code**, **Discount**, **Conditions**, **Valid**, **Used** or **Status**.
+2. Click the same title again to sort the other way.
+3. Click it a third time to go back to the normal order, newest first.
+
 ## How a buyer uses a code online
 
 1. The buyer goes to the checkout of your online store.

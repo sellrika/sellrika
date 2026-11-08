@@ -22,6 +22,7 @@ import {
 	ABANDONED_CART_DELAYS,
 	CAMPAIGN_MAX_PRODUCTS,
 	CAMPAIGN_MAX_RECIPIENTS,
+	CAMPAIGN_SORTS,
 } from "@constants/Marketing.Constant";
 
 /**
@@ -38,7 +39,8 @@ export class MarketingController {
 	) {}
 
 	/**
-	 * GET /marketing?page= — the campaigns and the abandoned-cart settings.
+	 * GET /marketing?sort=&dir=&page= — the campaigns and the abandoned-cart settings.
+	 * `sort` = one of CAMPAIGN_SORTS, `dir` = asc | desc.
 	 * @param req The current request.
 	 * @param errors Errors of the abandoned-cart form, when it failed.
 	 * @returns The Marketing/Index page.
@@ -46,8 +48,10 @@ export class MarketingController {
 	async index(req: Request, errors?: Errors) {
 		const { shop } = ctx(req);
 		const { page, perPage } = Paginate.params(req, "campaigns");
+		const sort = Paginate.sort(req, CAMPAIGN_SORTS);
 		return inertia(req, "Marketing/Index", {
-			campaigns: await this.campaigns.page(shop.id, page, perPage),
+			campaigns: await this.campaigns.page(shop.id, page, perPage, sort),
+			filters: { sort },
 			abandoned: await this.marketing.settings(shop.id),
 			delays: ABANDONED_CART_DELAYS,
 			mail_ready: await this.mail.ready(shop.id),
