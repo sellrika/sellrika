@@ -530,6 +530,9 @@ Rules:
 - It never breaks a page. With no bundle, or a render that throws, there is a log line, and the browser renders the page as before.
 - Production only (`NODE_ENV=production`).
   In `bun run dev` Vite serves the source, so a built bundle would be older than the page.
+- The HTML is cached, keyed by the page data as JSON (`SSR_CACHE_SIZE` pages, oldest out first).
+  The same data always gives the same HTML, so a guest never sees another person's page.
+  A render makes a lot of garbage, and Bun keeps that memory, so a hit saves memory too.
 - One render at a time. `render()` queues.
   Inertia keeps the current page in one place per process. Two renders at once could mix their language or user.
 - A server-rendered page must not touch `window`, `document` or `localStorage` while it renders.
