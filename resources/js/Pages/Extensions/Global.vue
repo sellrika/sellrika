@@ -17,7 +17,6 @@ import {
 import AppLayout from "@/layouts/AppLayout.vue";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -234,6 +233,17 @@ const updating = ref<PlatformExtensionRow | null>(null);
 const installing = ref(false);
 
 /**
+ * Close the update dialog, unless it is installing.
+ * Its last refusal goes with it.
+ * @param open The dialog's new state.
+ */
+function onUpdateOpen(open: boolean) {
+	if (open || installing.value) return;
+	updating.value = null;
+	delete rowErrors.value.update;
+}
+
+/**
  * Install the newer version of the extension in the dialog.
  * Its settings and switches stay.
  */
@@ -252,9 +262,10 @@ function installUpdate() {
 			},
 			onFinish() {
 				installing.value = false;
-				updating.value = null;
 			},
+			// a refusal keeps the dialog open and shows its reason there
 			onSuccess() {
+				updating.value = null;
 				rowErrors.value = {};
 				toast.success(
 					t("global_extensions.updated_toast", { name: e.name, version }),
@@ -336,8 +347,8 @@ function remove(e: PlatformExtensionRow) {
 
     <!-- one row per extension of the platform; no settings here, each shop configures its own -->
     <Card class="py-0">
-      <CardHeader v-if="rowErrors.key || rowErrors.update" class="pt-4">
-        <p class="text-sm text-destructive" role="alert">{{ rowErrors.key || rowErrors.update }}</p>
+      <CardHeader v-if="rowErrors.key" class="pt-4">
+        <p class="text-sm text-destructive" role="alert">{{ rowErrors.key }}</p>
       </CardHeader>
       <CardContent class="px-0">
         <Table>
@@ -387,16 +398,18 @@ function remove(e: PlatformExtensionRow) {
     </Card>
 
     <!-- Update: asked first; the new zip replaces the installed one, its settings stay -->
-    <AlertDialog :open="!!updating" @update:open="(o: boolean) => !o && !installing && (updating = null)">
+    <AlertDialog :open="!!updating" @update:open="onUpdateOpen">
       <AlertDialogContent v-if="updating?.update">
         <AlertDialogHeader>
           <AlertDialogTitle>{{ t("global_extensions.update_title", { name: updating.name, version: updating.update.version }) }}</AlertDialogTitle>
           <AlertDialogDescription>{{ t("global_extensions.update_text", { from: updating.version, version: updating.update.version }) }}</AlertDialogDescription>
         </AlertDialogHeader>
         <p v-if="updating.update.notes" class="text-sm whitespace-pre-line">{{ updating.update.notes }}</p>
+        <p v-if="rowErrors.update" class="text-sm text-destructive" role="alert">{{ rowErrors.update }}</p>
         <AlertDialogFooter>
           <AlertDialogCancel :disabled="installing">{{ t("common.cancel") }}</AlertDialogCancel>
-          <AlertDialogAction :disabled="installing" @click.prevent="installUpdate"><LoaderCircle v-if="installing" class="animate-spin" /> {{ t("global_extensions.update") }}</AlertDialogAction>
+          <!-- a plain Button: AlertDialogAction closes the dialog on click, before the answer -->
+          <Button type="button" :disabled="installing" @click="installUpdate"><LoaderCircle v-if="installing" class="animate-spin" /> {{ t("global_extensions.update") }}</Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
