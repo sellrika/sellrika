@@ -412,11 +412,15 @@ export class ExtensionCatalog {
 
 	/**
 	 * Does the running app fit an extension's `app_version`?
+	 * A prerelease app (`1.2.0-beta`) counts as its release (`1.2.0`):
+	 * `Bun.semver.satisfies` matches a prerelease only to a range that names one.
 	 * @param range The manifest's range, or none.
 	 * @returns True when the app's version is in it, or there is none.
 	 */
 	fitsApp(range: string | undefined): boolean {
-		return !range || Bun.semver.satisfies(app.version, range);
+		if (!range) return true;
+		const release = app.version.split("-")[0] ?? app.version;
+		return Bun.semver.satisfies(release, range);
 	}
 
 	/**

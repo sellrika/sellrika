@@ -3025,5 +3025,16 @@ test("app_version: an upload must name the app versions it runs on, and fit this
 		app_version: `>=${app.version} <999.0.0`,
 		fits_app: true,
 	});
+	// a prerelease app counts as its release: 1.2.0-beta fits >=1.2.0
+	const real = app.version;
+	try {
+		app.version = "1.2.0-beta";
+		expect(await uploadWith(">=1.2.0")).toEqual({ key: "versioned" });
+		expect((await uploadWith(">=1.3.0")).errors?.file).toContain(
+			"needs app version >=1.3.0",
+		);
+	} finally {
+		app.version = real;
+	}
 	expect(await ExtensionService.remove("versioned")).toEqual({});
 });
