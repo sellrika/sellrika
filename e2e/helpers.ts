@@ -67,7 +67,12 @@ export async function addProductImage(page: Page) {
 	await expect(page.getByAltText("Cover image")).toBeVisible();
 }
 
-/** `extensions/<name>` zipped as-is (the server runs .ts too; `bun run build:extension` is the normal way), with an optional manifest tweak. */
+/**
+ * `extensions/<name>` zipped as-is, with an optional manifest tweak.
+ * The server runs .ts too; `bun run build:extension` is the normal way.
+ * A built-in manifest has no `app_version` (it ships with the app),
+ * but an upload must have one, so the zip gets `>=0.0.0`.
+ */
 export function packExtension(
 	name: string,
 	patch: (m: Record<string, unknown>) => Record<string, unknown> = (m) => m,
@@ -82,7 +87,10 @@ export function packExtension(
 			rel === "extension.json"
 				? new TextEncoder().encode(
 						JSON.stringify(
-							patch(JSON.parse(readFileSync(join(dir, rel), "utf8"))),
+							patch({
+								app_version: ">=0.0.0",
+								...JSON.parse(readFileSync(join(dir, rel), "utf8")),
+							}),
 						),
 					)
 				: new Uint8Array(readFileSync(join(dir, rel)));

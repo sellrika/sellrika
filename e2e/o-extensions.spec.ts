@@ -70,9 +70,27 @@ test("add: a bad zip and a built-in key are refused; an uploaded one can be dele
 	await expect(page.getByRole("alert")).toHaveText(
 		"webhook is built in — its updates ship with the app",
 	);
+	// an upload must say which app versions it runs on, and fit this app
+	await uploadZip(
+		pack("webhook", (m) => ({ ...m, key: "my-hook", app_version: undefined })),
+	);
+	await expect(page.getByRole("alert")).toContainText(
+		'add "app_version" to extension.json',
+	);
+	await uploadZip(
+		pack("webhook", (m) => ({
+			...m,
+			key: "my-hook",
+			app_version: ">=999.0.0",
+		})),
+	);
+	await expect(page.getByRole("alert")).toContainText(
+		"This extension needs app version >=999.0.0.",
+	);
 	await uploadZip(myHook());
 	await expect(page.getByText("Extension added").last()).toBeVisible();
 	await expect(row("My Hook").getByText("Uploaded")).toBeVisible();
+	await expect(row("My Hook").getByText("Needs app >=0.0.0")).toBeVisible();
 	await expect(
 		row("My Hook").getByLabel("My Hook enabled for all shops"),
 	).not.toBeChecked(); // new = off

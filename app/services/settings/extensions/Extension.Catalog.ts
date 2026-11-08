@@ -1,5 +1,6 @@
 import { ExtensionFiles } from "@xcore/extensions/ExtensionFiles";
 import { ExtensionLoader } from "@xcore/extensions/ExtensionLoader";
+import { app } from "@config/app";
 import { Outbound } from "@xcore/http/Outbound";
 import { t } from "@xcore/i18n/I18n";
 import { Service } from "@xcore/di";
@@ -259,6 +260,7 @@ export class ExtensionCatalog {
 	 * Upload a zip to the platform catalog (the platform admin).
 	 * It is unpacked into a fresh versioned folder.
 	 * Its manifest and entry module are checked, older versions dropped.
+	 * Its `app_version` must be set and must fit the running app.
 	 * A new key starts off for all shops; a re-upload keeps its switch.
 	 * A key that is built in is refused: its updates ship with the app.
 	 * @param file The zip as uploaded.
@@ -295,6 +297,8 @@ export class ExtensionCatalog {
 			return {
 				errors: { file: t("server.ext_builtin", { key: manifest.key }) },
 			};
+		const misfit = this.#appVersionProblem(manifest.app_version);
+		if (misfit) return { errors: { file: misfit } };
 		const home = `${this.#platformDir()}/${manifest.key}`;
 		const dir = `${home}/${Date.now()}`;
 		await ExtensionFiles.write(dir, files);
@@ -398,10 +402,39 @@ export class ExtensionCatalog {
 			description: manifest.description,
 			icon: logoUrl(ext),
 			builtin: builtin.has(ext.key),
+			app_version: ext.app_version ?? null,
+			fits_app: this.fitsApp(ext.app_version),
 			enabled: rule?.enabled ?? false,
 			// a user deleted since drops off the list
 			users: (rule?.users ?? []).flatMap((id) => emails.get(id) ?? []),
 		};
+	}
+
+	/**
+	 * Does the running app fit an extension's `app_version`?
+	 * A prerelease app (`1.2.0-beta`) counts as its release (`1.2.0`):
+	 * `Bun.semver.satisfies` matches a prerelease only to a range that names one.
+	 * @param range The manifest's range, or none.
+	 * @returns True when the app's version is in it, or there is none.
+	 */
+	fitsApp(range: string | undefined): boolean {
+		if (!range) return true;
+		const release = app.version.split("-")[0] ?? app.version;
+		return Bun.semver.satisfies(release, range);
+	}
+
+	/**
+	 * Why an upload's `app_version` is refused.
+	 * @param range The manifest's range, or none.
+	 * @returns The message for the admin, or null when it fits.
+	 */
+	#appVersionProblem(range: string | undefined): string | null {
+		if (!range) return t("server.ext_app_version_missing");
+		if (this.fitsApp(range)) return null;
+		return t("server.ext_app_version_misfit", {
+			range,
+			version: app.version,
+		});
 	}
 
 	/**

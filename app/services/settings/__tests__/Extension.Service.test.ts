@@ -47,7 +47,9 @@ const { DailyReportService: _DailyReportService } = await import(
 	"@services/sales/DailyReport.Service"
 );
 const DailyReportService = Container.get(_DailyReportService);
-const { zip } = await import("@helpers/zip");
+const { extensionZip: zip, ANY_APP_VERSION } = await import(
+	"@services/settings/__tests__/extensionZip"
+);
 const { ExtensionFiles } = await import("@xcore/extensions/ExtensionFiles");
 const { emptyCatalog } = await import("./emptyCatalog");
 
@@ -149,6 +151,7 @@ const manifest = (over: Record<string, unknown> = {}) =>
 		key: "greeter",
 		name: "Greeter",
 		version: "1.0.0",
+		app_version: ANY_APP_VERSION,
 		description: "Says hi",
 		fields: [{ name: "greeting", label: "Greeting", required: true }],
 		...over,
@@ -2982,4 +2985,56 @@ test("loyalty example: a paid order with a customer earns points once, the goal 
 	await sql`delete from extension_rows where shop_id = ${S} and ext_key = 'loyalty'`;
 	await sql`update shops set owner_id = ${shop.owner_id} where id = ${S}`;
 	await uninstall("loyalty");
+});
+
+test("app_version: an upload must name the app versions it runs on, and fit this app", async () => {
+	const { zip: rawZip } = await import("@helpers/zip");
+	const { app } = await import("@config/app");
+	/**
+	 * Upload a one-file extension with this `app_version`.
+	 * @param range The range, or undefined for none.
+	 * @returns The upload's answer.
+	 */
+	async function uploadWith(range: string | undefined) {
+		const json = JSON.parse(manifest({ key: "versioned", fields: [] }));
+		if (range === undefined) delete json.app_version;
+		else json.app_version = range;
+		return ExtensionService.upload(
+			asFile(
+				rawZip({
+					"extension.json": JSON.stringify(json),
+					"index.js": "export default {};",
+				}),
+			),
+		);
+	}
+	expect((await uploadWith(undefined)).errors?.file).toContain("app_version");
+	expect((await uploadWith("garbage")).errors?.file).toContain(
+		"app_version must be a version range",
+	);
+	expect((await uploadWith(">=999.0.0")).errors?.file).toBe(
+		`This extension needs app version >=999.0.0. This app is ${app.version}.`,
+	);
+	expect(await uploadWith(`>=${app.version} <999.0.0`)).toEqual({
+		key: "versioned",
+	});
+	const row = (await ExtensionService.platformList()).find(
+		(e) => e.key === "versioned",
+	);
+	expect(row).toMatchObject({
+		app_version: `>=${app.version} <999.0.0`,
+		fits_app: true,
+	});
+	// a prerelease app counts as its release: 1.2.0-beta fits >=1.2.0
+	const real = app.version;
+	try {
+		app.version = "1.2.0-beta";
+		expect(await uploadWith(">=1.2.0")).toEqual({ key: "versioned" });
+		expect((await uploadWith(">=1.3.0")).errors?.file).toContain(
+			"needs app version >=1.3.0",
+		);
+	} finally {
+		app.version = real;
+	}
+	expect(await ExtensionService.remove("versioned")).toEqual({});
 });

@@ -8,6 +8,8 @@
  * `bun run make:extension my-thing --custom` writes it into
  * custom-extensions/my-thing/ instead, the folder of our own extensions.
  */
+import { app } from "@config/app";
+
 const custom = process.argv.includes("--custom");
 const folder = custom ? "custom-extensions" : "extensions";
 const key = process.argv[2];
@@ -30,6 +32,12 @@ await Bun.write(
 			 */
 			name: "name",
 			version: "1.0.0",
+			/**
+			 * The app versions it runs on. Only a custom one has it:
+			 * it ships as a zip, and an upload must say it.
+			 * A built-in one ships with the app.
+			 */
+			...(custom && { app_version: `>=${app.version}` }),
 			description: "description",
 			main: "index.ts",
 			fields: [

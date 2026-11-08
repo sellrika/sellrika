@@ -116,6 +116,15 @@ export type PlatformExtensionRow = {
 	 */
 	builtin: boolean;
 	/**
+	 * The app versions it runs on (manifest `app_version`), or null = not said.
+	 */
+	app_version: string | null;
+	/**
+	 * The running app is in `app_version` (true when there is none).
+	 * False after an app update the extension does not fit.
+	 */
+	fits_app: boolean;
+	/**
 	 * The "Enabled for all shops" switch.
 	 */
 	enabled: boolean;

@@ -386,6 +386,7 @@ export const en = {
 	"global_extensions.added_toast": "Extension added",
 	"global_extensions.all_users": "All users",
 	"global_extensions.available_to": "Available to",
+	"global_extensions.app_version": "Needs app {range}",
 	"global_extensions.builtin": "Built in",
 	"global_extensions.delete_aria": "Delete {name}",
 	"global_extensions.delete_confirm":
@@ -395,6 +396,7 @@ export const en = {
 	"global_extensions.empty": "No extensions yet. Press Add extension.",
 	"global_extensions.enabled_all": "Enabled for all shops",
 	"global_extensions.enabled_all_aria": "{name} enabled for all shops",
+	"global_extensions.misfit": "Doesn't fit this app version",
 	"global_extensions.no_user_found": "No user found — keep typing.",
 	"global_extensions.off_toast": "{name} is off for all shops",
 	"global_extensions.on_toast": "{name} is on for all shops",
@@ -1906,6 +1908,10 @@ export const en = {
 	"server.csv_too_many_rows": "Too many rows (max {max})",
 	"server.csv_variant_name": "Variant {n}",
 	"server.customer_phone_taken": "Phone already used by “{name}”",
+	"server.ext_app_version_misfit":
+		"This extension needs app version {range}. This app is {version}.",
+	"server.ext_app_version_missing":
+		'The extension must say which app versions it runs on: add "app_version" to extension.json, like ">=1.2.0"',
 	"server.ext_builtin": "{key} is built in — its updates ship with the app",
 	"server.ext_builtin_delete": "A built-in extension can't be deleted",
 	"server.ext_download_failed": "Could not download it: {reason}",

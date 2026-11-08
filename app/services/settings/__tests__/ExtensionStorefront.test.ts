@@ -32,7 +32,9 @@ const { ExtensionManifest } = await import("@validators/Extension.Validator");
 const { apiDocs } = await import("@xcore/api/OpenApi");
 const { apiRoutes } = await import("@routes/api");
 if (!apiDocs.length) apiRoutes();
-const { zip } = await import("@helpers/zip");
+const { extensionZip: zip } = await import(
+	"@services/settings/__tests__/extensionZip"
+);
 
 /*
  * The pages an extension brings to a shop's online store (manifest

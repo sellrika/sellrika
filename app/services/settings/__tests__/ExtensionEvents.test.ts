@@ -41,7 +41,9 @@ const { DailyReportService: _DailyReportService } = await import(
 );
 const DailyReportService = Container.get(_DailyReportService);
 const { EXTENSION_EVENTS } = await import("@constants/Extension.Constant");
-const { zip } = await import("@helpers/zip");
+const { extensionZip: zip } = await import(
+	"@services/settings/__tests__/extensionZip"
+);
 const { ExtensionFiles } = await import("@xcore/extensions/ExtensionFiles");
 const { emptyCatalog } = await import("./emptyCatalog");
 

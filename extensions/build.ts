@@ -17,6 +17,7 @@
  * reads.
  */
 import { zip } from "../app/helpers/zip";
+import pkg from "../package.json";
 import JSX_RUNTIME from "../app/xcore/extensions/jsx-runtime.txt";
 
 /**
@@ -26,6 +27,9 @@ const MANIFEST = "extension.json";
 
 /**
  * Bundle one extension folder into an upload-ready zip.
+ * An upload must say which app versions it runs on (`app_version`).
+ * A built-in folder has none (it ships with the app), so its zip gets
+ * `>=` this app's version. A folder that has one keeps it.
  * @param dir The extension folder (holds `extension.json`).
  * @returns The zip bytes and the file name to save them as.
  */
@@ -33,6 +37,13 @@ export async function buildExtension(
 	dir: string,
 ): Promise<{ name: string; bytes: Uint8Array }> {
 	const { manifest, files } = await bundleExtension(dir);
+	const written = JSON.parse(new TextDecoder().decode(files[MANIFEST]));
+	if (!written.app_version) {
+		written.app_version = `>=${pkg.version}`;
+		files[MANIFEST] = new TextEncoder().encode(
+			`${JSON.stringify(written, null, 2)}\n`,
+		);
+	}
 	return {
 		name: `${manifest.key}-${manifest.version ?? "1.0.0"}.zip`,
 		bytes: zip(files),

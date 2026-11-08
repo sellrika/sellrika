@@ -368,6 +368,7 @@ export const th = {
 	"global_extensions.added_toast": "เพิ่มส่วนขยายแล้ว",
 	"global_extensions.all_users": "ผู้ใช้ทั้งหมด",
 	"global_extensions.available_to": "ใช้ได้สำหรับ",
+	"global_extensions.app_version": "ต้องใช้แอป {range}",
 	"global_extensions.builtin": "มีในระบบ",
 	"global_extensions.delete_aria": "ลบ {name}",
 	"global_extensions.delete_confirm":
@@ -377,6 +378,7 @@ export const th = {
 	"global_extensions.empty": "ยังไม่มีส่วนขยาย กด เพิ่มส่วนขยาย",
 	"global_extensions.enabled_all": "เปิดใช้งานสำหรับทุกร้าน",
 	"global_extensions.enabled_all_aria": "เปิดใช้งาน {name} สำหรับทุกร้าน",
+	"global_extensions.misfit": "ไม่รองรับแอปเวอร์ชันนี้",
 	"global_extensions.no_user_found": "ไม่พบผู้ใช้ — พิมพ์ต่อ",
 	"global_extensions.off_toast": "ปิด {name} สำหรับทุกร้านแล้ว",
 	"global_extensions.on_toast": "เปิด {name} สำหรับทุกร้านแล้ว",
@@ -1820,6 +1822,10 @@ export const th = {
 	"server.csv_too_many_rows": "จำนวนแถวมากเกินไป (สูงสุด {max})",
 	"server.csv_variant_name": "ตัวเลือก {n}",
 	"server.customer_phone_taken": "เบอร์โทรนี้ถูกใช้โดย “{name}” แล้ว",
+	"server.ext_app_version_misfit":
+		"ส่วนขยายนี้ต้องใช้แอปเวอร์ชัน {range} แอปนี้คือเวอร์ชัน {version}",
+	"server.ext_app_version_missing":
+		'ส่วนขยายต้องระบุเวอร์ชันแอปที่รองรับ: เพิ่ม "app_version" ใน extension.json เช่น ">=1.2.0"',
 	"server.ext_builtin": "{key} เป็นส่วนขยายในตัว — อัปเดตมาพร้อมกับแอป",
 	"server.ext_builtin_delete": "ลบส่วนขยายในตัวไม่ได้",
 	"server.ext_download_failed": "ดาวน์โหลดไม่สำเร็จ: {reason}",

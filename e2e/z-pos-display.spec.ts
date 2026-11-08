@@ -21,6 +21,8 @@ const EXT = Buffer.from(
 			key: "second-screen",
 			name: "Second Screen",
 			version: "1.0.0",
+			// an upload must say which app versions it runs on
+			app_version: ">=0.0.0",
 			description: "Shows the sale",
 			slots: [{ name: "pos.display", script: "assets/display.js" }],
 		}),
