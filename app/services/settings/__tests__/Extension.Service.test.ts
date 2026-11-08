@@ -3038,3 +3038,106 @@ test("app_version: an upload must name the app versions it runs on, and fit this
 	}
 	expect(await ExtensionService.remove("versioned")).toEqual({});
 });
+
+test("updates: an uploaded extension with update_url gets a newer version; the zip must match; off with UPDATE_CHECK=0", async () => {
+	const { zip: rawZip } = await import("@helpers/zip");
+	const { app } = await import("@config/app");
+	const { ExtensionUpdates } = await import(
+		"@services/settings/extensions/Extension.Updates"
+	);
+	const updates = Container.get(ExtensionUpdates);
+	// a public IP: the link check needs no DNS
+	const UPDATE_URL = "https://1.1.1.1/upd.json";
+	/**
+	 * The zip of the test extension at one version.
+	 * @param version Its version.
+	 * @param key Its key.
+	 * @returns The zip's bytes.
+	 */
+	function zipOf(version: string, key = "upd") {
+		return rawZip({
+			"extension.json": manifest({
+				key,
+				name: "Upd",
+				version,
+				fields: [],
+				update_url: UPDATE_URL,
+			}),
+			"index.js": "export default {};",
+		});
+	}
+	let answer: Record<string, unknown> = {};
+	let zipVersion = "1.1.0";
+	const was = globalThis.fetch;
+	const wasCheck = app.updateCheck;
+	globalThis.fetch = (async (url: URL | string) =>
+		String(url).endsWith(".json")
+			? Response.json(answer)
+			: new Response(zipOf(zipVersion).slice().buffer as ArrayBuffer)) as any;
+	/**
+	 * The test extension's row on Global Extensions.
+	 * @returns The row.
+	 */
+	async function row() {
+		for (const e of await ExtensionService.platformList())
+			if (e.key === "upd") return e;
+		throw new Error("no upd row");
+	}
+	try {
+		app.updateCheck = true;
+		answer = {
+			version: "1.1.0",
+			url: "https://1.1.1.1/upd-1.1.0.zip",
+			notes: "Faster",
+		};
+		expect(await ExtensionService.upload(asFile(zipOf("1.0.0")))).toEqual({
+			key: "upd",
+		});
+		// the upload asks its update_url at once, without waiting for the job
+		for (let i = 0; i < 100 && !(await row()).update; i++) await Bun.sleep(5);
+		expect((await row()).update).toEqual({ version: "1.1.0", notes: "Faster" });
+		// and the job asks again
+		updates.latest.delete("upd");
+		expect((await row()).update).toBeNull();
+		await updates.run();
+		expect((await row()).update).toEqual({ version: "1.1.0", notes: "Faster" });
+		// the admin approved 1.0.9, but the link names 1.1.0 now: refused, the badge shows 1.1.0
+		expect(
+			(await ExtensionService.installUpdate("upd", "1.0.9")).errors?.update,
+		).toBe("A newer version 1.1.0 came out. Check it and update again.");
+		expect((await row()).version).toBe("1.0.0");
+		// a zip that is not the version the link named is refused, nothing changes
+		zipVersion = "1.0.5";
+		expect(
+			(await ExtensionService.installUpdate("upd", "1.1.0")).errors?.update,
+		).toBe("The update is not upd version 1.1.0");
+		expect((await row()).version).toBe("1.0.0");
+		zipVersion = "1.1.0";
+		expect(await ExtensionService.installUpdate("upd", "1.1.0")).toEqual({
+			key: "upd",
+		});
+		expect(await row()).toMatchObject({ version: "1.1.0", update: null });
+		// the newest already: no update to install
+		expect(
+			(await ExtensionService.installUpdate("upd", "1.1.0")).errors?.update,
+		).toBe("There is no newer version of this extension");
+		// an answer in another form is refused
+		answer = { version: "two", url: "http://1.1.1.1/x.zip" };
+		expect(
+			(await ExtensionService.installUpdate("upd", "1.1.0")).errors?.update,
+		).toBe("The update link did not answer with a version and a zip link");
+		// a built-in or unknown key has no update_url
+		expect(
+			(await ExtensionService.installUpdate("webhook", "1.1.0")).errors?.update,
+		).toBe("There is no newer version of this extension");
+		// UPDATE_CHECK=0: the job asks nobody
+		app.updateCheck = false;
+		answer = { version: "9.0.0", url: "https://1.1.1.1/upd-9.zip" };
+		await updates.run();
+		expect((await row()).update).toBeNull();
+	} finally {
+		globalThis.fetch = was;
+		app.updateCheck = wasCheck;
+		await ExtensionService.remove("upd");
+	}
+});

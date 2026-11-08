@@ -386,6 +386,13 @@ export const th = {
 	"global_extensions.guide": "คู่มือนักพัฒนา",
 	"global_extensions.subtitle": "โค้ดส่วนขยายของทั้งแพลตฟอร์ม เปิดตัวไหนก็จะมีให้ทุกร้านใช้",
 	"global_extensions.title": "ส่วนขยายทั้งระบบ",
+	"global_extensions.update": "อัปเดต",
+	"global_extensions.update_aria": "อัปเดต {name} เป็น {version}",
+	"global_extensions.update_available": "มีอัปเดต {version}",
+	"global_extensions.update_text":
+		"เวอร์ชัน {version} จะแทนที่เวอร์ชัน {from} การตั้งค่าและสวิตช์ยังอยู่เหมือนเดิม",
+	"global_extensions.update_title": "อัปเดต {name} เป็น {version} ใช่ไหม",
+	"global_extensions.updated_toast": "อัปเดต {name} เป็น {version} แล้ว",
 	"global_extensions.uploaded": "อัปโหลดแล้ว",
 	"global_extensions.users_count": "ผู้ใช้ {count} คน",
 	"global_extensions.users_desc":
@@ -1851,6 +1858,11 @@ export const th = {
 		"อ่านคีย์ที่บันทึกไว้ไม่ได้ — APP_KEY เปลี่ยนไปหลังจากกรอกคีย์ เปิด “ตั้งค่า” แล้วกรอกใหม่อีกครั้ง",
 	"server.ext_starts_with": "{label} ต้องขึ้นต้นด้วย {prefix}",
 	"server.ext_unknown": "ไม่รู้จักส่วนขยายนี้",
+	"server.ext_update_bad_answer": "ลิงก์อัปเดตไม่ได้ส่งเวอร์ชันและลิงก์ zip กลับมา",
+	"server.ext_update_changed":
+		"มีเวอร์ชันใหม่กว่า {version} ออกมาแล้ว ตรวจสอบแล้วอัปเดตอีกครั้ง",
+	"server.ext_update_mismatch": "อัปเดตนี้ไม่ใช่ {key} เวอร์ชัน {version}",
+	"server.ext_update_none": "ไม่มีเวอร์ชันใหม่กว่าของส่วนขยายนี้",
 	"server.ext_url_http": "ลิงก์ตอบกลับ HTTP {status}",
 	"server.ext_url_invalid": "กรอกลิงก์ https:// ที่ชี้ไปยังไฟล์ .zip",
 	"server.ext_user_unknown": "{email} ไม่ใช่ผู้ใช้ในระบบ",

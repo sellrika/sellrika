@@ -416,6 +416,13 @@ export const de = {
 	"global_extensions.subtitle":
 		"Der Erweiterungs-Code der ganzen Plattform. Schalten Sie eine ein, um sie allen Shops anzubieten.",
 	"global_extensions.title": "Globale Erweiterungen",
+	"global_extensions.update": "Aktualisieren",
+	"global_extensions.update_aria": "{name} auf {version} aktualisieren",
+	"global_extensions.update_available": "Update {version} verfügbar",
+	"global_extensions.update_text":
+		"Version {version} ersetzt Version {from}. Einstellungen und Schalter bleiben.",
+	"global_extensions.update_title": "{name} auf {version} aktualisieren?",
+	"global_extensions.updated_toast": "{name} ist auf {version} aktualisiert",
 	"global_extensions.uploaded": "Hochgeladen",
 	"global_extensions.users_count": "{count} Benutzer",
 	"global_extensions.users_desc":
@@ -2002,6 +2009,12 @@ export const de = {
 		"Die gespeicherten Schlüssel sind nicht lesbar — APP_KEY hat sich seit der Eingabe geändert. Öffnen Sie „Konfigurieren“ und geben Sie sie erneut ein.",
 	"server.ext_starts_with": "{label} beginnt mit {prefix}",
 	"server.ext_unknown": "Unbekannte Erweiterung",
+	"server.ext_update_bad_answer":
+		"Der Update-Link hat keine Version und keinen Zip-Link geliefert",
+	"server.ext_update_changed":
+		"Eine neuere Version {version} ist erschienen. Prüfe sie und aktualisiere erneut.",
+	"server.ext_update_mismatch": "Das Update ist nicht {key} Version {version}",
+	"server.ext_update_none": "Es gibt keine neuere Version dieser Erweiterung",
 	"server.ext_url_http": "Der Link antwortete mit HTTP {status}",
 	"server.ext_url_invalid":
 		"Geben Sie einen https://-Link zu einer .zip-Datei ein",

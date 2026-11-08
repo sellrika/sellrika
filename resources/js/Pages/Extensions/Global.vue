@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { Head, router, useForm } from "@inertiajs/vue3";
 import { toast } from "vue-sonner";
 import {
+	ArrowUpCircle,
 	BookOpen,
 	ChevronDown,
 	Link2,
@@ -14,6 +15,16 @@ import {
 	Users,
 } from "@lucide/vue";
 import AppLayout from "@/layouts/AppLayout.vue";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -217,6 +228,45 @@ function toggle(e: PlatformExtensionRow, on: boolean) {
 	);
 }
 
+/** The extension whose update the admin is asked to confirm (null = closed). */
+const updating = ref<PlatformExtensionRow | null>(null);
+/** The update is being installed. */
+const installing = ref(false);
+
+/**
+ * Install the newer version of the extension in the dialog.
+ * Its settings and switches stay.
+ */
+function installUpdate() {
+	const e = updating.value;
+	if (!e?.update) return;
+	const version = e.update.version;
+	router.post(
+		`${BASE}/${e.key}/update`,
+		// the version the admin approved: the server refuses another one
+		{ version },
+		{
+			preserveScroll: true,
+			onStart() {
+				installing.value = true;
+			},
+			onFinish() {
+				installing.value = false;
+				updating.value = null;
+			},
+			onSuccess() {
+				rowErrors.value = {};
+				toast.success(
+					t("global_extensions.updated_toast", { name: e.name, version }),
+				);
+			},
+			onError(errors) {
+				rowErrors.value = errors;
+			},
+		},
+	);
+}
+
 /**
  * Delete an uploaded extension's code, after asking.
  * @param e The extension.
@@ -286,8 +336,8 @@ function remove(e: PlatformExtensionRow) {
 
     <!-- one row per extension of the platform; no settings here, each shop configures its own -->
     <Card class="py-0">
-      <CardHeader v-if="rowErrors.key" class="pt-4">
-        <p class="text-sm text-destructive" role="alert">{{ rowErrors.key }}</p>
+      <CardHeader v-if="rowErrors.key || rowErrors.update" class="pt-4">
+        <p class="text-sm text-destructive" role="alert">{{ rowErrors.key || rowErrors.update }}</p>
       </CardHeader>
       <CardContent class="px-0">
         <Table>
@@ -312,6 +362,7 @@ function remove(e: PlatformExtensionRow) {
                   <span class="text-xs font-normal text-muted-foreground">v{{ e.version }}</span>
                   <Badge variant="secondary" class="font-normal">{{ e.builtin ? t("global_extensions.builtin") : t("global_extensions.uploaded") }}</Badge>
                   <Badge v-if="!e.fits_app" variant="outline" class="border-destructive/50 font-normal text-destructive">{{ t("global_extensions.misfit") }}</Badge>
+                  <Badge v-if="e.update" variant="outline" class="border-emerald-300 font-normal text-emerald-700 dark:text-emerald-400">{{ t("global_extensions.update_available", { version: e.update.version }) }}</Badge>
                 </p>
                 <p v-if="e.app_version" class="text-xs text-muted-foreground">{{ t("global_extensions.app_version", { range: e.app_version }) }}</p>
                 <p class="max-w-xl text-sm whitespace-normal text-muted-foreground">{{ e.description }}</p>
@@ -326,6 +377,7 @@ function remove(e: PlatformExtensionRow) {
                 </Button>
               </TableCell>
               <TableCell class="pr-6 text-right align-middle whitespace-nowrap">
+                <Button v-if="e.update" type="button" variant="outline" size="sm" :aria-label="t('global_extensions.update_aria', { name: e.name, version: e.update.version })" @click="updating = e"><ArrowUpCircle /> {{ t("global_extensions.update") }}</Button>
                 <Button v-if="!e.builtin" type="button" variant="ghost" size="sm" class="text-destructive" :aria-label="t('global_extensions.delete_aria', { name: e.name })" @click="remove(e)"><Trash2 /> {{ t("common.delete") }}</Button>
               </TableCell>
             </TableRow>
@@ -333,6 +385,21 @@ function remove(e: PlatformExtensionRow) {
         </Table>
       </CardContent>
     </Card>
+
+    <!-- Update: asked first; the new zip replaces the installed one, its settings stay -->
+    <AlertDialog :open="!!updating" @update:open="(o: boolean) => !o && !installing && (updating = null)">
+      <AlertDialogContent v-if="updating?.update">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t("global_extensions.update_title", { name: updating.name, version: updating.update.version }) }}</AlertDialogTitle>
+          <AlertDialogDescription>{{ t("global_extensions.update_text", { from: updating.version, version: updating.update.version }) }}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <p v-if="updating.update.notes" class="text-sm whitespace-pre-line">{{ updating.update.notes }}</p>
+        <AlertDialogFooter>
+          <AlertDialogCancel :disabled="installing">{{ t("common.cancel") }}</AlertDialogCancel>
+          <AlertDialogAction :disabled="installing" @click.prevent="installUpdate"><LoaderCircle v-if="installing" class="animate-spin" /> {{ t("global_extensions.update") }}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
 
     <!-- Available to: the users an extension is for; none picked = every user -->
     <Dialog :open="!!usersFor" @update:open="(o: boolean) => !o && (usersFor = null)">

@@ -19,6 +19,7 @@ import {
 import { ExtensionRoutes } from "./Extension.Routes";
 import { ExtensionRuntime } from "./Extension.Runtime";
 import { ExtensionSettings } from "./Extension.Settings";
+import { ExtensionUpdates } from "./Extension.Updates";
 import type {
 	Errors,
 	ExtensionInfo,
@@ -66,6 +67,7 @@ export class ExtensionService {
 		private routes: ExtensionRoutes,
 		private events: ExtensionEvents,
 		private storefront: ExtensionStorefront,
+		private updates: ExtensionUpdates,
 	) {}
 
 	// ── The platform catalog ──
@@ -103,10 +105,30 @@ export class ExtensionService {
 	/**
 	 * Every extension of the platform with its global switch, for Admin ›
 	 * Global Extensions, in the request's language.
+	 * An uploaded one whose `update_url` named a newer version has `update`.
 	 * @returns One row per extension.
 	 */
-	platformList(): Promise<PlatformExtensionRow[]> {
-		return this.catalogue.platformList();
+	async platformList(): Promise<PlatformExtensionRow[]> {
+		const rows = await this.catalogue.platformList();
+		const uploaded = new Map<string, ExtensionInfo>();
+		for (const ext of await this.catalogue.uploaded())
+			uploaded.set(ext.key, ext);
+		for (const row of rows) {
+			const ext = uploaded.get(row.key);
+			row.update = ext ? this.updates.update(ext) : null;
+		}
+		return rows;
+	}
+
+	/**
+	 * Install the newer version of an uploaded extension (`update_url`).
+	 * Its settings and switches stay.
+	 * @param key The extension key.
+	 * @param version The version the admin saw and approved.
+	 * @returns `{key}` when updated, else `{errors}` under `update`.
+	 */
+	installUpdate(key: string, version: string): Promise<Installed> {
+		return this.updates.install(key, version);
 	}
 
 	/**
@@ -170,8 +192,10 @@ export class ExtensionService {
 	 * @param file The zip as uploaded.
 	 * @returns `{errors}` (`file`) when it can't be added, else `{key}`.
 	 */
-	upload(file: File): Promise<Installed> {
-		return this.catalogue.upload(file);
+	async upload(file: File): Promise<Installed> {
+		const r = await this.catalogue.upload(file);
+		if (r.key) this.updates.checkSoon(r.key);
+		return r;
 	}
 
 	/**
@@ -182,8 +206,10 @@ export class ExtensionService {
 	 * @returns `{errors}` under `url` when it can't be downloaded.
 	 * Otherwise `upload`'s answer, its refusals moved under `url` too.
 	 */
-	fromUrl(url: string): Promise<Installed> {
-		return this.catalogue.fromUrl(url);
+	async fromUrl(url: string): Promise<Installed> {
+		const r = await this.catalogue.fromUrl(url);
+		if (r.key) this.updates.checkSoon(r.key);
+		return r;
 	}
 
 	// ── The request's language ──

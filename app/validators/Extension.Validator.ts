@@ -7,6 +7,7 @@ import {
 	EXTENSION_FIELD_TYPES,
 	EXTENSION_PAYMENT_MODES,
 	EXTENSION_SLOTS,
+	EXTENSION_UPDATE_VERSION,
 } from "@constants/Extension.Constant";
 import { PAYMENT_ICON_NAMES } from "@constants/PaymentMethod.Constant";
 import { ROLES } from "@constants/User.Constant";
@@ -253,6 +254,16 @@ export const ExtensionManifest = z.object({
 			EXTENSION_APP_VERSION_RANGE,
 			"app_version must be a version range like >=1.2.0",
 		)
+		.optional(),
+	/**
+	 * Where the app asks for a newer version: an https link to a JSON file
+	 * in the `ExtensionUpdateInfo` form. Left out = no update check.
+	 * Only an uploaded extension is checked.
+	 */
+	update_url: z
+		.url("update_url must be a full https:// link")
+		.startsWith("https://", "update_url must be a full https:// link")
+		.max(500)
 		.optional(),
 	/** What it does, at most 300 characters. Left out = "". */
 	description: z.string().trim().max(300).default(""),
@@ -618,6 +629,12 @@ export const GlobalExtensionInput = z.object({
 	enabled: z.boolean(),
 });
 
+/** POST /admin/extensions/:key/update: the version the admin approved. */
+export const ExtensionUpdateInput = z.object({
+	/** The version the confirm dialog showed, like `1.2.0`. */
+	version: z.string().regex(EXTENSION_UPDATE_VERSION),
+});
+
 /**
  * Who may use an extension: the owners' emails, [] = every user.
  * PUT /admin/extensions/:key/users.
@@ -633,3 +650,19 @@ export const GlobalExtensionUsersInput = z.object({
 export type GlobalExtensionUsersInput = z.infer<
 	typeof GlobalExtensionUsersInput
 >;
+
+/**
+ * What an extension's `update_url` answers: its newest version.
+ * The extension's author keeps this file up to date.
+ */
+export const ExtensionUpdateInfo = z.object({
+	/** The newest version, like `1.2.0`. */
+	version: z.string().regex(EXTENSION_UPDATE_VERSION),
+	/** The zip of that version: an https link. */
+	url: z.url().startsWith("https://"),
+	/** What changed, shown before the update. At most 500 characters. */
+	notes: z.string().trim().max(500).default(""),
+});
+
+/** One parsed `update_url` answer. */
+export type ExtensionUpdateInfo = z.infer<typeof ExtensionUpdateInfo>;

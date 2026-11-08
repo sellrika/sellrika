@@ -742,6 +742,7 @@ export type PlatformExtensionRow = {
 	builtin: boolean;
 	app_version: string | null; // the app versions it runs on (manifest `app_version`), null = not said
 	fits_app: boolean; // the running app is in `app_version` (true when there is none)
+	update: { version: string; notes: string } | null; // a newer version its `update_url` named (uploaded only)
 	enabled: boolean;
 	users: string[]; // the emails of the users it is for; [] = every user
 };

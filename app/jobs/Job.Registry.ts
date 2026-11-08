@@ -5,6 +5,7 @@ import { RATES_CRON } from "@constants/Currency.Constant";
 import { DOMAIN_CRON } from "@constants/Domain.Constant";
 import { MARKETING_CRON } from "@constants/Marketing.Constant";
 import { RELEASE_CRON } from "@constants/Release.Constant";
+import { EXTENSION_UPDATE_CRON } from "@constants/Extension.Constant";
 import { REPORT_CRON } from "@constants/Report.Constant";
 import { STORE_RECONCILE_CRON } from "@constants/Store.Constant";
 import { DailyReportService } from "@services/sales/DailyReport.Service";
@@ -13,6 +14,7 @@ import { MarketingService } from "@services/sales/marketing/Marketing.Service";
 import { StoreReconcileService } from "@services/sales/StoreReconcile.Service";
 import { ExchangeRateService } from "@services/settings/ExchangeRate.Service";
 import { ReleaseService } from "@services/settings/Release.Service";
+import { ExtensionUpdates } from "@services/settings/extensions/Extension.Updates";
 
 /** A service a background job can run. */
 type Runnable = { run(): Promise<unknown> };
@@ -102,6 +104,15 @@ export class JobRegistry {
 				name: "release-check",
 				expression: RELEASE_CRON,
 				service: ReleaseService,
+			},
+			/**
+			 * Has an uploaded extension a newer version (its `update_url`)?
+			 * For the badge on Global Extensions. Off with UPDATE_CHECK=0.
+			 */
+			{
+				name: "extension-update-check",
+				expression: EXTENSION_UPDATE_CRON,
+				service: ExtensionUpdates,
 			},
 		];
 		/**

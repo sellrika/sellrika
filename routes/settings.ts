@@ -126,6 +126,8 @@ function platformRoutes() {
 	/** Add a zip (file or https link). */
 	router.post("/admin/extensions", [ExtensionController, "globalStore"]);
 	router.put("/admin/extensions/:key", [ExtensionController, "globalUpdate"]);
+	/** Install the newer version its `update_url` names (uploaded only). */
+	router.post("/admin/extensions/:key/update", [ExtensionController, "globalInstallUpdate"]);
 	router.delete("/admin/extensions/:key", [ExtensionController, "globalDestroy"]);
 }
 
