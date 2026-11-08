@@ -447,12 +447,14 @@ How an author opts in:
 How the app uses it (`app/services/settings/extensions/Extension.Updates.ts`):
 
 - The job `extension-update-check` asks every uploaded extension's `update_url`, every 6 hours and once on boot (`EXTENSION_UPDATE_CRON`). The answers stay in memory, like the app's release check.
+- An upload (zip or link) also asks its own `update_url` at once, without waiting (`checkSoon`). So the badge shows right away.
 - `UPDATE_CHECK=0` turns it off. Then the server asks nobody.
 - A built-in extension is never asked. It ships with the app.
 - The link is read with `Outbound.fetch`: public addresses only, at most 64 KB (`EXTENSION_UPDATE_MAX_BYTES`), 10 seconds. A failure is a warning in the log and keeps what was known.
 - The badge shows when the named `version` is higher than the installed one (`Bun.semver.order`).
-- `POST /admin/extensions/:key/update` (platform admin) installs it:
-  - The `update_url` is asked again, so the admin gets what is out now.
+- `POST /admin/extensions/:key/update {version}` (platform admin) installs it:
+  - `version` is the one the confirm dialog showed.
+  - The `update_url` is asked again. When it names another version now, nothing is installed (`server.ext_update_changed`), and the badge shows the new one. So the admin always approves what gets installed.
   - The zip goes through `fromUrl` and every upload check, `app_version` included.
   - The zip must have the same key and the named version. Otherwise nothing changes (`server.ext_update_mismatch`).
   - Settings and switches stay, like any re-upload.

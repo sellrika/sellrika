@@ -629,6 +629,12 @@ export const GlobalExtensionInput = z.object({
 	enabled: z.boolean(),
 });
 
+/** POST /admin/extensions/:key/update: the version the admin approved. */
+export const ExtensionUpdateInput = z.object({
+	/** The version the confirm dialog showed, like `1.2.0`. */
+	version: z.string().regex(EXTENSION_UPDATE_VERSION),
+});
+
 /**
  * Who may use an extension: the owners' emails, [] = every user.
  * PUT /admin/extensions/:key/users.

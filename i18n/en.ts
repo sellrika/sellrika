@@ -1946,6 +1946,8 @@ export const en = {
 	"server.ext_unknown": "Unknown extension",
 	"server.ext_update_bad_answer":
 		"The update link did not answer with a version and a zip link",
+	"server.ext_update_changed":
+		"A newer version {version} came out. Check it and update again.",
 	"server.ext_update_mismatch": "The update is not {key} version {version}",
 	"server.ext_update_none": "There is no newer version of this extension",
 	"server.ext_url_http": "The link answered HTTP {status}",

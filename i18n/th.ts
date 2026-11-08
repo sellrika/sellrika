@@ -1859,6 +1859,8 @@ export const th = {
 	"server.ext_starts_with": "{label} ต้องขึ้นต้นด้วย {prefix}",
 	"server.ext_unknown": "ไม่รู้จักส่วนขยายนี้",
 	"server.ext_update_bad_answer": "ลิงก์อัปเดตไม่ได้ส่งเวอร์ชันและลิงก์ zip กลับมา",
+	"server.ext_update_changed":
+		"มีเวอร์ชันใหม่กว่า {version} ออกมาแล้ว ตรวจสอบแล้วอัปเดตอีกครั้ง",
 	"server.ext_update_mismatch": "อัปเดตนี้ไม่ใช่ {key} เวอร์ชัน {version}",
 	"server.ext_update_none": "ไม่มีเวอร์ชันใหม่กว่าของส่วนขยายนี้",
 	"server.ext_url_http": "ลิงก์ตอบกลับ HTTP {status}",

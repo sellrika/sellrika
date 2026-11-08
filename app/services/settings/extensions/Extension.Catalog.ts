@@ -375,8 +375,12 @@ export class ExtensionCatalog {
 	 * @returns The uploads, in upload order.
 	 */
 	async uploaded(): Promise<ExtensionInfo[]> {
-		const builtins = new Set((await this.builtins()).map((ext) => ext.key));
-		return (await this.#uploaded()).filter((ext) => !builtins.has(ext.key));
+		const builtins = new Set<string>();
+		for (const ext of await this.builtins()) builtins.add(ext.key);
+		const list: ExtensionInfo[] = [];
+		for (const ext of await this.#uploaded())
+			if (!builtins.has(ext.key)) list.push(ext);
+		return list;
 	}
 
 	/**

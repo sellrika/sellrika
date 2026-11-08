@@ -124,10 +124,11 @@ export class ExtensionService {
 	 * Install the newer version of an uploaded extension (`update_url`).
 	 * Its settings and switches stay.
 	 * @param key The extension key.
+	 * @param version The version the admin saw and approved.
 	 * @returns `{key}` when updated, else `{errors}` under `update`.
 	 */
-	installUpdate(key: string): Promise<Installed> {
-		return this.updates.install(key);
+	installUpdate(key: string, version: string): Promise<Installed> {
+		return this.updates.install(key, version);
 	}
 
 	/**
@@ -191,8 +192,10 @@ export class ExtensionService {
 	 * @param file The zip as uploaded.
 	 * @returns `{errors}` (`file`) when it can't be added, else `{key}`.
 	 */
-	upload(file: File): Promise<Installed> {
-		return this.catalogue.upload(file);
+	async upload(file: File): Promise<Installed> {
+		const r = await this.catalogue.upload(file);
+		if (r.key) this.updates.checkSoon(r.key);
+		return r;
 	}
 
 	/**
@@ -203,8 +206,10 @@ export class ExtensionService {
 	 * @returns `{errors}` under `url` when it can't be downloaded.
 	 * Otherwise `upload`'s answer, its refusals moved under `url` too.
 	 */
-	fromUrl(url: string): Promise<Installed> {
-		return this.catalogue.fromUrl(url);
+	async fromUrl(url: string): Promise<Installed> {
+		const r = await this.catalogue.fromUrl(url);
+		if (r.key) this.updates.checkSoon(r.key);
+		return r;
 	}
 
 	// ── The request's language ──

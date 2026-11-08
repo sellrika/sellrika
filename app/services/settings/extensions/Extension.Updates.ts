@@ -37,15 +37,27 @@ export class ExtensionUpdates {
 	 */
 	async run() {
 		if (!app.updateCheck) return;
-		for (const ext of await this.catalog.uploaded()) {
-			if (!ext.update_url) {
-				this.latest.delete(ext.key);
-				continue;
-			}
-			const info = await this.#ask(ext.update_url);
-			if ("info" in info) this.latest.set(ext.key, info.info);
-			else console.warn(`[extensions] ${ext.key} update check: ${info.error}`);
-		}
+		for (const ext of await this.catalog.uploaded()) await this.#check(ext);
+	}
+
+	/**
+	 * Ask one extension's `update_url` now, after an upload.
+	 * So its badge shows at once, not at the next run of the job.
+	 * Never awaited by the upload, never throws.
+	 * @param key The extension key.
+	 */
+	checkSoon(key: string) {
+		if (!app.updateCheck) return;
+		this.#checkKey(key).catch(function ignore() {});
+	}
+
+	/**
+	 * Ask one uploaded extension's `update_url`, found by its key.
+	 * @param key The extension key.
+	 */
+	async #checkKey(key: string) {
+		for (const ext of await this.catalog.uploaded())
+			if (ext.key === key) await this.#check(ext);
 	}
 
 	/**
@@ -66,27 +78,52 @@ export class ExtensionUpdates {
 	 * The zip goes through every check of an upload (`app_version`
 	 * included), and must have the same key and the version it named.
 	 * Settings and switches stay, like any re-upload.
+	 * The link must still name the version the admin approved.
+	 * A newer one is refused, and the badge then shows it.
 	 * @param key The extension key.
+	 * @param version The version the admin saw and approved.
 	 * @returns `{key}` when updated, else `{errors}` under `update`.
 	 */
-	async install(key: string): Promise<Installed> {
+	async install(key: string, version: string): Promise<Installed> {
 		let ext: ExtensionInfo | undefined;
 		for (const e of await this.catalog.uploaded()) if (e.key === key) ext = e;
 		if (!ext?.update_url)
 			return { errors: { update: t("server.ext_update_none") } };
 		const asked = await this.#ask(ext.update_url);
 		if ("error" in asked) return { errors: { update: asked.error } };
-		if (!this.#newer(asked.info.version, ext.version)) {
-			this.latest.set(key, asked.info);
+		this.latest.set(key, asked.info);
+		if (!this.#newer(asked.info.version, ext.version))
 			return { errors: { update: t("server.ext_update_none") } };
-		}
+		if (asked.info.version !== version)
+			return {
+				errors: {
+					update: t("server.ext_update_changed", {
+						version: asked.info.version,
+					}),
+				},
+			};
 		const r = await this.catalog.fromUrl(asked.info.url, {
 			key,
 			version: asked.info.version,
 		});
 		if (r.errors) return { errors: this.#underUpdate(r.errors) };
-		this.latest.set(key, asked.info);
 		return r;
+	}
+
+	/**
+	 * Ask one uploaded extension's `update_url` and remember the answer.
+	 * No `update_url` forgets what was known.
+	 * A failure is a warning and keeps what was known.
+	 * @param ext The extension as installed.
+	 */
+	async #check(ext: ExtensionInfo) {
+		if (!ext.update_url) {
+			this.latest.delete(ext.key);
+			return;
+		}
+		const info = await this.#ask(ext.update_url);
+		if ("info" in info) this.latest.set(ext.key, info.info);
+		else console.warn(`[extensions] ${ext.key} update check: ${info.error}`);
 	}
 
 	/**

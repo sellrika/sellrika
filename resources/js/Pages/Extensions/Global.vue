@@ -243,7 +243,8 @@ function installUpdate() {
 	const version = e.update.version;
 	router.post(
 		`${BASE}/${e.key}/update`,
-		{},
+		// the version the admin approved: the server refuses another one
+		{ version },
 		{
 			preserveScroll: true,
 			onStart() {

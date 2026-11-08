@@ -14,6 +14,7 @@ import type { Shop } from "@models/Shop";
 import { StoreService } from "@services/sales/Store.Service";
 import {
 	ExtensionInput,
+	ExtensionUpdateInput,
 	GlobalExtensionInput,
 	GlobalExtensionUsersInput,
 } from "@validators/Extension.Validator";
@@ -149,13 +150,20 @@ export class ExtensionController {
 	}
 
 	/**
-	 * POST /admin/extensions/:key/update — install the newer version
-	 * an uploaded extension's `update_url` names. Its settings stay.
+	 * POST /admin/extensions/:key/update {version} — install the newer
+	 * version an uploaded extension's `update_url` names. Its settings stay.
+	 * `version` is the one the admin approved: a different one is refused.
 	 * @param req The current request.
 	 * @returns Back to the list, or the list with the refusal (`update`).
 	 */
 	async globalInstallUpdate(req: BunRequest<"/admin/extensions/:key/update">) {
-		const r = await this.extensions.installUpdate(req.params.key);
+		const v = validate(ExtensionUpdateInput, await HttpRequest.body(req));
+		if (v.errors)
+			return this.#globalDone(req, { update: t("server.ext_update_none") });
+		const r = await this.extensions.installUpdate(
+			req.params.key,
+			v.data.version,
+		);
 		return this.#globalDone(req, r.errors);
 	}
 

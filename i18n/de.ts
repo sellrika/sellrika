@@ -2011,6 +2011,8 @@ export const de = {
 	"server.ext_unknown": "Unbekannte Erweiterung",
 	"server.ext_update_bad_answer":
 		"Der Update-Link hat keine Version und keinen Zip-Link geliefert",
+	"server.ext_update_changed":
+		"Eine neuere Version {version} ist erschienen. Prüfe sie und aktualisiere erneut.",
 	"server.ext_update_mismatch": "Das Update ist nicht {key} Version {version}",
 	"server.ext_update_none": "Es gibt keine neuere Version dieser Erweiterung",
 	"server.ext_url_http": "Der Link antwortete mit HTTP {status}",
