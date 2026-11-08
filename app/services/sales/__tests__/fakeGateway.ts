@@ -1,6 +1,6 @@
 import { Container } from "@xcore/di";
 import { ExtensionService } from "@services/settings/extensions/Extension.Service";
-import { zip } from "@helpers/zip";
+import { extensionZip as zip } from "@services/settings/__tests__/extensionZip";
 
 /**
  * Fake payment gateway extensions for the store tests: a real zip, uploaded and switched on the way an

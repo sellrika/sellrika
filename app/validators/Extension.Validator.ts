@@ -2,6 +2,7 @@ import { z } from "zod";
 import { email } from "@validators/Fields.Validator";
 import {
 	EXTENSION_APP_SETTINGS,
+	EXTENSION_APP_VERSION_RANGE,
 	EXTENSION_ASSETS_DIR,
 	EXTENSION_FIELD_TYPES,
 	EXTENSION_PAYMENT_MODES,
@@ -239,6 +240,20 @@ export const ExtensionManifest = z.object({
 	name: z.string().trim().min(1, "name is required").max(60),
 	/** The version text, at most 20 characters. Left out = `1.0.0`. */
 	version: z.string().trim().min(1).max(20).default("1.0.0"),
+	/**
+	 * The app versions it runs on: a range like `>=1.2.0` or `^1.2.0`.
+	 * Needed for an upload (zip or link), so the platform admin knows
+	 * it fits the running app. Optional for a built-in one.
+	 */
+	app_version: z
+		.string()
+		.trim()
+		.max(100)
+		.regex(
+			EXTENSION_APP_VERSION_RANGE,
+			"app_version must be a version range like >=1.2.0",
+		)
+		.optional(),
 	/** What it does, at most 300 characters. Left out = "". */
 	description: z.string().trim().max(300).default(""),
 	/** A link to its help page: a full URL. Optional. */

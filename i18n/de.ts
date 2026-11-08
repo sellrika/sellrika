@@ -396,6 +396,7 @@ export const de = {
 	"global_extensions.added_toast": "Erweiterung hinzugefügt",
 	"global_extensions.all_users": "Alle Benutzer",
 	"global_extensions.available_to": "Verfügbar für",
+	"global_extensions.app_version": "Braucht App {range}",
 	"global_extensions.builtin": "Integriert",
 	"global_extensions.delete_aria": "{name} löschen",
 	"global_extensions.delete_confirm":
@@ -406,6 +407,7 @@ export const de = {
 		"Noch keine Erweiterungen. Drücken Sie Erweiterung hinzufügen.",
 	"global_extensions.enabled_all": "Für alle Shops aktiv",
 	"global_extensions.enabled_all_aria": "{name} für alle Shops aktiv",
+	"global_extensions.misfit": "Passt nicht zu dieser App-Version",
 	"global_extensions.no_user_found": "Kein Benutzer gefunden — weiter tippen.",
 	"global_extensions.off_toast": "{name} ist für alle Shops aus",
 	"global_extensions.on_toast": "{name} ist für alle Shops an",
@@ -1970,6 +1972,10 @@ export const de = {
 	"server.csv_variant_name": "Variante {n}",
 	"server.customer_phone_taken":
 		"Diese Telefonnummer wird bereits von „{name}“ verwendet",
+	"server.ext_app_version_misfit":
+		"Diese Erweiterung braucht die App-Version {range}. Diese App ist {version}.",
+	"server.ext_app_version_missing":
+		'Die Erweiterung muss angeben, auf welchen App-Versionen sie läuft: Füge "app_version" in extension.json hinzu, z. B. ">=1.2.0"',
 	"server.ext_builtin": "{key} ist integriert — Updates kommen mit der App",
 	"server.ext_builtin_delete":
 		"Eine integrierte Erweiterung kann nicht gelöscht werden",

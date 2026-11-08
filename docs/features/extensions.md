@@ -78,6 +78,7 @@ Every extension shows with:
 
 - its name, version, icon and description
 - a **Built in** or **Uploaded** badge
+- **Needs app …**: its `app_version`. A red **Doesn't fit this app version** badge when the running app is not in it (`fits_app`), for example after an app update.
 - **Available to**: "All users", one email, or "N users"
 - the **Enabled for all shops** switch
 - **Delete** (uploaded only)
@@ -413,6 +414,11 @@ Checks:
 - `main` and every page and slot script must be in the zip.
 - `main` must import. A module that throws on import is refused and its files are deleted.
 - A built-in key is refused.
+- `app_version` must be set, and the running app (`package.json` › `version`) must fit it. Otherwise the upload is refused, with the range and the app's version in the message.
+  - It is a version range: `>=1.2.0`, `^1.2.0`, `~1.1`, `1.x`, `>=1.2.0 <2.0.0`, `^1.0.0 || ^2.0.0`. `Bun.semver.satisfies` checks it.
+  - Its form is checked first (`EXTENSION_APP_VERSION_RANGE`): `Bun.semver.satisfies` says yes to text that is no range at all.
+  - A built-in extension (`extensions/`) ships with the app, in the same Docker image. So it has no `app_version`. `make:extension --custom` writes one (`>=` the app's version now); plain `make:extension` does not.
+  - An extension already uploaded before this rule keeps working.
 
 Result:
 

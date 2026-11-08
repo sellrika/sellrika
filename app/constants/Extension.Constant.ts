@@ -238,3 +238,13 @@ export const EXTENSION_LIST_ROWS_MAX = 50;
 
 /** How many pictures one `ctx.uploads.drop()` call looks at. */
 export const EXTENSION_DROP_MAX = 200;
+
+/**
+ * The form of a manifest's `app_version`: an npm-style version range.
+ * One or more comparators (`>=1.2.0`, `^1.2`, `~1.1.0`, `1.x`),
+ * joined by spaces (and) or `||` (or).
+ * `Bun.semver.satisfies` says yes to text that is no range at all,
+ * so the form is checked first.
+ */
+export const EXTENSION_APP_VERSION_RANGE =
+	/^(\^|~|>=|<=|>|<|=)?\d+(\.(\d+|x|\*)){0,2}( +(\^|~|>=|<=|>|<|=)?\d+(\.(\d+|x|\*)){0,2})*( *\|\| *(\^|~|>=|<=|>|<|=)?\d+(\.(\d+|x|\*)){0,2}( +(\^|~|>=|<=|>|<|=)?\d+(\.(\d+|x|\*)){0,2})*)*$/;

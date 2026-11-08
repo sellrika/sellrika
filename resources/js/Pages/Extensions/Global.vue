@@ -311,7 +311,9 @@ function remove(e: PlatformExtensionRow) {
                   {{ e.name }}
                   <span class="text-xs font-normal text-muted-foreground">v{{ e.version }}</span>
                   <Badge variant="secondary" class="font-normal">{{ e.builtin ? t("global_extensions.builtin") : t("global_extensions.uploaded") }}</Badge>
+                  <Badge v-if="!e.fits_app" variant="outline" class="border-destructive/50 font-normal text-destructive">{{ t("global_extensions.misfit") }}</Badge>
                 </p>
+                <p v-if="e.app_version" class="text-xs text-muted-foreground">{{ t("global_extensions.app_version", { range: e.app_version }) }}</p>
                 <p class="max-w-xl text-sm whitespace-normal text-muted-foreground">{{ e.description }}</p>
               </TableCell>
               <TableCell class="text-center align-middle">
