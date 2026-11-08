@@ -392,6 +392,7 @@ Table `categories`: `name`, `color` (`#rrggbb` or null), `position`, `image`.
 - Add and edit are one dialog on `/categories`: the **Add category** button, or a row's pencil. It works like the payment methods page.
 - It uses the product uploader (`ImagesUpload.vue`, `max` 1, `folder="categories"`). So a picked file or a pasted link opens `ImageEditor.vue` first.
 - Managers and admins may add, edit and delete.
+- **Name** and **Products** sort in the browser (`sortRows()` in `resources/js/lib/sort.ts`): low to high, then high to low, then back to the normal order.
 - Deleting a category removes its `product_categories` links only.
 - The list includes `product_count`.
 
