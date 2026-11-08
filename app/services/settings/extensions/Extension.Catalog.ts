@@ -47,6 +47,12 @@ export type Installed =
 	| { errors: Errors; key?: never };
 
 /**
+ * What an update's zip must be: the extension it updates,
+ * at the version its `update_url` named.
+ */
+export type ExpectedZip = { key: string; version: string };
+
+/**
  * What `download` answers.
  * The zip's bytes, or the message for the admin.
  */
@@ -264,9 +270,10 @@ export class ExtensionCatalog {
 	 * A new key starts off for all shops; a re-upload keeps its switch.
 	 * A key that is built in is refused: its updates ship with the app.
 	 * @param file The zip as uploaded.
+	 * @param expected For an update: the key and version the zip must have.
 	 * @returns `{errors}` (`file`) when it can't be added, else `{key}`.
 	 */
-	async upload(file: File): Promise<Installed> {
+	async upload(file: File, expected?: ExpectedZip): Promise<Installed> {
 		if (file.size > MAX_EXTENSION_ZIP_BYTES)
 			return { errors: { file: t("server.ext_zip_too_large") } };
 		let files: Record<string, Uint8Array>;
@@ -299,6 +306,13 @@ export class ExtensionCatalog {
 			};
 		const misfit = this.#appVersionProblem(manifest.app_version);
 		if (misfit) return { errors: { file: misfit } };
+		if (
+			expected &&
+			(manifest.key !== expected.key || manifest.version !== expected.version)
+		)
+			return {
+				errors: { file: t("server.ext_update_mismatch", expected) },
+			};
 		const home = `${this.#platformDir()}/${manifest.key}`;
 		const dir = `${home}/${Date.now()}`;
 		await ExtensionFiles.write(dir, files);
@@ -323,10 +337,11 @@ export class ExtensionCatalog {
 	 * Admin-only and https-only, so the server can't be made to fetch
 	 * arbitrary internal addresses.
 	 * @param url Where the zip is.
+	 * @param expected For an update: the key and version the zip must have.
 	 * @returns `{errors}` under `url` when it can't be downloaded.
 	 * Otherwise `upload`'s answer, its refusals moved under `url` too.
 	 */
-	async fromUrl(url: string): Promise<Installed> {
+	async fromUrl(url: string, expected?: ExpectedZip): Promise<Installed> {
 		let source: URL;
 		try {
 			source = new URL(url.trim());
@@ -343,6 +358,7 @@ export class ExtensionCatalog {
 				source.pathname.split("/").pop() || "extension.zip",
 				{ type: "application/zip" },
 			),
+			expected,
 		);
 		return installed.errors
 			? {
@@ -351,6 +367,16 @@ export class ExtensionCatalog {
 					},
 				}
 			: installed;
+	}
+
+	/**
+	 * The extensions the platform admin uploaded (zip or link).
+	 * An upload with a built-in key never shows: the built-in one wins.
+	 * @returns The uploads, in upload order.
+	 */
+	async uploaded(): Promise<ExtensionInfo[]> {
+		const builtins = new Set((await this.builtins()).map((ext) => ext.key));
+		return (await this.#uploaded()).filter((ext) => !builtins.has(ext.key));
 	}
 
 	/**
@@ -404,6 +430,8 @@ export class ExtensionCatalog {
 			builtin: builtin.has(ext.key),
 			app_version: ext.app_version ?? null,
 			fits_app: this.fitsApp(ext.app_version),
+			// filled in by ExtensionService, which knows the update check
+			update: null,
 			enabled: rule?.enabled ?? false,
 			// a user deleted since drops off the list
 			users: (rule?.users ?? []).flatMap((id) => emails.get(id) ?? []),

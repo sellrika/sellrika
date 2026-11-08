@@ -249,6 +249,9 @@ test("a shop owner: no Global Extensions, only what is switched on for all shops
 	expect(
 		(await owner.request.delete("/admin/extensions/my-hook")).status(),
 	).toBe(403);
+	expect(
+		(await owner.request.post("/admin/extensions/my-hook/update")).status(),
+	).toBe(403);
 	// Settings › Extensions: the switched-on ones only, fresh for this shop
 	await owner.getByRole("link", { name: "Extensions", exact: true }).click();
 	await expect(owner).toHaveURL(/\/extensions$/);

@@ -79,6 +79,7 @@ Every extension shows with:
 - its name, version, icon and description
 - a **Built in** or **Uploaded** badge
 - **Needs app …**: its `app_version`. A red **Doesn't fit this app version** badge when the running app is not in it (`fits_app`), for example after an app update.
+- **Update X available** and an **Update** button, when its `update_url` named a newer version (`update`). The button asks first, in a dialog with the notes.
 - **Available to**: "All users", one email, or "N users"
 - the **Enabled for all shops** switch
 - **Delete** (uploaded only)
@@ -424,6 +425,38 @@ Result:
 
 - A new key starts off for all shops.
 - An existing key is an **update**. Its global switch and every shop's settings stay.
+
+### Update check (`update_url`)
+
+An uploaded extension may say where its newest version is. Only then does Global Extensions show an update badge and an **Update** button.
+
+How an author opts in:
+
+- `extension.json` gets `"update_url": "https://…/my-thing.json"`. https only.
+- That link answers JSON (`ExtensionUpdateFile` in `extensions/types.ts`, checked by `ExtensionUpdateInfo`):
+
+```json
+{ "version": "1.2.0", "url": "https://example.com/my-thing-1.2.0.zip", "notes": "Faster" }
+```
+
+  - `version`: numbers only, like `1.2.0`.
+  - `url`: the zip of that version, https only.
+  - `notes`: optional, at most 500 characters. The confirm dialog shows it.
+- Our own extensions (`sellrika/extensions`) get it from their build: `…/releases/download/latest/<key>.json`.
+
+How the app uses it (`app/services/settings/extensions/Extension.Updates.ts`):
+
+- The job `extension-update-check` asks every uploaded extension's `update_url`, every 6 hours and once on boot (`EXTENSION_UPDATE_CRON`). The answers stay in memory, like the app's release check.
+- `UPDATE_CHECK=0` turns it off. Then the server asks nobody.
+- A built-in extension is never asked. It ships with the app.
+- The link is read with `Outbound.fetch`: public addresses only, at most 64 KB (`EXTENSION_UPDATE_MAX_BYTES`), 10 seconds. A failure is a warning in the log and keeps what was known.
+- The badge shows when the named `version` is higher than the installed one (`Bun.semver.order`).
+- `POST /admin/extensions/:key/update` (platform admin) installs it:
+  - The `update_url` is asked again, so the admin gets what is out now.
+  - The zip goes through `fromUrl` and every upload check, `app_version` included.
+  - The zip must have the same key and the named version. Otherwise nothing changes (`server.ext_update_mismatch`).
+  - Settings and switches stay, like any re-upload.
+  - A refusal shows above the list (`errors.update`).
 
 ### Global switch
 
@@ -822,7 +855,7 @@ This is about the MCP server. See [api.md](api.md).
 
 | Who | Routes |
 |---|---|
-| Platform admin | `GET /admin/extensions` (page), `POST /admin/extensions` (zip upload or `url`; a refusal is Inertia `errors.file` / `errors.url`), `PUT /admin/extensions/:key` (`{enabled}`), `DELETE /admin/extensions/:key` (errors under `key`), `GET /admin/extensions/users`, `PUT /admin/extensions/:key/users`. Everyone else gets 403. |
+| Platform admin | `GET /admin/extensions` (page), `POST /admin/extensions` (zip upload or `url`; a refusal is Inertia `errors.file` / `errors.url`), `PUT /admin/extensions/:key` (`{enabled}`), `POST /admin/extensions/:key/update` (errors under `update`), `DELETE /admin/extensions/:key` (errors under `key`), `GET /admin/extensions/users`, `PUT /admin/extensions/:key/users`. Everyone else gets 403. |
 | Admin | `GET /extensions` (page), `PUT /extensions/:key` (errors `config.<field>` or `key`). Cashiers get the 403 page. |
 | Every role | `GET /extensions/:key/:page`, `ANY /ext/:key/*` |
 | Public | `ANY /store/:slug/ext/:key/*` |

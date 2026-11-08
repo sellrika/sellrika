@@ -1871,3 +1871,22 @@ export type PaymentScript = (
 		locale: string;
 	},
 ) => void | Promise<void>;
+
+/**
+ * What an extension's `update_url` (in extension.json) must answer:
+ * a JSON file that names its newest version.
+ * Only an uploaded extension is checked, every 6 hours and on boot.
+ * When `version` is higher than the installed one, Admin › Global
+ * Extensions shows an update badge and an **Update** button.
+ * The zip at `url` must have the same key and this `version`,
+ * and its `app_version` must fit the app.
+ * Example: `{"version": "1.2.0", "url": "https://example.com/my-thing-1.2.0.zip", "notes": "Faster"}`
+ */
+export type ExtensionUpdateFile = {
+	/** The newest version, numbers only, like `1.2.0`. */
+	version: string;
+	/** The zip of that version: an https link. */
+	url: string;
+	/** What changed, shown before the update. At most 500 characters. Optional. */
+	notes?: string;
+};

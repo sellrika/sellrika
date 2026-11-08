@@ -405,6 +405,13 @@ export const en = {
 	"global_extensions.subtitle":
 		"The extension code of the whole platform. Switch one on to offer it to every shop.",
 	"global_extensions.title": "Global Extensions",
+	"global_extensions.update": "Update",
+	"global_extensions.update_aria": "Update {name} to {version}",
+	"global_extensions.update_available": "Update {version} available",
+	"global_extensions.update_text":
+		"Version {version} replaces version {from}. Its settings and switches stay.",
+	"global_extensions.update_title": "Update {name} to {version}?",
+	"global_extensions.updated_toast": "{name} is updated to {version}",
 	"global_extensions.uploaded": "Uploaded",
 	"global_extensions.users_count": "{count} users",
 	"global_extensions.users_desc":
@@ -1937,6 +1944,10 @@ export const en = {
 		"The saved keys can't be read — APP_KEY changed since they were entered. Open Configure and enter them again.",
 	"server.ext_starts_with": "{label}s start with {prefix}",
 	"server.ext_unknown": "Unknown extension",
+	"server.ext_update_bad_answer":
+		"The update link did not answer with a version and a zip link",
+	"server.ext_update_mismatch": "The update is not {key} version {version}",
+	"server.ext_update_none": "There is no newer version of this extension",
 	"server.ext_url_http": "The link answered HTTP {status}",
 	"server.ext_url_invalid": "Enter an https:// link to a .zip file",
 	"server.ext_user_unknown": "{email} is not a user",

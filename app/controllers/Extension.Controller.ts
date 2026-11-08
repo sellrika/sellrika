@@ -149,6 +149,17 @@ export class ExtensionController {
 	}
 
 	/**
+	 * POST /admin/extensions/:key/update — install the newer version
+	 * an uploaded extension's `update_url` names. Its settings stay.
+	 * @param req The current request.
+	 * @returns Back to the list, or the list with the refusal (`update`).
+	 */
+	async globalInstallUpdate(req: BunRequest<"/admin/extensions/:key/update">) {
+		const r = await this.extensions.installUpdate(req.params.key);
+		return this.#globalDone(req, r.errors);
+	}
+
+	/**
 	 * DELETE /admin/extensions/:key — delete an uploaded extension's code.
 	 * A built-in one is refused.
 	 * @param req The current request.

@@ -19,6 +19,7 @@ import {
 import { ExtensionRoutes } from "./Extension.Routes";
 import { ExtensionRuntime } from "./Extension.Runtime";
 import { ExtensionSettings } from "./Extension.Settings";
+import { ExtensionUpdates } from "./Extension.Updates";
 import type {
 	Errors,
 	ExtensionInfo,
@@ -66,6 +67,7 @@ export class ExtensionService {
 		private routes: ExtensionRoutes,
 		private events: ExtensionEvents,
 		private storefront: ExtensionStorefront,
+		private updates: ExtensionUpdates,
 	) {}
 
 	// ── The platform catalog ──
@@ -103,10 +105,29 @@ export class ExtensionService {
 	/**
 	 * Every extension of the platform with its global switch, for Admin ›
 	 * Global Extensions, in the request's language.
+	 * An uploaded one whose `update_url` named a newer version has `update`.
 	 * @returns One row per extension.
 	 */
-	platformList(): Promise<PlatformExtensionRow[]> {
-		return this.catalogue.platformList();
+	async platformList(): Promise<PlatformExtensionRow[]> {
+		const rows = await this.catalogue.platformList();
+		const uploaded = new Map<string, ExtensionInfo>();
+		for (const ext of await this.catalogue.uploaded())
+			uploaded.set(ext.key, ext);
+		for (const row of rows) {
+			const ext = uploaded.get(row.key);
+			row.update = ext ? this.updates.update(ext) : null;
+		}
+		return rows;
+	}
+
+	/**
+	 * Install the newer version of an uploaded extension (`update_url`).
+	 * Its settings and switches stay.
+	 * @param key The extension key.
+	 * @returns `{key}` when updated, else `{errors}` under `update`.
+	 */
+	installUpdate(key: string): Promise<Installed> {
+		return this.updates.install(key);
 	}
 
 	/**

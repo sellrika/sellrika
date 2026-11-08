@@ -248,3 +248,15 @@ export const EXTENSION_DROP_MAX = 200;
  */
 export const EXTENSION_APP_VERSION_RANGE =
 	/^(\^|~|>=|<=|>|<|=)?\d+(\.(\d+|x|\*)){0,2}( +(\^|~|>=|<=|>|<|=)?\d+(\.(\d+|x|\*)){0,2})*( *\|\| *(\^|~|>=|<=|>|<|=)?\d+(\.(\d+|x|\*)){0,2}( +(\^|~|>=|<=|>|<|=)?\d+(\.(\d+|x|\*)){0,2})*)*$/;
+
+/** When the update check of uploaded extensions runs: every 6 hours (and once on boot). */
+export const EXTENSION_UPDATE_CRON = "0 */6 * * *";
+
+/** How long one ask to an extension's `update_url` may take. */
+export const EXTENSION_UPDATE_TIMEOUT_MS = 10_000;
+
+/** The most bytes of an `update_url` answer the app reads. */
+export const EXTENSION_UPDATE_MAX_BYTES = 64 * 1024;
+
+/** The version an `update_url` answer names: `1.2.0`, numbers only. */
+export const EXTENSION_UPDATE_VERSION = /^\d+\.\d+\.\d+$/;

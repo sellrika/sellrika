@@ -99,6 +99,14 @@ export type ExtensionRow = Omit<
 		enabled: boolean;
 	};
 
+/** A newer version of an uploaded extension, for Global Extensions. */
+export type ExtensionUpdate = {
+	/** The newer version, like `1.2.0`. */
+	version: string;
+	/** What changed, as its author wrote it. "" = nothing said. */
+	notes: string;
+};
+
 /**
  * What Admin › Global Extensions shows for one extension of the platform.
  */
@@ -124,6 +132,11 @@ export type PlatformExtensionRow = {
 	 * False after an app update the extension does not fit.
 	 */
 	fits_app: boolean;
+	/**
+	 * A newer version its `update_url` named, or null = none known.
+	 * Only an uploaded extension with `update_url` can have one.
+	 */
+	update: ExtensionUpdate | null;
 	/**
 	 * The "Enabled for all shops" switch.
 	 */
