@@ -11,6 +11,12 @@ import { FAVICON_PATH } from "./Http.Constant";
  */
 export const VITE_ENTRY = "resources/js/app.ts";
 
+/**
+ * How many server-rendered pages are kept, keyed by their page data.
+ * One entry is one page in one language, a few dozen KB.
+ */
+export const SSR_CACHE_SIZE = 50;
+
 /** Dev only — in production the manifest lists the built CSS. */
 export const VITE_CSS_ENTRY = "resources/css/app.css";
 

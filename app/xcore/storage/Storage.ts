@@ -1,11 +1,9 @@
 import { DriveManager } from "flydrive";
 import { FSDriver } from "flydrive/drivers/fs";
-import { GCSDriver } from "flydrive/drivers/gcs";
-import { S3Driver } from "flydrive/drivers/s3";
-import { AzureDriver } from "flydrive-azure";
+import type { DriverContract } from "flydrive/types";
 import { Outbound } from "@xcore/http/Outbound";
 import { t } from "@xcore/i18n/I18n";
-import { storage } from "@config/storage";
+import { type StorageDriver, storage } from "@config/storage";
 import { STATIC_CACHE_CONTROL } from "@constants/Http.Constant";
 import {
 	IMAGE_FETCH_TIMEOUT_MS,
@@ -27,6 +25,51 @@ export { UPLOAD_DIR };
 const { local, s3, azure, gcs } = storage.drivers;
 
 /**
+ * The disk of one cloud driver.
+ * Its SDK is imported only here, so only the chosen one is loaded.
+ * ponytail: the AWS, Google and Azure SDKs cost 25 to 75 MB of memory each.
+ * A local install never needs them.
+ * @param name The cloud driver `STORAGE_DRIVER` names.
+ * @returns A factory that builds the disk.
+ */
+async function cloudDisk(
+	name: Exclude<StorageDriver, "local">,
+): Promise<() => DriverContract> {
+	if (name === "s3") {
+		const { S3Driver } = await import("flydrive/drivers/s3");
+		return function s3Disk() {
+			return new S3Driver({ ...s3, visibility: "private" });
+		};
+	}
+	if (name === "azure") {
+		const { AzureDriver } = await import("flydrive-azure");
+		return function azureDisk() {
+			return new AzureDriver(azure);
+		};
+	}
+	const { GCSDriver } = await import("flydrive/drivers/gcs");
+	return function gcsDisk() {
+		return new GCSDriver({
+			...gcs,
+			visibility: "private",
+			usingUniformAcl: true,
+		});
+	};
+}
+
+/** The local disk, and the cloud disk `STORAGE_DRIVER` names, if any. */
+const services: Partial<Record<StorageDriver, () => DriverContract>> = {
+	local: function localDisk() {
+		return new FSDriver({
+			location: Bun.pathToFileURL(local.dir),
+			visibility: "private",
+		});
+	},
+};
+if (storage.default !== "local")
+	services[storage.default] = await cloudDisk(storage.default);
+
+/**
  * The upload disks (flydrive).
  * `drive.use()` returns the disk `STORAGE_DRIVER` names.
  * A driver is only built on first use,
@@ -38,17 +81,7 @@ const { local, s3, azure, gcs } = storage.drivers;
  */
 export const drive = new DriveManager({
 	default: storage.default,
-	services: {
-		local: () =>
-			new FSDriver({
-				location: Bun.pathToFileURL(local.dir),
-				visibility: "private",
-			}),
-		s3: () => new S3Driver({ ...s3, visibility: "private" }),
-		azure: () => new AzureDriver(azure),
-		gcs: () =>
-			new GCSDriver({ ...gcs, visibility: "private", usingUniformAcl: true }),
-	},
+	services: services as Record<StorageDriver, () => DriverContract>,
 	/** Tests swap a service for a folder-backed fake with `drive.fake(name)`. */
 	fakes: { location: Bun.pathToFileURL(`${local.dir}-fake`) },
 });

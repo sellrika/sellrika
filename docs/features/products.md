@@ -592,6 +592,8 @@ Multipart fields `file`, `folder` and an optional `shop`. The answer is `{ url }
 - The file is written through the storage driver (`drive.use().put`, flydrive).
 - `STORAGE_DRIVER` = `local` | `s3` | `azure` | `gcs`. For `local`, the root is `UPLOAD_DIR` (default `storage`).
   See [architecture.md](../architecture.md) › Environment.
+- Only the chosen driver's SDK is loaded (`await import()` in `Storage.ts`).
+  The AWS, Google and Azure SDKs cost 25 to 75 MB of memory each, and a local install needs none of them.
 - **The driver key is the URL path without its first `/`**, like `uploads/12/products/….png`. It is the same on every driver.
   So a driver switch only needs the files copied as they are.
 

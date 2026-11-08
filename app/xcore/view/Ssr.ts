@@ -1,4 +1,5 @@
 import { app } from "@config/app";
+import { SSR_CACHE_SIZE } from "@constants/Inertia.Constant";
 import { Hooks } from "@xcore/hooks/Hooks";
 
 /**
@@ -25,6 +26,15 @@ export class Ssr {
 	static #bundle: Promise<Render | null> | null = null;
 
 	/**
+	 * Rendered HTML, keyed by the page data as JSON.
+	 * A render depends only on the page data,
+	 * so the same key always gives the same HTML.
+	 * A render makes a lot of garbage, and Bun keeps that memory.
+	 * Most visits are guests on the same few pages, so most are a hit.
+	 */
+	static #cache = new Map<string, string>();
+
+	/**
 	 * The HTML of a page, rendered on the server.
 	 * @param page The Inertia page: component, props, url, version.
 	 * @returns The HTML for inside `<div id="app">`.
@@ -32,15 +42,31 @@ export class Ssr {
 	 */
 	static async render(page: { component: string }): Promise<string | null> {
 		if (!Hooks.ssrPages.includes(page.component)) return null;
+		const key = JSON.stringify(page);
+		const hit = Ssr.#cache.get(key);
+		if (hit !== undefined) return hit;
 		Ssr.#bundle ??= Ssr.#load();
 		const render = await Ssr.#bundle;
 		if (!render) return null;
 		try {
-			return await render(page);
+			const html = await render(page);
+			Ssr.#remember(key, html);
+			return html;
 		} catch (error) {
 			console.error(`[ssr] ${page.component} did not render`, error);
 			return null;
 		}
+	}
+
+	/**
+	 * Keep a rendered page. When the cache is full, the oldest one goes.
+	 * @param key The page data as JSON.
+	 * @param html The rendered HTML.
+	 */
+	static #remember(key: string, html: string): void {
+		if (Ssr.#cache.size >= SSR_CACHE_SIZE)
+			Ssr.#cache.delete(Ssr.#cache.keys().next().value!);
+		Ssr.#cache.set(key, html);
 	}
 
 	/**
