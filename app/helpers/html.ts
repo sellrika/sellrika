@@ -17,6 +17,53 @@ import {
 	HTML_ENTITIES,
 	SANITIZE_PASSES,
 } from "@constants/Html.Constant";
+import { CODE_STYLE, languageOf, PRE_STYLE, paintCode } from "@/lib/codeBlock";
+
+/**
+ * A code block: `<pre><code …>text</code></pre>`.
+ * Group 1 is the `<code>`'s attributes, group 2 its content.
+ */
+const CODE_BLOCK =
+	/<pre\b[^>]*>\s*<code\b([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi;
+
+/**
+ * Colour one plain code block, the same way the editor does.
+ * A block that already holds tags (the editor's coloured spans) stays as it is.
+ * @param block The whole `<pre>…</pre>`.
+ * @param attrs The `<code>`'s attributes.
+ * @param inner The `<code>`'s content.
+ * @returns The coloured block, or the block unchanged.
+ */
+function paintBlock(block: string, attrs: string, inner: string): string {
+	if (inner.includes("<")) return block;
+	const cls = /\bclass\s*=\s*"([^"]*)"/i.exec(attrs)?.[1] ?? "";
+	const language = languageOf(cls);
+	const text = inner.replace(/&(nbsp|amp|lt|gt|quot|#39|#x27);/g, decodeEntity);
+	return `<pre style="${PRE_STYLE}"><code class="language-${language}" style="${CODE_STYLE}">${paintCode(text, language)}</code></pre>`;
+}
+
+/**
+ * One HTML entity back to its letter.
+ * @param _ The whole entity (not used).
+ * @param name The entity's name, like `lt`.
+ * @returns The letter.
+ */
+function decodeEntity(_: string, name: string): string {
+	// highlight.js writes a ' as &#x27;
+	return name === "#x27" ? "'" : (HTML_ENTITIES[name] ?? name);
+}
+
+/**
+ * Colour every plain code block, so HTML from the API, the MCP server
+ * or an AI assistant looks like a code block made in the editor.
+ * ponytail: plain-text blocks only know the named entities of `HTML_ENTITIES`;
+ * a numeric one (`&#123;`) stays as typed.
+ * @param html The HTML.
+ * @returns The HTML with its code blocks coloured.
+ */
+export function paintCodeBlocks(html: string): string {
+	return html.replace(CODE_BLOCK, paintBlock);
+}
 
 /**
  * Is this link safe to keep in an `href` or `src`?
@@ -36,7 +83,7 @@ function safeUrl(v: string) {
  *   "" when it never stops changing.
  */
 export async function sanitizeHtml(html: string): Promise<string> {
-	let out = html;
+	let out = paintCodeBlocks(html);
 	for (let pass = 0; pass < SANITIZE_PASSES; pass++) {
 		const next = await cleanOnce(out);
 		if (next === out) return out;

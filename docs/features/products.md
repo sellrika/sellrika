@@ -221,7 +221,7 @@ Code blocks:
 - An email app that does not know CSS variables shows the code with no colours.
 - Inside a block the editor keeps the text itself. Each keystroke paints it again and puts the caret back. Enter is a new line in the code. A paste goes in as plain text.
 - So typing in a code block is outside the browser's own undo.
-- A code block sent through the API or the CSV import without the colour spans shows as plain text in the theme's own `pre` style.
+- A code block saved without the colour spans (from the API, the MCP server, the CSV import or an extension's `ctx.html.clean()`) is coloured on save. `sanitizeHtml` runs `paintCodeBlocks` first, with the same `paintCode` as the editor. A block that already has spans stays as it is.
 
 Pictures (prop `images`, the upload folder):
 

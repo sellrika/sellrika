@@ -48,3 +48,16 @@ test("sanitizeHtml: a raw-text tag goes with its inside, no handler gets out", a
 		expect(out).toStartWith("<p>ok</p>");
 	}
 });
+
+test("sanitizeHtml: colours a plain code block like the editor, once", async () => {
+	const { paintCode } = await import("@/lib/codeBlock");
+	const plain = `<pre><code class="language-typescript">const a = 'x' &lt; b;</code></pre>`;
+	const saved = await sanitizeHtml(plain);
+	expect(saved).toContain(paintCode("const a = 'x' < b;", "typescript"));
+	expect(saved).toContain(`<pre style="background:`);
+	expect(await sanitizeHtml(saved)).toBe(saved); // a second save changes nothing
+	const text = `<pre><code>it's &amp; ok</code></pre>`;
+	const once = await sanitizeHtml(text);
+	expect(once).toContain(`class="language-plaintext"`);
+	expect(await sanitizeHtml(once)).toBe(once); // plaintext stays stable, no double escaping
+});
